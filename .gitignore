@@ -42,7 +42,7 @@ backend/mvnw
 # Frontend
 frontend/node_modules/
 frontend/dist/
-frontend/.angular/
+frontend/.next/
 # dependencies
 /node_modules
 /.pnp
