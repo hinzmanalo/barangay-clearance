@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-02-24
 **Current Phase:** Phase 3 — Clearance Module
-**Overall Progress:** 3 / 11 phases complete
+**Overall Progress:** 3 / 11 phases complete (backend of Phase 2 fully complete; frontend Phase 2 complete with known search bug)
 
 ---
 
@@ -283,17 +283,19 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ## Progress Log
 
-| Date       | Phase   | Action       | Notes                                                                                                                                                  |
-| ---------- | ------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-02-24 | —       | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                    |
-| 2026-02-24 | Phase 0 | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                               |
-| 2026-02-24 | Phase 1 | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                               |
-| 2026-02-24 | Docs    | Added        | `backend/docs/Security.md` — full security reference with Mermaid sequence diagram and prose process flow walkthrough for all six authentication flows |
+| Date       | Phase   | Action       | Notes                                                                                                                                                                                                                                                                         |
+| ---------- | ------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-02-24 | —       | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                                                                                                                                           |
+| 2026-02-24 | Phase 0 | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                                                                                                                                                      |
+| 2026-02-24 | Phase 1 | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                                                                                                                                                      |
+| 2026-02-24 | Docs    | Added        | `backend/docs/Security.md` — full security reference with Mermaid sequence diagram and prose process flow walkthrough for all six authentication flows                                                                                                                        |
+| 2026-02-24 | Phase 2 | Completed    | Residents module: `Resident` entity, `ResidentRepository` search, `ResidentService` (CRUD + portal activation workflow), `ResidentMapper` (MapStruct, `hasPortalAccount`), `ResidentController`, frontend list/new/detail pages, `ResidentTable.tsx`, `useResidents.ts` hooks |
+| 2026-02-24 | Docs    | Added        | `frontend/docs/system-design-and-architecture.md` — frontend architecture reference: routing, auth flow, API client interceptors, state management rationale, component patterns, type system, key user flows                                                                 |
 
 ---
 
 ## Blockers & Issues
 
-> Record any blockers here as they arise.
-
-None currently.
+| Date       | Phase   | Severity | Issue                                                                                                                                                                                                                                                                                                                            | Status  |
+| ---------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 2026-02-24 | Phase 2 | High     | **`lower(bytea)` SQL error on resident search** — `GET /api/v1/residents` throws `ERROR: function lower(bytea) does not exist`. Root cause: Hibernate passes `null` query parameters as `bytea` type, breaking the `LOWER(?)` call. Fix: use explicit `CAST` in JPQL or rewrite as a `@Query` with `COALESCE` and proper typing. | 🔴 Open |

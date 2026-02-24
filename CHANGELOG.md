@@ -9,7 +9,80 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ## [Unreleased]
 
-> Work planned but not yet started (Phases 2–10).
+> Work planned but not yet started (Phases 3–10).
+
+---
+
+## [0.3.1] — Documentation — 2026-02-24
+
+### Added
+
+#### Frontend
+
+**Documentation**
+
+- `frontend/docs/system-design-and-architecture.md` — created as the single authoritative reference for frontend architecture decisions so that any developer can understand how the application is structured, why specific patterns were chosen, and how to extend it consistently. Key decisions documented:
+  - **Why no global state library (Redux/Zustand):** TanStack React Query owns all server state (API data, caching, loading/error states), and `AuthContext` handles the only true global client state (identity + role). There is no shared mutable client state that would warrant a general-purpose store — adding one would be complexity without benefit.
+  - **Why tokens are mirrored to a cookie:** Next.js Edge Middleware runs on the server before the React tree renders and therefore cannot read `localStorage`. The `AuthContext` mirrors the access token to an `accessToken` cookie on login and hydration so the middleware can enforce role-based route guards without a round-trip to the backend.
+  - **Why the 401→refresh→retry interceptor uses a subscriber queue:** When multiple concurrent requests all receive a 401 simultaneously (e.g., on first page load with an expired token), a naive implementation would fire N simultaneous refresh calls. The queue holds all failing requests, performs exactly one refresh, then replays them all with the new token.
+  - **Routing model:** Route groups (`/portal/*` for residents, `/backoffice/*` for staff) are enforced at the Edge Middleware layer, not just the component layer, so an unauthorized user is redirected before any page bundle is loaded.
+  - Layer diagram, annotated directory structure, query key conventions, form validation pattern, and full development guidelines for adding new features.
+
+---
+
+## [0.3.0] — Phase 2: Residents Module — 2026-02-24
+
+### Added
+
+#### Backend
+
+**Entity**
+
+- `Resident.java` — the core record in the resident registry. The `user_id` foreign key to `users` is intentionally nullable: walk-in residents registered by a clerk have no portal account, so there is no user to link. When a resident self-registers via the portal, `AuthService` atomically creates both the `User` and `Resident` rows and links them — this linkage is what drives the pending-review workflow and, after approval, grants the resident access to submit clearance requests.
+
+**Repository**
+
+- `ResidentRepository.java` — supplies the paginated, case-insensitive name search used by the clerk's resident directory. The query matches against both `lastName firstName` and `firstName lastName` orderings so that clerks find the same resident regardless of how they type the name. ⚠️ **Known bug:** when `q` is `null`, Hibernate infers the parameter type as `bytea` instead of `text`, causing `ERROR: function lower(bytea) does not exist` — the `GET /api/v1/residents` endpoint is currently broken for unauthenticated/empty searches. Fix: replace the `? is null` guard with an explicit `CAST(:q AS text) IS NULL` or rewrite using a `Specification`.
+
+**Service**
+
+- `ResidentService.java` — implements the two main resident workflows:
+  1. **Staff-managed CRUD** (`create`, `update`, `getById`, `search`) — clerks add and maintain resident records independently of whether those residents have portal accounts.
+  2. **Portal activation workflow** (`findPendingUsers`, `activateUser`, `rejectUser`) — when a resident self-registers, their account starts in `PENDING_VERIFICATION`. A clerk reviews the pending list, verifies identity, then either activates the account (allowing the resident to log in and submit requests) or rejects it (blocking access). Activation and rejection are separate from the resident's own `ACTIVE`/`INACTIVE` status.
+  - `createFromRegistration(RegisterRequest, User)` is called inside `AuthService.register()`'s `@Transactional` boundary, so a failed resident creation rolls back the user creation too — there are no orphaned `User` rows without a matching `Resident`.
+
+- `ResidentMapper.java` — converts between the `Resident` JPA entity and the `ResidentDTO` returned by the API. The `hasPortalAccount` boolean is computed at mapping time (`resident.getUserId() != null`) rather than stored as a column, keeping the database normalized and eliminating any risk of the flag going out of sync with the actual FK.
+
+**Controller**
+
+- `ResidentController.java` (`/api/v1/residents`) — exposes the resident registry to both staff-facing and system callers:
+  - `POST /` — lets a clerk register a resident who presents in person, before or without creating a portal account. Protected to `ADMIN` and `CLERK` roles.
+  - `GET /` — powers the resident directory search. Accepts `q` (name/address free-text) and `purok` (subdivision filter) query params with pagination.
+  - `GET /{id}` — fetches a single resident's full profile, used by the detail and edit pages.
+  - `PATCH /{id}` — partially updates resident details. Only fields present in the request body are applied; absent fields are left unchanged.
+  - `GET /pending-users` — returns the clerk's review queue: all residents who completed self-registration and are awaiting identity verification.
+  - `PATCH /{id}/activate-user` — approves a pending portal account, allowing the resident to log in.
+  - `PATCH /{id}/reject-user` — denies a pending portal account, leaving the resident record intact but preventing login.
+
+**DTOs**
+
+- `ResidentDTO.java` — the API response shape for a resident. Includes the computed `hasPortalAccount` flag so the frontend can conditionally render portal-account actions without a secondary request.
+- `CreateResidentRequest.java` — the write payload for walk-in registration. Contains only the fields a clerk supplies; `userId` and status are set by the service, not the caller, preventing mass-assignment of sensitive fields.
+- `UpdateResidentRequest.java` — all fields are optional so callers can send only the changed fields. The service applies a null-check before overwriting each field, ensuring a partial request cannot accidentally blank out fields the caller omitted.
+
+#### Frontend
+
+- `src/app/backoffice/residents/page.tsx` — the staff resident directory. The search input is debounced at 300 ms so the API is not called on every keystroke; the query fires only after the user pauses. React Query caches the result so navigating away and back within the 30-second stale window reuses the cached page without a network call.
+
+- `src/app/backoffice/residents/new/page.tsx` — walk-in resident creation form. Zod validates required fields and format rules before submission so common mistakes (missing birth date, invalid contact number format) surface immediately without a round-trip. When the server returns field-level errors from `ErrorResponse.details`, they are mapped back to the specific form fields via `form.setError` rather than shown as a generic banner.
+
+- `src/app/backoffice/residents/[id]/page.tsx` — dual-purpose resident page. For all residents it provides a read/edit view of the profile. For residents whose account is `PENDING_VERIFICATION`, it additionally renders **Activate** and **Reject** action buttons that are hidden for other account states. Button visibility is derived from the `hasPortalAccount` flag and the current clerk's role — approvers cannot edit profiles, only approve or reject.
+
+- `src/components/backoffice/ResidentTable.tsx` — pure presentational table that receives resident data via props. Names are formatted as `Last, First MI.` for scannability in a list. Status and portal account state use color-coded inline badges. The component handles loading (spinner) and empty (explanatory message) states so the parent page does not need conditional rendering logic around it.
+
+- `src/hooks/useResidents.ts` — the data-fetching layer for the residents domain. Uses a hierarchical query key factory (`residentKeys.all → lists() → list(params) → detail(id) → pending()`) so mutations can invalidate exactly the right cache entries. For example, activating a resident invalidates both the detail query and the pending-users list without clearing unrelated resident list queries that are still valid.
+
+- `src/types/resident.ts` — TypeScript interfaces that serve as the single source of type truth for the resident domain. `CreateResidentPayload` and `UpdateResidentPayload` are intentionally separate from the `Resident` read type: write payloads omit `id`, `hasPortalAccount`, `createdAt`, and `updatedAt` so it is impossible at the type level to accidentally send read-only fields in a mutation.
 
 ---
 
@@ -165,7 +238,9 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ---
 
-[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/your-org/barangay-clearance/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/your-org/barangay-clearance/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/your-org/barangay-clearance/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/your-org/barangay-clearance/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/your-org/barangay-clearance/releases/tag/v0.1.0
