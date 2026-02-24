@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
 **Last Updated:** 2026-02-24
-**Current Phase:** Not Started
-**Overall Progress:** 0 / 11 phases complete
+**Current Phase:** Phase 1 — Identity Module
+**Overall Progress:** 1 / 11 phases complete
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Phase | Name | Status | Week | Notes |
 |---|---|---|---|---|
-| [Phase 0](phase-00-scaffolding.md) | Scaffolding & Infrastructure | 🔴 Not Started | 1 | Foundation — must complete first |
+| [Phase 0](phase-00-scaffolding.md) | Scaffolding & Infrastructure | 🟢 Complete | 1 | Foundation — must complete first |
 | [Phase 1](phase-01-auth.md) | Identity Module: Auth & JWT | 🔴 Not Started | 2 | Blocks all other phases |
 | [Phase 2](phase-02-residents.md) | Residents Module | 🔴 Not Started | 2–3 | Blocks Phase 3 |
 | [Phase 3](phase-03-clearance.md) | Clearance Module | 🔴 Not Started | 3–4 | Core business logic |
@@ -34,7 +34,7 @@
 
 > Update this section when starting a new phase.
 
-**No active phase.** Begin with Phase 0 — Project Scaffolding & Infrastructure.
+**Active phase:** Phase 1 — Identity Module: Auth & JWT
 
 ---
 
@@ -55,25 +55,25 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 ## Phase Details
 
 ### Phase 0 — Scaffolding & Infrastructure
-**Status:** 🔴 Not Started
+**Status:** 🟢 Complete
 **Blocking:** All other phases
 
 **Checklist:**
-- [ ] `backend/pom.xml` with all dependencies
-- [ ] Spring Boot `BarangayClearanceApplication.java`
-- [ ] `application.yml` + profile variants (local, prod, test)
-- [ ] Flyway V1: `V1__initial_schema.sql` (all 9 tables + indexes)
-- [ ] Flyway V2: `V2__seed_settings.sql`
-- [ ] Flyway V3: `V3__seed_admin.sql` (BCrypt hash generated)
-- [ ] `ErrorResponse.java`, `AppException.java`, `GlobalExceptionHandler.java`
-- [ ] `PageResponse<T>` generic wrapper
-- [ ] `docker-compose.dev.yml` (PostgreSQL only)
-- [ ] `docker-compose.yml` (full production stack)
-- [ ] `nginx/nginx.conf`
-- [ ] `.env.example`
-- [ ] Next.js project initialized (`npx create-next-app@14`)
-- [ ] `frontend/src/lib/api.ts` (Axios skeleton)
-- [ ] `frontend/src/types/` (empty domain type files)
+- [x] `backend/pom.xml` with all dependencies
+- [x] Spring Boot `BarangayClearanceApplication.java`
+- [x] `application.yml` + profile variants (local, prod, test)
+- [x] Flyway V1: `V1__initial_schema.sql` (all 9 tables + indexes)
+- [x] Flyway V2: `V2__seed_settings.sql`
+- [x] Flyway V3: `V3__seed_admin.sql` (BCrypt hash generated)
+- [x] `ErrorResponse.java`, `AppException.java`, `GlobalExceptionHandler.java`
+- [x] `PageResponse<T>` generic wrapper
+- [x] `docker-compose.dev.yml` (PostgreSQL only)
+- [x] `docker-compose.yml` (full production stack)
+- [x] `nginx/nginx.conf`
+- [x] `.env.example`
+- [x] Next.js project initialized (`npx create-next-app@14`)
+- [x] `frontend/src/lib/api.ts` (Axios skeleton)
+- [x] `frontend/src/types/` (empty domain type files)
 
 ---
 
@@ -262,6 +262,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 | Date | Phase | Action | Notes |
 |---|---|---|---|
 | 2026-02-24 | — | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md |
+| 2026-02-24 | Phase 0 | Completed | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose |
 
 ---
 

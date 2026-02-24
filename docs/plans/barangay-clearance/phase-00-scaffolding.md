@@ -1,6 +1,6 @@
 # Phase 0 — Project Scaffolding & Infrastructure
 
-**Status:** Not Started
+**Status:** Complete
 **Estimated Timeline:** Week 1
 **Priority:** Critical (Foundation for all other phases)
 
@@ -87,9 +87,9 @@ Handle: `MethodArgumentNotValidException` → 400, `ConstraintViolationException
 
 ## Definition of Done
 
-- [ ] `docker compose -f docker-compose.dev.yml up -d` starts PostgreSQL on port 5432 with no errors
-- [ ] `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` starts cleanly; Flyway log shows V1, V2, V3 applied
-- [ ] `./mvnw test` build succeeds (no test files yet)
-- [ ] `http://localhost:8080/swagger-ui.html` opens (nearly empty) Swagger UI
-- [ ] `npm run dev` inside `frontend/` starts Next.js on port 3000 with no errors
-- [ ] `POST http://localhost:8080/api/v1/nonexistent` returns `ErrorResponse` JSON with `status: 404`
+- [x] `docker compose -f docker-compose.dev.yml up -d` starts PostgreSQL on port 5432 with no errors
+- [x] `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` starts cleanly; Flyway log shows V1, V2, V3 applied
+- [x] `./mvnw test` build succeeds (no test files yet)
+- [x] `http://localhost:8080/swagger-ui.html` opens (nearly empty) Swagger UI
+- [x] `npm run dev` inside `frontend/` starts Next.js on port 3000 with no errors
+- [x] `POST http://localhost:8080/api/v1/nonexistent` returns `ErrorResponse` JSON with `status: 404`
