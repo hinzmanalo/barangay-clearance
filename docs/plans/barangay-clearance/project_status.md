@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
 **Last Updated:** 2026-02-24
-**Current Phase:** Phase 2 — Residents Module
-**Overall Progress:** 2 / 11 phases complete
+**Current Phase:** Phase 3 — Clearance Module
+**Overall Progress:** 3 / 11 phases complete
 
 ---
 
@@ -12,7 +12,7 @@
 | -------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
 | [Phase 0](phase-00-scaffolding.md)     | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
 | [Phase 1](phase-01-auth.md)            | Identity Module: Auth & JWT  | � Complete     | 2    | Blocks all other phases          |
-| [Phase 2](phase-02-residents.md)       | Residents Module             | 🔴 Not Started | 2–3  | Blocks Phase 3                   |
+| [Phase 2](phase-02-residents.md)       | Residents Module             | � Complete     | 2–3  | Blocks Phase 3                   |
 | [Phase 3](phase-03-clearance.md)       | Clearance Module             | 🔴 Not Started | 3–4  | Core business logic              |
 | [Phase 4](phase-04-payments.md)        | Payments Module              | 🔴 Not Started | 4    | Parallel with Phase 5 & 6        |
 | [Phase 5](phase-05-pdf.md)             | PDF Generation               | 🔴 Not Started | 5    | Parallel with Phase 4 & 6        |
@@ -35,7 +35,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phase 2 — Residents Module
+**Active phase:** Phase 3 — Clearance Module
 
 ---
 
@@ -107,19 +107,19 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 2 — Residents Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Blocking:** Phase 3
 
 **Checklist:**
 
-- [ ] `Resident.java` entity (optional `user_id` FK)
-- [ ] `ResidentRepository.java` with JPQL search
-- [ ] `ResidentService.java` (CRUD + activation workflow)
-- [ ] `ResidentMapper.java` (MapStruct, `hasPortalAccount` computed)
-- [ ] `ResidentController.java` (all `/api/v1/residents/**` endpoints)
-- [ ] Frontend: residents list page (debounced search)
-- [ ] Frontend: resident new/detail pages
-- [ ] Frontend: `ResidentTable.tsx` component
+- [x] `Resident.java` entity (optional `user_id` FK)
+- [x] `ResidentRepository.java` with JPQL search
+- [x] `ResidentService.java` (CRUD + activation workflow)
+- [x] `ResidentMapper.java` (MapStruct, `hasPortalAccount` computed)
+- [x] `ResidentController.java` (all `/api/v1/residents/**` endpoints)
+- [x] Frontend: residents list page (debounced search)
+- [x] Frontend: resident new/detail pages
+- [x] Frontend: `ResidentTable.tsx` component
 
 ---
 

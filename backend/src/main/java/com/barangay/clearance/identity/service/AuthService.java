@@ -5,6 +5,7 @@ import com.barangay.clearance.identity.entity.RefreshToken;
 import com.barangay.clearance.identity.entity.User;
 import com.barangay.clearance.identity.repository.RefreshTokenRepository;
 import com.barangay.clearance.identity.repository.UserRepository;
+import com.barangay.clearance.residents.service.ResidentService;
 import com.barangay.clearance.shared.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final ResidentService residentService;
 
     /**
      * Register a new resident. Account starts as PENDING_VERIFICATION.
@@ -46,9 +48,9 @@ public class AuthService {
                 .mustChangePassword(false)
                 .build();
 
-        userRepository.save(user);
-        // TODO Phase 2: create linked Resident profile via ResidentService
-        log.info("Resident registered: {}", user.getEmail());
+        User savedUser = userRepository.save(user);
+        residentService.createFromRegistration(request, savedUser);
+        log.info("Resident registered: {}", savedUser.getEmail());
     }
 
     /**

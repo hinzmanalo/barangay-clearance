@@ -1,4 +1,7 @@
-// Resident types — populated in Phase 2
+// Resident types
+
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
+export type ResidentStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface Resident {
   id: string;
@@ -7,12 +10,36 @@ export interface Resident {
   middleName?: string;
   lastName: string;
   birthDate: string;
-  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  gender: Gender;
   address: string;
   contactNumber?: string;
   email?: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: ResidentStatus;
   hasPortalAccount: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateResidentPayload {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  birthDate: string;
+  gender: Gender;
+  address: string;
+  contactNumber?: string;
+  email?: string;
+}
+
+export interface UpdateResidentPayload {
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  birthDate?: string;
+  gender?: Gender;
+  address?: string;
+  contactNumber?: string;
+  email?: string;
+  status?: ResidentStatus;
+  userId?: string;
 }

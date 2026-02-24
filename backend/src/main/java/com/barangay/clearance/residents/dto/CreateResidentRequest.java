@@ -1,4 +1,4 @@
-package com.barangay.clearance.identity.dto;
+package com.barangay.clearance.residents.dto;
 
 import com.barangay.clearance.residents.entity.Resident;
 import jakarta.validation.constraints.*;
@@ -7,15 +7,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class RegisterRequest {
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    private String email;
-
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    private String password;
+public class CreateResidentRequest {
 
     @NotBlank(message = "First name is required")
     @Size(max = 100)
@@ -40,4 +32,8 @@ public class RegisterRequest {
 
     @Size(max = 20)
     private String contactNumber;
+
+    @Email(message = "Invalid email format")
+    @Size(max = 255)
+    private String email;
 }

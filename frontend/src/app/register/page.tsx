@@ -15,7 +15,12 @@ const registerSchema = z
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
     firstName: z.string().min(1, 'First name is required').max(100),
+    middleName: z.string().max(100).optional(),
     lastName: z.string().min(1, 'Last name is required').max(100),
+    birthDate: z.string().min(1, 'Birth date is required'),
+    gender: z.enum(['MALE', 'FEMALE', 'OTHER'], { required_error: 'Gender is required' }),
+    address: z.string().min(1, 'Address is required'),
+    contactNumber: z.string().max(20).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -44,7 +49,12 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         firstName: data.firstName,
+        middleName: data.middleName || undefined,
         lastName: data.lastName,
+        birthDate: data.birthDate,
+        gender: data.gender,
+        address: data.address,
+        contactNumber: data.contactNumber || undefined,
       });
       setSuccess(true);
     } catch (err) {
@@ -90,7 +100,7 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
+                First Name *
               </label>
               <input
                 id="firstName"
@@ -104,7 +114,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
+                Last Name *
               </label>
               <input
                 id="lastName"
@@ -119,8 +129,82 @@ export default function RegisterPage() {
           </div>
 
           <div>
+            <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
+              Middle Name
+            </label>
+            <input
+              id="middleName"
+              type="text"
+              {...register('middleName')}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Birth Date *
+              </label>
+              <input
+                id="birthDate"
+                type="date"
+                {...register('birthDate')}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {errors.birthDate && (
+                <p className="mt-1 text-xs text-red-600">{errors.birthDate.message}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                Gender *
+              </label>
+              <select
+                id="gender"
+                {...register('gender')}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select gender</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+              {errors.gender && (
+                <p className="mt-1 text-xs text-red-600">{errors.gender.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+              Address (include Purok/Zone) *
+            </label>
+            <textarea
+              id="address"
+              rows={2}
+              {...register('address')}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.address && (
+              <p className="mt-1 text-xs text-red-600">{errors.address.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700 mb-1">
+              Contact Number
+            </label>
+            <input
+              id="contactNumber"
+              type="tel"
+              {...register('contactNumber')}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              Email *
             </label>
             <input
               id="email"
@@ -136,7 +220,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              Password *
             </label>
             <input
               id="password"
@@ -152,7 +236,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
+              Confirm Password *
             </label>
             <input
               id="confirmPassword"

@@ -104,6 +104,14 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Jakarta Data API — required to resolve Hibernate-generated static metamodel classes -->
+        <dependency>
+            <groupId>jakarta.data</groupId>
+            <artifactId>jakarta.data-api</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- SpringDoc OpenAPI / Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>

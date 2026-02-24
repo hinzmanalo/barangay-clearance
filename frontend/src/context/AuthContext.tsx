@@ -46,6 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (token) {
       const payload = decodeToken(token);
       if (payload && payload.exp * 1000 > Date.now()) {
+        // Keep cookie in sync so Next.js middleware can read it
+        document.cookie = `accessToken=${token}; path=/; SameSite=Lax; max-age=${payload.exp - Math.floor(Date.now() / 1000)}`;
         setState({
           userId: payload.sub,
           email: payload.email,
@@ -56,9 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         return;
       }
-      // Token expired — clear storage
+      // Token expired — clear storage and cookie
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      document.cookie = 'accessToken=; path=/; max-age=0';
     }
     setState((prev) => ({ ...prev, isLoading: false }));
   }, []);
@@ -73,6 +76,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const payload = decodeToken(accessToken);
+
+    // Mirror to cookie so Next.js middleware can read it server-side
+    if (payload) {
+      document.cookie = `accessToken=${accessToken}; path=/; SameSite=Lax; max-age=${payload.exp - Math.floor(Date.now() / 1000)}`;
+    }
     if (!payload) throw new Error('Invalid token received');
 
     setState({
@@ -102,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearAuth = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    document.cookie = 'accessToken=; path=/; max-age=0';
     setState({
       userId: null,
       email: null,
