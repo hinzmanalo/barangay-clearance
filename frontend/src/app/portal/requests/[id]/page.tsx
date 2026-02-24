@@ -135,7 +135,7 @@ export default function PortalRequestDetailPage() {
             <span className="font-mono text-sm text-gray-700">#{cr.clearanceNumber}</span>
           )}
         </div>
-        <StatusTimeline currentStatus={cr.status} reviewedAt={cr.reviewedAt} issuedAt={cr.issuedAt} />
+        <StatusTimeline currentStatus={cr.status} paymentStatus={cr.paymentStatus} reviewedAt={cr.reviewedAt} issuedAt={cr.issuedAt} />
       </div>
 
       {/* Details */}
