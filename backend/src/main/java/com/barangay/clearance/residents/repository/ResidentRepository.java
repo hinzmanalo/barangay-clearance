@@ -14,25 +14,25 @@ import java.util.UUID;
 @Repository
 public interface ResidentRepository extends JpaRepository<Resident, UUID> {
 
-    /**
-     * Full-text search matching on lower(last_name || ' ' || first_name || ' ' ||
-     * first_name || ' ' || last_name)
-     * to exploit the idx_residents_name functional index.
-     * Also filters by purok_zone (address partial match) when provided.
-     */
-    @Query("""
-            SELECT r FROM Resident r
-            WHERE (:q = '' OR
-                   LOWER(CONCAT(r.lastName, ' ', r.firstName)) LIKE LOWER(CONCAT('%', :q, '%')) OR
-                   LOWER(CONCAT(r.firstName, ' ', r.lastName)) LIKE LOWER(CONCAT('%', :q, '%')))
-              AND (:purok = '' OR LOWER(r.address) LIKE LOWER(CONCAT('%', :purok, '%')))
-            """)
-    Page<Resident> search(
-            @Param("q") String q,
-            @Param("purok") String purok,
-            Pageable pageable);
+        /**
+         * Full-text search matching on lower(last_name || ' ' || first_name || ' ' ||
+         * first_name || ' ' || last_name)
+         * to exploit the idx_residents_name functional index.
+         * Also filters by purok_zone (address partial match) when provided.
+         */
+        @Query("""
+                        SELECT r FROM Resident r
+                        WHERE (:q = '' OR
+                               LOWER(CONCAT(r.lastName, ' ', r.firstName)) LIKE LOWER(CONCAT('%', :q, '%')) OR
+                               LOWER(CONCAT(r.firstName, ' ', r.lastName)) LIKE LOWER(CONCAT('%', :q, '%')))
+                          AND (:purok = '' OR LOWER(r.address) LIKE LOWER(CONCAT('%', :purok, '%')))
+                        """)
+        Page<Resident> search(
+                        @Param("q") String q,
+                        @Param("purok") String purok,
+                        Pageable pageable);
 
-    Optional<Resident> findByUserId(UUID userId);
+        Optional<Resident> findByUserId(UUID userId);
 
-    boolean existsByUserId(UUID userId);
+        boolean existsByUserId(UUID userId);
 }
