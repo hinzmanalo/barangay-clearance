@@ -9,6 +9,7 @@ import type {
   CreateClearancePayload,
   RejectPayload,
 } from '@/types/clearance';
+import type { PaymentDTO } from '@/types/payment';
 
 // ── Query keys ─────────────────────────────────────────────────────────────
 export const clearanceKeys = {
@@ -211,5 +212,62 @@ export function useResubmitClearance() {
       qc.invalidateQueries({ queryKey: clearanceKeys.myDetail(data.id) });
       qc.invalidateQueries({ queryKey: ['my-clearances'] });
     },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Payment hooks
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Resident pays for their own clearance (portal).
+ * Generates a fresh UUID v4 idempotency key per invocation.
+ */
+export function usePayClearance() {
+  const qc = useQueryClient();
+  return useMutation<PaymentDTO, Error, string>({
+    mutationFn: async (clearanceId) => {
+      const idempotencyKey = crypto.randomUUID();
+      const { data } = await api.post(`/api/v1/me/clearances/${clearanceId}/pay`, null, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+      });
+      return data;
+    },
+    onSuccess: (_data, clearanceId) => {
+      qc.invalidateQueries({ queryKey: clearanceKeys.myDetail(clearanceId) });
+      qc.invalidateQueries({ queryKey: ['my-clearances'] });
+    },
+  });
+}
+
+/**
+ * Clerk marks a clearance as paid (cash collection).
+ */
+export function useMarkClearancePaid() {
+  const qc = useQueryClient();
+  return useMutation<PaymentDTO, Error, string>({
+    mutationFn: async (clearanceId) => {
+      const { data } = await api.post(`/api/v1/clearances/${clearanceId}/mark-paid`);
+      return data;
+    },
+    onSuccess: (_data, clearanceId) => {
+      qc.invalidateQueries({ queryKey: clearanceKeys.detail(clearanceId) });
+      qc.invalidateQueries({ queryKey: clearanceKeys.lists() });
+      qc.invalidateQueries({ queryKey: clearanceKeys.summary() });
+    },
+  });
+}
+
+/**
+ * Get all payments associated with a clearance (backoffice).
+ */
+export function useClearancePayments(clearanceId: string | undefined) {
+  return useQuery<PaymentDTO[]>({
+    queryKey: ['clearance-payments', clearanceId],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/v1/clearances/${clearanceId}/payments`);
+      return data;
+    },
+    enabled: !!clearanceId,
   });
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ClearanceRequest, ClearanceStatus } from '@/types/clearance';
-import { useApproveClearance, useRejectClearance, useReleaseClearance } from '@/hooks/useClearances';
+import { useApproveClearance, useRejectClearance, useReleaseClearance, useMarkClearancePaid } from '@/hooks/useClearances';
 import { AxiosError } from 'axios';
 
 interface ActionButtonsProps {
@@ -22,6 +22,7 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
   const approveMutation = useApproveClearance();
   const rejectMutation = useRejectClearance();
   const releaseMutation = useReleaseClearance();
+  const markPaidMutation = useMarkClearancePaid();
 
   const handleApprove = async () => {
     setError(null);
@@ -62,16 +63,31 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
     }
   };
 
+  const handleMarkPaid = async () => {
+    setError(null);
+    try {
+      await markPaidMutation.mutateAsync(clearance.id);
+      // Re-fetch is handled by cache invalidation in the hook;
+      // trigger an optional success callback if the parent wants to refresh
+      onSuccess?.(clearance);
+    } catch (err) {
+      const e = err as AxiosError<{ message: string }>;
+      setError(e.response?.data?.message ?? 'Failed to mark as paid.');
+    }
+  };
+
   const { status, paymentStatus } = clearance;
   const canApprove = status === 'FOR_APPROVAL';
   const canReject = status === 'FOR_APPROVAL';
+  const canMarkPaid = status === 'APPROVED' && paymentStatus === 'UNPAID';
   const canRelease = status === 'APPROVED' && paymentStatus === 'PAID';
-  const hasActions = canApprove || canReject || canRelease;
+  const hasActions = canApprove || canReject || canMarkPaid || canRelease;
 
   if (!hasActions) return null;
 
   const isPending =
-    approveMutation.isPending || rejectMutation.isPending || releaseMutation.isPending;
+    approveMutation.isPending || rejectMutation.isPending ||
+    releaseMutation.isPending || markPaidMutation.isPending;
 
   return (
     <div className="space-y-3">
@@ -109,6 +125,16 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {releaseMutation.isPending ? 'Releasing…' : 'Release'}
+          </button>
+        )}
+
+        {canMarkPaid && (
+          <button
+            onClick={handleMarkPaid}
+            disabled={isPending}
+            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {markPaidMutation.isPending ? 'Recording…' : 'Mark as Paid (Cash)'}
           </button>
         )}
       </div>

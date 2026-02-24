@@ -41,6 +41,11 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: method
 
+payment:
+  provider: stub
+  stub:
+    always-success: true
+
 logging:
   level:
     root: INFO

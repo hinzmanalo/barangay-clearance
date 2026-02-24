@@ -1,26 +1,27 @@
 # Barangay Clearance System — Project Status
 
 **Last Updated:** 2026-02-25
-**Current Phase:** Phase 4 / 5 / 6 — Payments, PDF, Settings (parallel)
-**Overall Progress:** 4 / 11 phases complete
+**Current Phase:** Phase 5 / 6 — PDF Generation, Settings (parallel)
+**Overall Progress:** 5 / 12 phases complete
 
 ---
 
 ## Phase Overview
 
-| Phase                                  | Name                         | Status         | Week | Notes                            |
-| -------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
-| [Phase 0](phase-00-scaffolding.md)     | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
-| [Phase 1](phase-01-auth.md)            | Identity Module: Auth & JWT  | � Complete     | 2    | Blocks all other phases          |
-| [Phase 2](phase-02-residents.md)       | Residents Module             | � Complete     | 2–3  | Blocks Phase 3                   |
-| [Phase 3](phase-03-clearance.md)       | Clearance Module             | � Complete     | 3–4  | Core business logic              |
-| [Phase 4](phase-04-payments.md)        | Payments Module              | 🔴 Not Started | 4    | Parallel with Phase 5 & 6        |
-| [Phase 5](phase-05-pdf.md)             | PDF Generation               | 🔴 Not Started | 5    | Parallel with Phase 4 & 6        |
-| [Phase 6](phase-06-settings.md)        | Settings Module              | 🔴 Not Started | 5    | Parallel with Phase 4 & 5        |
-| [Phase 7](phase-07-reports.md)         | Reports Module               | 🔴 Not Started | 6    | Parallel with Phase 8            |
-| [Phase 8](phase-08-frontend-polish.md) | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
-| [Phase 9](phase-09-testing.md)         | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
-| [Phase 10](phase-10-deployment.md)     | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
+| Phase                                   | Name                         | Status         | Week | Notes                            |
+| --------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
+| [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
+| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | � Complete     | 2    | Blocks all other phases          |
+| [Phase 2](phase-02-residents.md)        | Residents Module             | � Complete     | 2–3  | Blocks Phase 3                   |
+| [Phase 3](phase-03-clearance.md)        | Clearance Module             | � Complete     | 3–4  | Core business logic              |
+| [Phase 4](phase-04-payments.md)         | Payments Module              | � Complete     | 4    | Parallel with Phase 5 & 6        |
+| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🔴 Not Started | 5    | Parallel with Phase 4 & 6        |
+| [Phase 6](phase-06-settings.md)         | Settings Module              | 🔴 Not Started | 5    | Parallel with Phase 4 & 5        |
+| [Phase 7](phase-07-reports.md)          | Reports Module               | 🔴 Not Started | 6    | Parallel with Phase 8            |
+| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
+| [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
+| [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
+| [Phase 11](phase-11-user-management.md) | User Management              | 🔴 Not Started | 6–7  | Parallel with Phase 7 & 8        |
 
 **Status Legend:**
 
@@ -35,7 +36,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phases 4, 5, 6 — Payments, PDF Generation, Settings (all can run in parallel)
+**Active phase:** Phases 5, 6 — PDF Generation, Settings (both can run in parallel)
 
 ---
 
@@ -44,12 +45,12 @@
 See [dependency-graph.md](dependency-graph.md) for full details.
 
 **Sequential (critical path):**
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8 in parallel] → Phase 9 → Phase 10
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8/11 in parallel] → Phase 9 → Phase 10
 
 **Parallel opportunities:**
 
 - After Phase 3: Phases 4, 5, and 6 can all run concurrently
-- After Phases 4/5/6: Phases 7 and 8 can run concurrently
+- After Phases 4/5/6: Phases 7, 8, and 11 can run concurrently
 - During Phase 9: Phase 10 infrastructure setup can begin
 
 ---
@@ -152,19 +153,19 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 4 — Payments Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 5, 6
 
 **Checklist:**
 
-- [ ] `Payment.java` entity (with `responseBody` as TEXT/JSONB)
-- [ ] `PaymentGateway.java` interface + `StubPaymentGateway.java`
-- [ ] `PaymentRepository.java` (idempotency lookup query)
-- [ ] `PaymentService.java` (full idempotency logic)
-- [ ] `PaymentMapper.java` (MapStruct)
-- [ ] `PaymentController.java` (initiate + mark-paid endpoints)
-- [ ] Frontend: "Pay Now" button + idempotency key generation
-- [ ] Frontend: "Mark as Paid" button (clerk)
+- [x] `Payment.java` entity (with `responseBody` as TEXT/JSONB)
+- [x] `PaymentGateway.java` interface + `StubPaymentGateway.java`
+- [x] `PaymentRepository.java` (idempotency lookup query)
+- [x] `PaymentService.java` (full idempotency logic)
+- [x] `PaymentMapper.java` (MapStruct)
+- [x] `PaymentController.java` (initiate + mark-paid endpoints)
+- [x] Frontend: "Pay Now" button + idempotency key generation
+- [x] Frontend: "Mark as Paid" button (clerk)
 
 ---
 
@@ -286,18 +287,51 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ---
 
+### Phase 11 — User Management
+
+**Status:** 🔴 Not Started
+**Parallel with:** Phases 7, 8
+
+**Checklist:**
+
+**Backend:**
+
+- [ ] `UpdateStaffRequest.java`, `UpdateRoleRequest.java`, `AdminResetPasswordRequest.java`, `UpdateProfileRequest.java` DTOs
+- [ ] `UserService` — `activate`, `updateRole`, `updateStaff`, `adminResetPassword`, `getCurrentUser`, `updateCurrentUser`
+- [ ] `listStaff` enhanced with `role`, `status`, `search` query params (JPA Specification)
+- [ ] `UserController` — `PUT /{id}/activate`, `PUT /{id}/role`, `PUT /{id}`, `POST /{id}/reset-password`
+- [ ] `MeController` — `GET /api/v1/users/me`, `PUT /api/v1/users/me`
+- [ ] All endpoints documented with `@Operation`, `@ApiResponses`, `@SecurityRequirement`
+- [ ] `adminResetPassword` invalidates all refresh tokens for target user
+- [ ] Role-change guard: cannot change own role
+
+**Frontend:**
+
+- [ ] `types/auth.ts` updated (`StaffUser`, payload types, `UserStatus`)
+- [ ] `hooks/useUsers.ts` (all CRUD + action hooks + `useCurrentUser`)
+- [ ] `components/backoffice/UserTable.tsx`
+- [ ] `components/shared/RoleBadge.tsx`
+- [ ] `/backoffice/admin/users` — list with search, role/status filter, pagination
+- [ ] `/backoffice/admin/users/new` — create staff form (Zod validation)
+- [ ] `/backoffice/admin/users/[id]` — detail/edit + role change + activate/deactivate + reset password modal
+- [ ] `Sidebar.tsx` updated with "Users" link (ADMIN role only)
+- [ ] `npm run build` passes with no type errors
+
+---
+
 ## Progress Log
 
-| Date       | Phase   | Action       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-02-24 | —       | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                                                                                                                                                                                                                                                                                                                         |
-| 2026-02-24 | Phase 0 | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                                                                                                                                                                                                                                                                                                                                    |
-| 2026-02-24 | Phase 1 | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                                                                                                                                                                                                                                                                                                                                    |
-| 2026-02-24 | Docs    | Added        | `backend/docs/Security.md` — full security reference with Mermaid sequence diagram and prose process flow walkthrough for all six authentication flows                                                                                                                                                                                                                                                                                                      |
-| 2026-02-24 | Phase 2 | Completed    | Residents module: `Resident` entity, `ResidentRepository` search, `ResidentService` (CRUD + portal activation workflow), `ResidentMapper` (MapStruct, `hasPortalAccount`), `ResidentController`, frontend list/new/detail pages, `ResidentTable.tsx`, `useResidents.ts` hooks                                                                                                                                                                               |
-| 2026-02-24 | Docs    | Added        | `frontend/docs/system-design-and-architecture.md` — frontend architecture reference: routing, auth flow, API client interceptors, state management rationale, component patterns, type system, key user flows                                                                                                                                                                                                                                               |
-| 2026-02-24 | Phase 3 | Completed    | Clearance module: `ClearanceRequest`/`ClearanceNumberSequence` entities + enums, atomic number sequence (PostgreSQL `ON CONFLICT RETURNING`), full state machine (`submit → FOR_APPROVAL → APPROVED → RELEASED`, rejection/resubmit), backoffice + portal controllers, `ClearanceStatusChangedEvent`, V6 migration, frontend portal/backoffice pages + `StatusTimeline`, `ClearanceTable`, `ActionButtons`, `RequestCard` components, `useClearances` hooks |
-| 2026-02-25 | Shared  | Refactored   | Added `SpecificationBuilder<T>` to `shared/util/` — generic fluent JPA Specification builder; removed duplicated `buildFilter` from `ClearanceService`. Available for `ReportsService` and any future filtered-list service.                                                                                                                                                                                                                                |
+| Date       | Phase    | Action       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-02-24 | —        | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-02-24 | Phase 0  | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-02-24 | Phase 1  | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                                                                                                                                                                                                                                                                                                                                    |
+| 2026-02-24 | Docs     | Added        | `backend/docs/Security.md` — full security reference with Mermaid sequence diagram and prose process flow walkthrough for all six authentication flows                                                                                                                                                                                                                                                                                                      |
+| 2026-02-24 | Phase 2  | Completed    | Residents module: `Resident` entity, `ResidentRepository` search, `ResidentService` (CRUD + portal activation workflow), `ResidentMapper` (MapStruct, `hasPortalAccount`), `ResidentController`, frontend list/new/detail pages, `ResidentTable.tsx`, `useResidents.ts` hooks                                                                                                                                                                               |
+| 2026-02-24 | Docs     | Added        | `frontend/docs/system-design-and-architecture.md` — frontend architecture reference: routing, auth flow, API client interceptors, state management rationale, component patterns, type system, key user flows                                                                                                                                                                                                                                               |
+| 2026-02-24 | Phase 3  | Completed    | Clearance module: `ClearanceRequest`/`ClearanceNumberSequence` entities + enums, atomic number sequence (PostgreSQL `ON CONFLICT RETURNING`), full state machine (`submit → FOR_APPROVAL → APPROVED → RELEASED`, rejection/resubmit), backoffice + portal controllers, `ClearanceStatusChangedEvent`, V6 migration, frontend portal/backoffice pages + `StatusTimeline`, `ClearanceTable`, `ActionButtons`, `RequestCard` components, `useClearances` hooks |
+| 2026-02-25 | Shared   | Refactored   | Added `SpecificationBuilder<T>` to `shared/util/` — generic fluent JPA Specification builder; removed duplicated `buildFilter` from `ClearanceService`. Available for `ReportsService` and any future filtered-list service.                                                                                                                                                                                                                                |
+| 2026-02-25 | Phase 11 | Planned      | Created `phase-11-user-management.md` — covers backend API gaps (activate, role update, profile update, admin password reset, search/filter, `/me` endpoints) and full frontend backoffice UI (user list, create, detail/edit pages, `UserTable`, `RoleBadge`, sidebar link).                                                                                                                                                                               |
 
 ---
 

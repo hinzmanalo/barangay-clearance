@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import StatusTimeline from '@/components/portal/StatusTimeline';
-import { useMyClearance, useResubmitClearance } from '@/hooks/useClearances';
+import { useMyClearance, useResubmitClearance, usePayClearance } from '@/hooks/useClearances';
 import type { Purpose, Urgency } from '@/types/clearance';
 import { STATUS_LABELS, PURPOSE_LABELS, PAYMENT_STATUS_LABELS } from '@/types/clearance';
 import { AxiosError } from 'axios';
@@ -42,8 +42,10 @@ export default function PortalRequestDetailPage() {
   const id = params.id as string;
   const { data: cr, isLoading, refetch } = useMyClearance(id);
   const resubmitMutation = useResubmitClearance();
+  const payMutation = usePayClearance();
   const [showResubmit, setShowResubmit] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const {
     register,
@@ -76,6 +78,19 @@ export default function PortalRequestDetailPage() {
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
       setServerError(axiosErr.response?.data?.message ?? 'Failed to resubmit.');
+    }
+  };
+
+  const handlePay = async () => {
+    setServerError(null);
+    setPaymentSuccess(false);
+    try {
+      await payMutation.mutateAsync(id);
+      setPaymentSuccess(true);
+      refetch();
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ message: string }>;
+      setServerError(axiosErr.response?.data?.message ?? 'Payment failed. Please try again.');
     }
   };
 
@@ -173,6 +188,37 @@ export default function PortalRequestDetailPage() {
           )}
         </dl>
       </div>
+
+      {/* Payment section — shown when APPROVED and unpaid */}
+      {cr.status === 'APPROVED' && cr.paymentStatus === 'UNPAID' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-3">
+          <h2 className="text-sm font-semibold text-blue-900">Payment Required</h2>
+          <p className="text-sm text-blue-800">
+            Your request has been approved. Please pay the fee of{' '}
+            <span className="font-semibold">₱{Number(cr.feeAmount).toFixed(2)}</span> to proceed.
+          </p>
+
+          {serverError && (
+            <div className="rounded-md bg-red-100 border border-red-300 p-3 text-sm text-red-700">
+              {serverError}
+            </div>
+          )}
+
+          {paymentSuccess ? (
+            <div className="rounded-md bg-green-100 border border-green-300 p-3 text-sm text-green-700 font-medium">
+              Payment successful! Your clearance is now being processed.
+            </div>
+          ) : (
+            <button
+              onClick={handlePay}
+              disabled={payMutation.isPending}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {payMutation.isPending ? 'Processing…' : `Pay ₱${Number(cr.feeAmount).toFixed(2)}`}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Resubmit section for rejected requests */}
       {cr.status === 'REJECTED' && (
