@@ -32,6 +32,7 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration attempt with already-registered email: {}", request.getEmail());
             throw AppException.conflict("Email already registered");
         }
 
@@ -59,18 +60,27 @@ public class AuthService {
                 .orElseThrow(() -> AppException.unauthorized("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            log.warn("Failed login attempt for email: {}", request.getEmail());
             throw AppException.unauthorized("Invalid email or password");
         }
 
         switch (user.getStatus()) {
-            case PENDING_VERIFICATION ->
+            case PENDING_VERIFICATION -> {
+                log.warn("Login denied for {} - account status: PENDING_VERIFICATION", user.getEmail());
                 throw AppException.forbidden("Account pending verification. Please wait for staff approval.");
-            case REJECTED ->
+            }
+            case REJECTED -> {
+                log.warn("Login denied for {} - account status: REJECTED", user.getEmail());
                 throw AppException.forbidden("Account has been rejected.");
-            case DEACTIVATED ->
+            }
+            case DEACTIVATED -> {
+                log.warn("Login denied for {} - account status: DEACTIVATED", user.getEmail());
                 throw AppException.forbidden("Account is deactivated.");
-            case INACTIVE ->
+            }
+            case INACTIVE -> {
+                log.warn("Login denied for {} - account status: INACTIVE", user.getEmail());
                 throw AppException.forbidden("Account is inactive.");
+            }
             default -> {
                 /* ACTIVE — proceed */ }
         }
@@ -121,6 +131,7 @@ public class AuthService {
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> AppException.unauthorized("User not found"));
 
+        log.debug("Access token refreshed for user: {}", user.getId());
         String newAccessToken = jwtService.generateAccessToken(
                 user.getId(), user.getEmail(), user.getRole(), user.isMustChangePassword());
 
@@ -140,6 +151,7 @@ public class AuthService {
         refreshTokenRepository.findByTokenHash(hash).ifPresent(rt -> {
             rt.setRevoked(true);
             refreshTokenRepository.save(rt);
+            log.info("Refresh token revoked for user: {}", rt.getUserId());
         });
     }
 
@@ -152,12 +164,14 @@ public class AuthService {
                 .orElseThrow(() -> AppException.notFound("User not found"));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            log.warn("Password change failed for user {}: current password mismatch", userId);
             throw AppException.badRequest("Current password is incorrect");
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         user.setMustChangePassword(false);
         userRepository.save(user);
+        log.info("Password changed successfully for user: {}", userId);
 
         // Revoke all existing refresh tokens and issue new ones
         refreshTokenRepository.deleteByUserId(userId);
