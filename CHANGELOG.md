@@ -9,7 +9,131 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ## [Unreleased]
 
-> Work planned but not yet started (Phases 3–10).
+> Work planned but not yet started (Phases 4–10).
+
+---
+
+## [0.3.3] — Phase 3: Clearance Module — 2026-02-25
+
+### Added
+
+#### Backend
+
+**Entities**
+
+- `ClearanceRequest.java` — the core clearance entity stored in `clearance_requests`. Holds all fields of a request lifecycle: `residentId`, `requestedBy`, `purpose`, `purposeOther` (free-text when purpose is `OTHER`), `urgency`, `feeAmount`, `copies`, `status`, `paymentStatus`, `notes`, `reviewedBy`, `reviewedAt`, `issuedAt`. The `clearanceNumber` is intentionally `null` until the request is released — assigning a number to a request that may still be rejected would waste the sequence slot.
+
+  Enums defined inline:
+  - `ClearanceStatus` — `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED`
+  - `ClearancePaymentStatus` — `UNPAID`, `PAID`, `WAIVED`
+  - `Purpose` — `EMPLOYMENT`, `TRAVEL_ABROAD`, `SCHOLARSHIP`, `LOAN`, `BUSINESS_PERMIT`, `LEGAL`, `CEDULA`, `OTHER`
+  - `Urgency` — `STANDARD`, `RUSH`
+
+- `ClearanceNumberSequence.java` — per-month counter entity (`clearance_number_sequence` table) used by the atomic number generation query.
+
+**Repositories**
+
+- `ClearanceRequestRepository.java` — extends `JpaSpecificationExecutor<ClearanceRequest>` to support the dynamic filter queries in `ClearanceService.list()`. Also provides `findByResidentId`, `findByIdAndResidentId` (ownership-checked single fetch), `countByStatus`, and `countReleasedToday`.
+- `ClearanceNumberSequenceRepository.java` — single native query method `nextSequence(yearMonth)` that executes the atomic `INSERT … ON CONFLICT DO UPDATE RETURNING` which guarantees no duplicate clearance numbers under concurrent load.
+
+**Service**
+
+- `ClearanceService.java` — the state machine enforcer. Two access contexts:
+  - **Portal (RESIDENT):** `submitPortal`, `listForResident`, `getForResident`, `resubmit` — all resolve the resident from the JWT principal, never from a request parameter, preventing horizontal privilege escalation.
+  - **Backoffice (Staff):** `createWalkIn`, `list` (dynamic filter via `SpecificationBuilder`), `getById`, `approve`, `reject`, `release`, `summary`, `markPaid`.
+
+  Key state-machine rules enforced in code:
+  - Every transition is guarded by the `guard()` helper — invalid transitions throw `AppException(400)`.
+  - `release()` requires both `APPROVED` status **and** `PAID` payment status before proceeding.
+  - The clearance number is assigned inside `release()` only, by delegating to `ClearanceNumberService`.
+  - Rejection reason is prepended to the `notes` field as `[REJECTED] <reason>` for audit visibility; the original notes are preserved below.
+
+- `ClearanceNumberService.java` — generates atomic, sequential clearance numbers per calendar month in the format `YYYY-MM-NNNN` (e.g. `2025-02-0001`). Uses `Propagation.REQUIRES_NEW` so the sequence increment is committed in its own transaction — this prevents sequence gaps from being reused if the outer transaction rolls back.
+
+- `ClearanceStatusChangedEvent.java` — Spring `ApplicationEvent` published on every status transition, carrying `clearanceId`, `from`, `to`, and `actorId`. Decouples the state machine from downstream concerns (audit logging, notifications) without direct dependencies.
+
+**Mapper**
+
+- `ClearanceMapper.java` — MapStruct mapper from `ClearanceRequest` entity to `ClearanceRequestDTO`. The `residentName` field is not mapped here (it has no counterpart on the entity); it is injected by `ClearanceService.enrich()` via a cross-module `ResidentRepository` lookup.
+
+**Controllers**
+
+- `ClearanceController.java` (`/api/v1/clearances`) — backoffice endpoints:
+  - `GET /` — paginated list with optional `status`, `paymentStatus`, `from`, `to` filters; default sort by `createdAt` descending. Roles: `CLERK`, `APPROVER`, `ADMIN`.
+  - `POST /` — walk-in request creation by a clerk; `residentId` is required in the body. Roles: `CLERK`, `ADMIN`.
+  - `GET /{id}` — single request fetch, no ownership check. Roles: `CLERK`, `APPROVER`, `ADMIN`.
+  - `POST /{id}/approve` — `FOR_APPROVAL → APPROVED`. Roles: `APPROVER`, `ADMIN`.
+  - `POST /{id}/reject` — `FOR_APPROVAL → REJECTED`; reason required in request body. Roles: `APPROVER`, `ADMIN`.
+  - `POST /{id}/release` — `APPROVED + PAID → RELEASED`; assigns clearance number. Roles: `CLERK`, `ADMIN`.
+  - `GET /summary` — dashboard counts (`pendingApproval`, `approvedAwaitingPayment`, `releasedToday`). Roles: `CLERK`, `APPROVER`, `ADMIN`.
+
+- `PortalClearanceController.java` (`/api/v1/me/clearances`) — resident portal endpoints. The entire controller is `@PreAuthorize("hasRole('RESIDENT')")` and all resident identity is resolved from the JWT, never from a request parameter:
+  - `GET /` — resident's own paginated history.
+  - `POST /` — submit a new request; must have `ACTIVE` account status.
+  - `GET /{id}` — resident's own single request; `404` if not owned.
+  - `PUT /{id}` — resubmit a `REJECTED` request (`REJECTED → FOR_APPROVAL`); ownership verified.
+
+**DTOs**
+
+- `ClearanceRequestDTO.java` — response shape including the denormalised `residentName` (`lastName, firstName`) field. This field is not a stored column — it is resolved via `ClearanceService.enrich()` at query time.
+- `CreateClearanceRequest.java` — shared write payload for both portal submission and walk-in creation. Contains `purpose`, `purposeOther`, `urgency`, `copies`, `notes`, and an optional `residentId` (only used for walk-in; portal submissions resolve the resident from the JWT).
+- `RejectRequest.java` — single-field DTO carrying the mandatory rejection reason.
+- `ClearanceSummaryDTO.java` — dashboard summary with `pendingApproval`, `approvedAwaitingPayment`, `releasedToday` counts.
+
+**Database**
+
+- `V6__clearance_extra_columns.sql` — adds `purpose_other VARCHAR(255)` and `copies INTEGER NOT NULL DEFAULT 1` to `clearance_requests`. These columns were added after the initial schema to support multi-purpose categorisation and multi-copy requests.
+
+#### Frontend
+
+- `src/app/portal/requests/` — resident request list and new-request form pages. The new-request form validates `purpose`/`purposeOther` pairing (the `purposeOther` text field is shown and required only when purpose is `OTHER`) using Zod refinements.
+
+- `src/app/portal/dashboard/` — resident portal dashboard showing active/recent requests.
+
+- `src/app/backoffice/clearances/page.tsx` — staff clearance list with filter controls (`status`, `paymentStatus`, date range). Filters are reflected in URL query params so deep-linking and browser back/forward preserve filter state.
+
+- `src/app/backoffice/clearances/new/` — walk-in request creation form; clerk searches for a resident by name and selects one before completing the request details.
+
+- `src/app/backoffice/clearances/[id]/` — clearance detail page showing status timeline and contextual action buttons depending on the request's current state and the clerk's role.
+
+- `src/components/portal/StatusTimeline.tsx` — visual step-by-step timeline component rendering each clearance status (`FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED`) with completed/active/pending states. Adapts layout for the rejection branch.
+
+- `src/components/portal/RequestCard.tsx` — summary card used in the portal dashboard list; shows status badge, purpose, date, and a link to the detail page.
+
+- `src/components/backoffice/ClearanceTable.tsx` — paginated staff table listing clearance requests with inline status and payment badges. Sortable columns; row click navigates to detail.
+
+- `src/components/backoffice/ActionButtons.tsx` — context-aware action button group rendered on the backoffice detail page. Renders approve/reject for `FOR_APPROVAL` requests (APPROVER/ADMIN), release for `APPROVED + PAID` requests (CLERK/ADMIN), and a disabled state for terminal statuses. Buttons are hidden per role using the JWT-decoded role from `useAuth()`.
+
+- `src/hooks/useClearances.ts` — TanStack React Query hooks for both access contexts. Uses a hierarchical key factory (`clearanceKeys.all → lists() → list(params) → detail(id) → summary()` for backoffice; `myList(params)` / `myDetail(id)` for portal) so mutations can invalidate precisely without over-clearing. Exposes: `useClearances`, `useClearance`, `useClearanceSummary`, `useCreateWalkIn`, `useApproveClearance`, `useRejectClearance`, `useReleaseClearance` (backoffice); `useMyNewClearanceRequest`, `useResubmitClearance` (portal).
+
+- `src/types/clearance.ts` — TypeScript interfaces fully populated: `ClearanceRequest`, `ClearanceSummary`, `CreateClearancePayload`, `RejectPayload`; enums `ClearanceStatus`, `ClearancePaymentStatus`, `Purpose`, `Urgency`.
+
+---
+
+## [0.3.2] — Refactoring — 2026-02-25
+
+### Changed
+
+#### Backend
+
+**Shared Utility**
+
+- `shared/util/SpecificationBuilder.java` — new generic fluent builder for JPA `Specification` instances. Eliminates the repeated predicate-list boilerplate that was previously duplicated as a private `buildFilter` method in each service. All filter predicates skip themselves automatically when the supplied value is `null`, so callers never need to guard before adding a filter. Supports: `.equal()`, `.greaterThanOrEqualTo()`, `.lessThanOrEqualTo()`, `.like()` (case-insensitive substring). Designed for use by any service that needs optional-filter queries (Clearance, Reports, etc.).
+
+  Usage pattern:
+
+  ```java
+  var spec = SpecificationBuilder.<ClearanceRequest>of()
+      .equal("status", status)
+      .equal("paymentStatus", paymentStatus)
+      .greaterThanOrEqualTo("createdAt", from)
+      .lessThanOrEqualTo("createdAt", to)
+      .build();
+  ```
+
+  This also sidesteps the Hibernate 6 type-inference bug with nullable enum parameters that breaks JPQL `:param IS NULL OR col = :param` patterns — the same root cause as the known `lower(bytea)` bug in `ResidentRepository`.
+
+- `ClearanceService.java` — removed private `buildFilter` method and its associated `Predicate`, `Specification`, `ArrayList`, `List` imports; the `list()` method now delegates to `SpecificationBuilder` directly.
 
 ---
 
@@ -238,7 +362,9 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ---
 
-[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/your-org/barangay-clearance/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/your-org/barangay-clearance/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/your-org/barangay-clearance/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/your-org/barangay-clearance/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/your-org/barangay-clearance/compare/v0.2.0...v0.2.1
