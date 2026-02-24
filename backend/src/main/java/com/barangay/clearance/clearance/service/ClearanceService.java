@@ -370,7 +370,10 @@ public class ClearanceService {
     @Transactional(readOnly = true)
     public ClearanceSummaryDTO summary() {
         long pendingApproval = clearanceRepo.countByStatus(ClearanceStatus.FOR_APPROVAL);
-        long approvedAwaitingPayment = clearanceRepo.countByStatus(ClearanceStatus.APPROVED);
+        long approved = clearanceRepo.countByStatus(ClearanceStatus.APPROVED);
+        long awaitingPayment = clearanceRepo.countByStatusAndPaymentStatus(
+                ClearanceStatus.APPROVED,
+                ClearancePaymentStatus.UNPAID);
 
         // "Released today" — requests issued on the current UTC day
         Instant startOfDay = LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -379,7 +382,8 @@ public class ClearanceService {
 
         return ClearanceSummaryDTO.builder()
                 .pendingApproval(pendingApproval)
-                .approvedAwaitingPayment(approvedAwaitingPayment)
+                .approved(approved)
+                .awaitingPayment(awaitingPayment)
                 .releasedToday(releasedToday)
                 .build();
     }

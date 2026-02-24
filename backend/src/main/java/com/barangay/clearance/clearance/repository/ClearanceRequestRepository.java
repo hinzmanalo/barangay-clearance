@@ -30,6 +30,11 @@ public interface ClearanceRequestRepository extends JpaRepository<ClearanceReque
     long countByStatus(ClearanceStatus status);
 
     /**
+     * Dashboard summary — count by status and payment status.
+     */
+    long countByStatusAndPaymentStatus(ClearanceStatus status, ClearanceRequest.ClearancePaymentStatus paymentStatus);
+
+    /**
      * Count requests released today (issued_at on current day).
      */
     @Query("""

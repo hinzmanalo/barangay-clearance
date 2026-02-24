@@ -74,6 +74,7 @@ export interface RejectPayload {
 
 export interface ClearanceSummary {
   pendingApproval: number;
-  approvedAwaitingPayment: number;
+  approved: number;
+  awaitingPayment: number;
   releasedToday: number;
 }

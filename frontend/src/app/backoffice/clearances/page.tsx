@@ -37,14 +37,18 @@ export default function ClearancesPage() {
 
       {/* Summary cards */}
       {summary && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg border border-yellow-200 p-4">
             <p className="text-xs text-yellow-600 font-medium uppercase tracking-wide">Pending Approval</p>
             <p className="mt-1 text-3xl font-bold text-yellow-700">{summary.pendingApproval}</p>
           </div>
           <div className="bg-white rounded-lg border border-green-200 p-4">
-            <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Approved · Awaiting Payment</p>
-            <p className="mt-1 text-3xl font-bold text-green-700">{summary.approvedAwaitingPayment}</p>
+            <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Approved</p>
+            <p className="mt-1 text-3xl font-bold text-green-700">{summary.approved}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-orange-200 p-4">
+            <p className="text-xs text-orange-600 font-medium uppercase tracking-wide">Awaiting Payment</p>
+            <p className="mt-1 text-3xl font-bold text-orange-700">{summary.awaitingPayment}</p>
           </div>
           <div className="bg-white rounded-lg border border-blue-200 p-4">
             <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Released Today</p>
