@@ -6,6 +6,7 @@ import ResidentTable from '@/components/backoffice/ResidentTable';
 import { useResidents, usePendingResidents, useActivateResident, useRejectResident } from '@/hooks/useResidents';
 import type { Resident } from '@/types/resident';
 import { AxiosError } from 'axios';
+import { toast } from '@/components/shared/ErrorToast';
 
 export default function ResidentsPage() {
   const [searchInput, setSearchInput] = useState('');
@@ -13,7 +14,6 @@ export default function ResidentsPage() {
   const [debouncedQ, setDebouncedQ] = useState('');
   const [debouncedPurok, setDebouncedPurok] = useState('');
   const [page, setPage] = useState(0);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Debounce the search inputs by 300ms
   useEffect(() => {
@@ -38,8 +38,8 @@ export default function ResidentsPage() {
   const rejectMutation = useRejectResident();
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    if (type === 'success') toast.success(message);
+    else toast.error(message);
   }, []);
 
   const handleActivate = async (userId: string) => {
@@ -67,16 +67,6 @@ export default function ResidentsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">

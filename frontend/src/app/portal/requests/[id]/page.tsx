@@ -8,6 +8,8 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import StatusTimeline from '@/components/portal/StatusTimeline';
 import { useMyClearance, useResubmitClearance, usePayClearance, downloadMyClearancePdf } from '@/hooks/useClearances';
+import { DetailPageSkeleton } from '@/components/shared/LoadingSkeleton';
+import { toast } from '@/components/shared/ErrorToast';
 import type { Purpose, Urgency } from '@/types/clearance';
 import { STATUS_LABELS, PURPOSE_LABELS, PAYMENT_STATUS_LABELS } from '@/types/clearance';
 import { AxiosError } from 'axios';
@@ -45,7 +47,6 @@ export default function PortalRequestDetailPage() {
   const payMutation = usePayClearance();
   const [showResubmit, setShowResubmit] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const {
@@ -84,21 +85,18 @@ export default function PortalRequestDetailPage() {
 
   const handlePay = async () => {
     setServerError(null);
-    setPaymentSuccess(false);
     try {
       await payMutation.mutateAsync(id);
-      setPaymentSuccess(true);
+      toast.success('Payment recorded! Your clearance is now being processed.');
       refetch();
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
-      setServerError(axiosErr.response?.data?.message ?? 'Payment failed. Please try again.');
+      toast.error(axiosErr.response?.data?.message ?? 'Payment failed. Please try again.');
     }
   };
 
   if (isLoading) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8 text-sm text-gray-500">Loading…</div>
-    );
+    return <DetailPageSkeleton />;
   }
 
   if (!cr) {
@@ -205,19 +203,13 @@ export default function PortalRequestDetailPage() {
             </div>
           )}
 
-          {paymentSuccess ? (
-            <div className="rounded-md bg-green-100 border border-green-300 p-3 text-sm text-green-700 font-medium">
-              Payment successful! Your clearance is now being processed.
-            </div>
-          ) : (
-            <button
-              onClick={handlePay}
-              disabled={payMutation.isPending}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {payMutation.isPending ? 'Processing…' : `Pay ₱${Number(cr.feeAmount).toFixed(2)}`}
-            </button>
-          )}
+          <button
+            onClick={handlePay}
+            disabled={payMutation.isPending}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {payMutation.isPending ? 'Processing…' : `Pay ₱${Number(cr.feeAmount).toFixed(2)}`}
+          </button>
         </div>
       )}
 
@@ -234,7 +226,7 @@ export default function PortalRequestDetailPage() {
               try {
                 await downloadMyClearancePdf(id, cr.clearanceNumber!);
               } catch {
-                setServerError('Failed to download PDF. Please try again.');
+                toast.error('Failed to download PDF. Please try again.');
               } finally {
                 setDownloading(false);
               }

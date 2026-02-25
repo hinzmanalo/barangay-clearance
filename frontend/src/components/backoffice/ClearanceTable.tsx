@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ClearanceRequest } from '@/types/clearance';
 import { STATUS_LABELS, PURPOSE_LABELS, PAYMENT_STATUS_LABELS } from '@/types/clearance';
+import { TableRowSkeleton } from '@/components/shared/LoadingSkeleton';
 
 interface ClearanceTableProps {
   clearances: ClearanceRequest[];
@@ -29,8 +30,21 @@ const PAYMENT_COLORS: Record<string, string> = {
 export default function ClearanceTable({ clearances, isLoading }: ClearanceTableProps) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-8 text-center text-sm text-gray-500">
-        Loading…
+      <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {['Resident', 'Purpose', 'Urgency', 'Status', 'Payment', 'Date', 'Clearance #'].map((h) => (
+                <th key={h} className="px-4 py-3 text-left font-semibold text-gray-600">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRowSkeleton key={i} cols={7} />
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }

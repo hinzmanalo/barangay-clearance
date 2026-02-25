@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { Resident } from '@/types/resident';
+import { TableRowSkeleton } from '@/components/shared/LoadingSkeleton';
 
 interface ResidentTableProps {
   residents: Resident[];
@@ -11,7 +12,22 @@ interface ResidentTableProps {
 export default function ResidentTable({ residents, isLoading }: ResidentTableProps) {
   if (isLoading) {
     return (
-      <div className="text-center py-12 text-gray-500 text-sm">Loading residents…</div>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {['Name', 'Address', 'Contact', 'Status', 'Portal', ''].map((h, i) => (
+                <th key={i} className="px-4 py-3 text-left font-semibold text-gray-600">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRowSkeleton key={i} cols={6} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   }
 

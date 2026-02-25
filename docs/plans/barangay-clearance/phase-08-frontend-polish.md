@@ -1,6 +1,6 @@
 # Phase 8 — Frontend Polish & Role-Based Navigation
 
-**Status:** Not Started
+**Status:** Complete
 **Estimated Timeline:** Week 6
 **Priority:** High
 
@@ -118,12 +118,12 @@ On app init, read `accessToken` from `localStorage`. If present, decode to get `
 
 ## Definition of Done
 
-- [ ] Navigating to `/portal/dashboard` without token → redirects to `/login`
-- [ ] CLERK token trying `/portal/dashboard` → redirected to `/backoffice/dashboard`
-- [ ] RESIDENT token trying `/backoffice/clearances` → redirected to `/portal/dashboard`
-- [ ] CLERK/APPROVER token trying `/backoffice/admin/users` → redirected to `/backoffice/dashboard`
-- [ ] Dashboard stat cards load and show correct counts
+- [x] Navigating to `/portal/dashboard` without token → redirects to `/login`
+- [x] CLERK token trying `/portal/dashboard` → redirected to `/backoffice/dashboard`
+- [x] RESIDENT token trying `/backoffice/clearances` → redirected to `/portal/dashboard`
+- [x] CLERK/APPROVER token trying `/backoffice/admin/users` → redirected to `/backoffice/dashboard`
+- [x] Dashboard stat cards load and show correct counts
 - [x] Status timeline shows correct step for each clearance status (payment step added 2026-02-25)
-- [ ] Loading skeletons appear before data loads; no layout shift on load
-- [ ] Toast notifications appear on success and error
-- [ ] First-login admin (`mustChangePassword=true`) is prompted to change password before accessing other pages
+- [x] Loading skeletons appear before data loads; no layout shift on load
+- [x] Toast notifications appear on success and error
+- [x] First-login admin (`mustChangePassword=true`) is prompted to change password before accessing other pages

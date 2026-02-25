@@ -1,13 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import BackofficeSidebar from '@/components/backoffice/Sidebar';
+import { useRouter } from 'next/navigation';
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { email, role, logout } = useAuth();
+  const { email, role, logout, mustChangePassword, isLoading } = useAuth();
+  const router = useRouter();
+
+  // Redirect to change-password if the admin / staff must change their password
+  useEffect(() => {
+    if (!isLoading && mustChangePassword) {
+      router.replace('/change-password');
+    }
+  }, [isLoading, mustChangePassword, router]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">

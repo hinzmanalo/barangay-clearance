@@ -66,15 +66,16 @@ export function useClearance(id: string | undefined) {
 }
 
 /**
- * Dashboard summary counts.
+ * Dashboard summary counts. Accepts optional query options (e.g. refetchInterval).
  */
-export function useClearanceSummary() {
+export function useClearanceSummary(options?: { refetchInterval?: number }) {
   return useQuery<ClearanceSummary>({
     queryKey: clearanceKeys.summary(),
     queryFn: async () => {
       const { data } = await api.get('/api/v1/clearances/summary');
       return data;
     },
+    ...options,
   });
 }
 

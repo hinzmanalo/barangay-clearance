@@ -7,6 +7,8 @@ import ActionButtons from '@/components/backoffice/ActionButtons';
 import { useClearance, downloadClearancePdf } from '@/hooks/useClearances';
 import type { ClearanceRequest } from '@/types/clearance';
 import { STATUS_LABELS, PURPOSE_LABELS, PAYMENT_STATUS_LABELS } from '@/types/clearance';
+import { DetailPageSkeleton } from '@/components/shared/LoadingSkeleton';
+import { toast } from '@/components/shared/ErrorToast';
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: 'bg-gray-100 text-gray-700',
@@ -28,15 +30,12 @@ export default function ClearanceDetailPage() {
   const { data: initialCr, isLoading } = useClearance(id);
   const [cr, setCr] = useState<ClearanceRequest | null>(null);
   const [downloading, setDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   // Use local state override after actions, fall back to query data
   const clearance = cr ?? initialCr;
 
   if (isLoading) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8 text-sm text-gray-500">Loading…</div>
-    );
+    return <DetailPageSkeleton />;
   }
 
   if (!clearance) {
@@ -90,17 +89,13 @@ export default function ClearanceDetailPage() {
         {/* Download PDF — shown when RELEASED */}
         {clearance.status === 'RELEASED' && clearance.clearanceNumber && (
           <div className="mt-4 flex items-center gap-3">
-            {downloadError && (
-              <span className="text-sm text-red-600">{downloadError}</span>
-            )}
             <button
               onClick={async () => {
                 setDownloading(true);
-                setDownloadError(null);
                 try {
                   await downloadClearancePdf(clearance.id, clearance.clearanceNumber!);
                 } catch {
-                  setDownloadError('Failed to download PDF.');
+                  toast.error('Failed to download PDF. Please try again.');
                 } finally {
                   setDownloading(false);
                 }

@@ -14,6 +14,8 @@ import {
 } from '@/hooks/useSettings';
 import { AxiosError } from 'axios';
 import api from '@/lib/api';
+import { toast } from '@/components/shared/ErrorToast';
+import { Skeleton } from '@/components/shared/LoadingSkeleton';
 
 // ── Zod schema ───────────────────────────────────────────────────────────
 
@@ -46,7 +48,6 @@ export default function SettingsPage() {
   const updateMutation = useUpdateBarangaySettings();
   const uploadLogoMutation = useUploadLogo();
 
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
@@ -105,8 +106,8 @@ export default function SettingsPage() {
   }, [logoPreviewUrl]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    if (type === 'success') toast.success(message);
+    else toast.error(message);
   }, []);
 
   // ── File selection ────────────────────────────────────────────────────
@@ -166,8 +167,16 @@ export default function SettingsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
-        <p className="text-gray-500 text-sm">Loading settings…</p>
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-1">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -176,17 +185,6 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg transition-all ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
 **Last Updated:** 2026-02-26
-**Current Phase:** Phase 8 / 11 — Parallel
-**Overall Progress:** 8 / 12 phases complete
+**Current Phase:** Phase 9 / 11
+**Overall Progress:** 9 / 12 phases complete
 
 ---
 
@@ -18,7 +18,7 @@
 | [Phase 5](phase-05-pdf.md)              | PDF Generation               | � Complete     | 5    | Parallel with Phase 4 & 6        |
 | [Phase 6](phase-06-settings.md)         | Settings Module              | � Complete     | 5    | Parallel with Phase 4 & 5        |
 | [Phase 7](phase-07-reports.md)          | Reports Module               | � Complete     | 6    | Parallel with Phase 8            |
-| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
+| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | � Complete     | 6    | Parallel with Phase 7            |
 | [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
 | [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
 | [Phase 11](phase-11-user-management.md) | User Management              | 🔴 Not Started | 6–7  | Parallel with Phase 7 & 8        |
@@ -36,7 +36,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phase 8 / 11 (parallel)
+**Active phase:** Phase 9 (Testing & QA)
 
 ---
 
@@ -225,20 +225,20 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 8 — Frontend Polish & Navigation
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phase 7
 
 **Checklist:**
 
-- [ ] `middleware.ts` — complete route guard with `jwt-decode`
-- [ ] `AuthContext.tsx` — complete with `localStorage` persistence + re-hydration
-- [ ] Backoffice dashboard with summary cards + 30s auto-refresh
+- [x] `middleware.ts` — complete route guard with `jwt-decode`, admin guard, public route redirect for authenticated users
+- [x] `AuthContext.tsx` — complete with `localStorage` persistence + re-hydration
+- [x] Backoffice dashboard with summary cards + 30s auto-refresh (`refetchInterval: 30_000`) + Skeleton placeholders
 - [x] `StatusTimeline.tsx` — all status steps with visual states (payment step added: Unpaid/orange, Paid/green)
-- [ ] Error toast system (Radix UI Toast / shadcn/ui)
-- [ ] Loading skeletons on all list/detail pages
-- [ ] `must_change_password` flow + `/change-password` page
-- [ ] Mobile-first Tailwind responsive layout
-- [ ] Shared components: `StatusBadge`, `PaymentBadge`, `PageHeader`
+- [x] Error toast system — `sonner` `<Toaster>` in `providers.tsx`; `toast.success/error` replacing all inline local-state toasts
+- [x] Loading skeletons on all list/detail pages (`TableRowSkeleton`, `DetailPageSkeleton`, `CardSkeleton`)
+- [x] `must_change_password` flow — portal/backoffice layouts redirect to `/change-password` on mount
+- [x] Mobile-first Tailwind responsive layout (sidebar + single column stack at mobile)
+- [x] Shared components: `StatusBadge`, `PaymentBadge`, `PageHeader`, `LoadingSkeleton`, `ErrorToast`
 
 ---
 

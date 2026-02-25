@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useFeeConfig, useUpdateFeeConfig } from '@/hooks/useSettings';
 import { AxiosError } from 'axios';
+import { toast } from '@/components/shared/ErrorToast';
+import { Skeleton } from '@/components/shared/LoadingSkeleton';
 
 // ── Zod schema ───────────────────────────────────────────────────────────
 
@@ -41,8 +43,6 @@ export default function FeesPage() {
   const { data: feeConfig, isLoading } = useFeeConfig();
   const updateMutation = useUpdateFeeConfig();
 
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -63,8 +63,8 @@ export default function FeesPage() {
   }, [feeConfig, reset]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    if (type === 'success') toast.success(message);
+    else toast.error(message);
   }, []);
 
   const onSubmit = async (data: FeesForm) => {
@@ -81,8 +81,18 @@ export default function FeesPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
-        <p className="text-gray-500 text-sm">Loading fee configuration…</p>
+      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -91,17 +101,6 @@ export default function FeesPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8 space-y-8">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg transition-all ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

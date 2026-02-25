@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import RequestCard from '@/components/portal/RequestCard';
 import { useMyClearances } from '@/hooks/useClearances';
+import { Skeleton } from '@/components/shared/LoadingSkeleton';
 
 export default function PortalDashboardPage() {
   const [page, setPage] = useState(0);
@@ -25,7 +26,18 @@ export default function PortalDashboardPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-gray-500 py-8 text-center">Loading…</div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 bg-white p-4 space-y-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-48" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          ))}
+        </div>
       ) : requests.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <p className="text-gray-500 text-sm mb-4">You haven't submitted any clearance requests yet.</p>

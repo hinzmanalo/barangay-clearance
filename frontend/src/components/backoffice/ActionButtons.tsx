@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ClearanceRequest, ClearanceStatus } from '@/types/clearance';
 import { useApproveClearance, useRejectClearance, useReleaseClearance, useMarkClearancePaid } from '@/hooks/useClearances';
 import { AxiosError } from 'axios';
+import { toast } from '@/components/shared/ErrorToast';
 
 interface ActionButtonsProps {
   clearance: ClearanceRequest;
@@ -28,6 +29,7 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
     setError(null);
     try {
       const updated = await approveMutation.mutateAsync(clearance.id);
+      toast.success('Clearance request approved.');
       onSuccess?.(updated);
     } catch (err) {
       const e = err as AxiosError<{ message: string }>;
@@ -45,6 +47,7 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
       const updated = await rejectMutation.mutateAsync({ id: clearance.id, payload: { reason: rejectReason } });
       setShowRejectForm(false);
       setRejectReason('');
+      toast.success('Clearance request rejected.');
       onSuccess?.(updated);
     } catch (err) {
       const e = err as AxiosError<{ message: string }>;
@@ -56,6 +59,7 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
     setError(null);
     try {
       const updated = await releaseMutation.mutateAsync(clearance.id);
+      toast.success('Clearance released successfully.');
       onSuccess?.(updated);
     } catch (err) {
       const e = err as AxiosError<{ message: string }>;
@@ -67,8 +71,7 @@ export default function ActionButtons({ clearance, onSuccess }: ActionButtonsPro
     setError(null);
     try {
       await markPaidMutation.mutateAsync(clearance.id);
-      // Re-fetch is handled by cache invalidation in the hook;
-      // trigger an optional success callback if the parent wants to refresh
+      toast.success('Payment recorded successfully.');
       onSuccess?.(clearance);
     } catch (err) {
       const e = err as AxiosError<{ message: string }>;
