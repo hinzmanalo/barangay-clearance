@@ -1,7 +1,7 @@
 package com.barangay.clearance.clearance.service;
 
-import com.barangay.clearance.clearance.repository.ClearanceNumberSequenceRepository;
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -22,25 +22,42 @@ import java.time.format.DateTimeFormatter;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ClearanceNumberService {
 
     private static final DateTimeFormatter YEAR_MONTH_FMT = DateTimeFormatter.ofPattern("yyyy-MM");
 
-    private final ClearanceNumberSequenceRepository sequenceRepository;
+    private static final String NEXT_SEQ_SQL = """
+            INSERT INTO clearance_number_sequence (year_month, last_seq)
+            VALUES (:yearMonth, 1)
+            ON CONFLICT (year_month)
+            DO UPDATE SET last_seq = clearance_number_sequence.last_seq + 1
+            RETURNING last_seq
+            """;
+
+    @PersistenceContext
+    private EntityManager em;
 
     /**
      * Returns the next clearance number for the current calendar month.
-     * Must be called inside a transaction (uses {@code REQUIRES_NEW} to ensure
-     * the sequence update is committed even if the caller rolls back — preventing
-     * gaps from being reused).
+     * Uses {@code REQUIRES_NEW} propagation so the sequence update is committed
+     * independently — preventing gaps from being reused on caller rollback.
+     *
+     * <p>
+     * Uses {@link EntityManager#createNativeQuery} directly because Spring Data
+     * JPA's {@code @Modifying} annotation does not support {@code RETURNING}
+     * clauses (it expects an update count, not a result set).
+     * </p>
      *
      * @return formatted clearance number, e.g. {@code "2025-02-0001"}
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String next() {
         String yearMonth = LocalDate.now().format(YEAR_MONTH_FMT);
-        Integer seq = sequenceRepository.nextSequence(yearMonth);
+
+        Integer seq = (Integer) em.createNativeQuery(NEXT_SEQ_SQL)
+                .setParameter("yearMonth", yearMonth)
+                .getSingleResult();
+
         String number = String.format("%s-%04d", yearMonth, seq);
         log.debug("Generated clearance number: {}", number);
         return number;

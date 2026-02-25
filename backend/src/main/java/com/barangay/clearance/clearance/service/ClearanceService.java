@@ -9,6 +9,7 @@ import com.barangay.clearance.clearance.entity.ClearanceRequest.ClearancePayment
 import com.barangay.clearance.clearance.entity.ClearanceRequest.ClearanceStatus;
 import com.barangay.clearance.clearance.repository.ClearanceRequestRepository;
 import com.barangay.clearance.clearance.service.mapper.ClearanceMapper;
+import com.barangay.clearance.residents.entity.Resident;
 import com.barangay.clearance.residents.entity.Resident.ResidentStatus;
 import com.barangay.clearance.residents.repository.ResidentRepository;
 import com.barangay.clearance.shared.exception.AppException;
@@ -409,6 +410,58 @@ public class ClearanceService {
         ClearanceRequest saved = clearanceRepo.save(cr);
         log.info("CLEARANCE_PAYMENT_MARKED_PAID id={}", saved.getId());
         return enrich(saved);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // PDF support — raw entity access for PDF generation
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the raw clearance entity for PDF generation.
+     *
+     * @throws AppException 404 if not found
+     * @throws AppException 400 if status is not RELEASED
+     */
+    @Transactional(readOnly = true)
+    public ClearanceRequest getReleasedEntity(UUID id) {
+        ClearanceRequest cr = findOrThrow(id);
+        if (cr.getStatus() != ClearanceStatus.RELEASED) {
+            throw AppException
+                    .badRequest("PDF can only be generated for RELEASED clearances (current: " + cr.getStatus() + ")");
+        }
+        return cr;
+    }
+
+    /**
+     * Returns the raw clearance entity for PDF generation, scoped to the resident's
+     * ownership.
+     *
+     * @throws AppException 404 if not found or not owned by this resident
+     * @throws AppException 403 if status is not RELEASED
+     */
+    @Transactional(readOnly = true)
+    public ClearanceRequest getReleasedEntityForResident(UUID id, UUID principalUserId) {
+        Resident resident = residentRepository.findByUserId(principalUserId)
+                .orElseThrow(() -> AppException.notFound("No resident profile linked to this account"));
+
+        ClearanceRequest cr = clearanceRepo.findByIdAndResidentId(id, resident.getId())
+                .orElseThrow(() -> AppException.notFound("Clearance request not found"));
+
+        if (cr.getStatus() != ClearanceStatus.RELEASED) {
+            throw AppException.forbidden("PDF can only be downloaded for RELEASED clearances");
+        }
+        return cr;
+    }
+
+    /**
+     * Returns the resident associated with a clearance request.
+     *
+     * @throws AppException 404 if resident not found
+     */
+    @Transactional(readOnly = true)
+    public Resident getResidentForClearance(UUID residentId) {
+        return residentRepository.findById(residentId)
+                .orElseThrow(() -> AppException.notFound("Resident not found for clearance"));
     }
 
     // ─────────────────────────────────────────────────────────────────

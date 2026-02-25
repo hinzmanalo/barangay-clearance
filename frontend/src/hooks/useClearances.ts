@@ -271,3 +271,43 @@ export function useClearancePayments(clearanceId: string | undefined) {
     enabled: !!clearanceId,
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PDF download helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Downloads a clearance PDF (backoffice).
+ * Triggers a browser download via a temporary object URL.
+ */
+export async function downloadClearancePdf(clearanceId: string, clearanceNumber: string): Promise<void> {
+  const response = await api.get(`/api/v1/clearances/${clearanceId}/pdf`, {
+    responseType: 'blob',
+  });
+  triggerBlobDownload(response.data, `clearance-${clearanceNumber}.pdf`);
+}
+
+/**
+ * Downloads a clearance PDF (portal — resident).
+ * Triggers a browser download via a temporary object URL.
+ */
+export async function downloadMyClearancePdf(clearanceId: string, clearanceNumber: string): Promise<void> {
+  const response = await api.get(`/api/v1/me/clearances/${clearanceId}/pdf`, {
+    responseType: 'blob',
+  });
+  triggerBlobDownload(response.data, `clearance-${clearanceNumber}.pdf`);
+}
+
+/**
+ * Creates a temporary object URL from a Blob and triggers a file download.
+ */
+function triggerBlobDownload(data: Blob, filename: string): void {
+  const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}

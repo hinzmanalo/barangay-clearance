@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
-**Last Updated:** 2026-02-25
-**Current Phase:** Phase 5 / 6 — PDF Generation, Settings (parallel)
-**Overall Progress:** 5 / 12 phases complete
+**Last Updated:** 2026-02-26
+**Current Phase:** Phase 6 — Settings
+**Overall Progress:** 6 / 12 phases complete
 
 ---
 
@@ -15,7 +15,7 @@
 | [Phase 2](phase-02-residents.md)        | Residents Module             | � Complete     | 2–3  | Blocks Phase 3                   |
 | [Phase 3](phase-03-clearance.md)        | Clearance Module             | � Complete     | 3–4  | Core business logic              |
 | [Phase 4](phase-04-payments.md)         | Payments Module              | � Complete     | 4    | Parallel with Phase 5 & 6        |
-| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🔴 Not Started | 5    | Parallel with Phase 4 & 6        |
+| [Phase 5](phase-05-pdf.md)              | PDF Generation               | � Complete     | 5    | Parallel with Phase 4 & 6        |
 | [Phase 6](phase-06-settings.md)         | Settings Module              | 🔴 Not Started | 5    | Parallel with Phase 4 & 5        |
 | [Phase 7](phase-07-reports.md)          | Reports Module               | 🔴 Not Started | 6    | Parallel with Phase 8            |
 | [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
@@ -36,7 +36,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phases 5, 6 — PDF Generation, Settings (both can run in parallel)
+**Active phase:** Phase 6 — Settings
 
 ---
 
@@ -171,20 +171,21 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 5 — PDF Generation
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 4, 6
 
 **Checklist:**
 
-- [ ] `ClearancePdfService.java` interface
-- [ ] `ClearancePdfServiceImpl.java` (PDFBox 3.x)
-  - [ ] Header with logo + barangay info
-  - [ ] Title + metadata block
-  - [ ] Body paragraph with text wrapping
-  - [ ] Signature block
-- [ ] Wire `GET /clearances/{id}/pdf` into `ClearanceController`
-- [ ] Wire `GET /me/clearances/{id}/pdf` into `PortalClearanceController`
-- [ ] Frontend: "Download PDF" button with blob download trigger
+- [x] `ClearancePdfService.java` interface
+- [x] `ClearancePdfServiceImpl.java` (PDFBox 3.x)
+  - [x] Header with logo + barangay info
+  - [x] Title + metadata block
+  - [x] Body paragraph with text wrapping
+  - [x] Signature block
+- [x] Wire `GET /clearances/{id}/pdf` into `ClearanceController`
+- [x] Wire `GET /me/clearances/{id}/pdf` into `PortalClearanceController`
+- [x] Frontend: "Download PDF" button with blob download trigger
+- [x] `BarangaySettings` entity + repository (needed by PDF, also prepares Phase 6)
 
 ---
 
@@ -231,7 +232,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 - [ ] `middleware.ts` — complete route guard with `jwt-decode`
 - [ ] `AuthContext.tsx` — complete with `localStorage` persistence + re-hydration
 - [ ] Backoffice dashboard with summary cards + 30s auto-refresh
-- [ ] `StatusTimeline.tsx` — all status steps with visual states
+- [x] `StatusTimeline.tsx` — all status steps with visual states (payment step added: Unpaid/orange, Paid/green)
 - [ ] Error toast system (Radix UI Toast / shadcn/ui)
 - [ ] Loading skeletons on all list/detail pages
 - [ ] `must_change_password` flow + `/change-password` page
@@ -332,6 +333,8 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 | 2026-02-24 | Phase 3  | Completed    | Clearance module: `ClearanceRequest`/`ClearanceNumberSequence` entities + enums, atomic number sequence (PostgreSQL `ON CONFLICT RETURNING`), full state machine (`submit → FOR_APPROVAL → APPROVED → RELEASED`, rejection/resubmit), backoffice + portal controllers, `ClearanceStatusChangedEvent`, V6 migration, frontend portal/backoffice pages + `StatusTimeline`, `ClearanceTable`, `ActionButtons`, `RequestCard` components, `useClearances` hooks |
 | 2026-02-25 | Shared   | Refactored   | Added `SpecificationBuilder<T>` to `shared/util/` — generic fluent JPA Specification builder; removed duplicated `buildFilter` from `ClearanceService`. Available for `ReportsService` and any future filtered-list service.                                                                                                                                                                                                                                |
 | 2026-02-25 | Phase 11 | Planned      | Created `phase-11-user-management.md` — covers backend API gaps (activate, role update, profile update, admin password reset, search/filter, `/me` endpoints) and full frontend backoffice UI (user list, create, detail/edit pages, `UserTable`, `RoleBadge`, sidebar link).                                                                                                                                                                               |
+| 2026-02-25 | Phase 8  | Partial      | `StatusTimeline.tsx` enhanced: added Payment step (4th step) between Approved and Released. Orange ring when Unpaid, green check when Paid/Waived, inactive when not yet reached. `portal/requests/[id]/page.tsx` updated to pass `paymentStatus` prop.                                                                                                                                                                                                     |
+| 2026-02-26 | Phase 5  | Completed    | PDF Generation: `ClearancePdfService` interface + `ClearancePdfServiceImpl` (PDFBox 3.x, A4 layout, logo embedding, text wrapping, signature block). Endpoints: `GET /clearances/{id}/pdf` (CLERK/ADMIN) + `GET /me/clearances/{id}/pdf` (RESIDENT, RELEASED only). Frontend: Download PDF buttons on portal request detail and backoffice clearance detail pages. Also created `BarangaySettings` entity + repository (prepares Phase 6).                  |
 
 ---
 

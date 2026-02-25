@@ -9,7 +9,78 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ## [Unreleased]
 
-> Work planned but not yet started (Phases 4–10).
+> Work planned but not yet started (Phases 6–10).
+
+---
+
+## [0.4.1] — Bugfix — 2026-02-26
+
+### Fixed
+
+#### Backend
+
+- `ClearanceNumberService.java` — the **"Release Clearance"** action threw `JpaSystemException` because the `nextSequence()` method in `ClearanceNumberSequenceRepository` used `@Modifying` with a `RETURNING` clause. Spring Data JPA's `@Modifying` annotation expects the query to be a DML statement that returns an **update count** (`int`/`void`), but the PostgreSQL `INSERT … ON CONFLICT DO UPDATE RETURNING last_seq` query produces a **result set**. This mismatch caused JDBC to fail at execute time. Fix: replaced the `@Modifying` repository method with a direct `EntityManager.createNativeQuery()` call, which correctly handles the `RETURNING` clause as a result-set query. The `ClearanceNumberSequenceRepository` interface is retained for any future JPA-standard operations but no longer contains the sequence query itself.
+
+---
+
+## [0.4.0] — Phase 5: PDF Generation — 2026-02-26
+
+### Added
+
+#### Backend
+
+**Settings (partial — prepares Phase 6)**
+
+- `settings/entity/BarangaySettings.java` — JPA entity mapping the singleton `barangay_settings` table (row `id = 1`, enforced by `CHECK (id = 1)` in the schema). Fields: `barangayName`, `municipality`, `province`, `captainName`, `logo` (BYTEA), `logoMimeType`. Created ahead of the full Phase 6 settings module because the PDF service needs to read barangay info and the optional logo for the header.
+
+- `settings/repository/BarangaySettingsRepository.java` — Spring Data repository; usage is `findById(1)` to fetch the singleton row seeded by Flyway V2.
+
+**PDF Service**
+
+- `pdf/service/ClearancePdfService.java` — interface defining `byte[] generate(ClearanceRequest, Resident, BarangaySettings)`. Decouples the PDF rendering strategy from the controllers and business logic.
+
+- `pdf/service/ClearancePdfServiceImpl.java` — PDFBox 3.x implementation that generates an A4 clearance certificate. The PDF is built top-down by decrementing a `y` tracker from the top margin (PDFBox's coordinate origin is bottom-left `(0, 0)`). Layout sections:
+  1. **Header** — optional logo image (proportionally scaled to max 80 pt height) on the left, with "Republika ng Pilipinas", province, municipality, and barangay name centered. If `settings.getLogo()` is null or the image bytes are invalid, the logo is silently skipped and a text-only header is rendered — no exception is thrown.
+  2. **Horizontal rule** — 1 pt line separating header from body.
+  3. **Title** — "BARANGAY CLEARANCE" centered in Helvetica Bold 16 pt.
+  4. **Metadata block** — clearance number, date issued (formatted as `MMMM dd, yyyy` in `Asia/Manila` timezone), and validity (6 months from issuance).
+  5. **Body paragraph** — "TO WHOM IT MAY CONCERN:" followed by a certification paragraph stating the resident's full name, age (computed via `Period.between`), birthdate, address, and barangay name, plus the purpose of the clearance. Text wrapping is implemented manually via `wrapText()` which measures each word with `PDFont.getStringWidth()` and breaks lines at the content width.
+  6. **Signature block** — right-aligned signature line, captain name in uppercase bold, and "Punong Barangay" title beneath.
+
+  Purpose labels are resolved from the `Purpose` enum to human-readable text (e.g. `BUSINESS_PERMIT` → "Business Permit"); for `OTHER`, the free-text `purposeOther` field is used.
+
+**Controller Endpoints**
+
+- `GET /api/v1/clearances/{id}/pdf` — added to `ClearanceController`. Roles: `CLERK`, `ADMIN`. Validates that the clearance is in `RELEASED` status (returns 400 otherwise), fetches the associated `Resident` and `BarangaySettings` (falls back to hardcoded defaults if the settings row is missing), generates the PDF, and streams it with `Content-Type: application/pdf` and `Content-Disposition: attachment; filename="clearance-YYYY-MM-NNNN.pdf"`.
+
+- `GET /api/v1/me/clearances/{id}/pdf` — added to `PortalClearanceController`. Role: `RESIDENT`. Validates both ownership (the clearance must belong to the authenticated resident's profile) and status (must be `RELEASED` — returns 403 otherwise).
+
+**ClearanceService Methods**
+
+- `getReleasedEntity(id)` — returns the raw `ClearanceRequest` entity; throws 400 if not `RELEASED`.
+- `getReleasedEntityForResident(id, principalUserId)` — ownership-checked variant; throws 404 if not owned, 403 if not `RELEASED`.
+- `getResidentForClearance(residentId)` — fetches the `Resident` entity for PDF rendering.
+
+#### Frontend
+
+- `src/hooks/useClearances.ts` — added `downloadClearancePdf(clearanceId, clearanceNumber)` (backoffice) and `downloadMyClearancePdf(clearanceId, clearanceNumber)` (portal) helper functions. Both issue a `GET` request with `responseType: 'blob'`, then trigger a browser download by creating a temporary object URL (`URL.createObjectURL`), programmatically clicking an anchor element, and revoking the URL immediately after.
+
+- `src/app/portal/requests/[id]/page.tsx` — added a **"Download PDF"** section that appears only when `status === 'RELEASED'`. Renders inside a green-tinted card with a document download icon. Includes loading state (`"Downloading…"`) and error handling.
+
+- `src/app/backoffice/clearances/[id]/page.tsx` — added a **"Print / Download PDF"** button below the action buttons, visible only when `status === 'RELEASED'`. Same blob-download mechanism as the portal variant.
+
+### Changed
+
+#### Frontend
+
+- `src/components/portal/StatusTimeline.tsx` — expanded from 3 steps to 4 steps by inserting a **Payment** step between Approved and Released. The payment step is styled dynamically based on `paymentStatus`:
+  - 🟠 Orange ring + label **"Unpaid"** when the request is `APPROVED` and `paymentStatus` is `UNPAID` — draws the resident's attention to the pending payment
+  - ✅ Green check + label **"Paid"** or **"Waived"** when `paymentStatus` is `PAID` or `WAIVED`
+  - Grey (inactive) when the request has not yet reached the `APPROVED` step
+
+  Connector segments are filled green only when the step to their left has a completed/payment-done state, so the visual progression is always accurate. The rejected branch is unchanged — a red dot still appears at the For Approval step.
+
+- `src/app/portal/requests/[id]/page.tsx` — passes `paymentStatus={cr.paymentStatus}` to `StatusTimeline` to satisfy the updated prop interface.
 
 ---
 
@@ -362,7 +433,8 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ---
 
-[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/your-org/barangay-clearance/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/your-org/barangay-clearance/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/your-org/barangay-clearance/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/your-org/barangay-clearance/compare/v0.3.0...v0.3.1
