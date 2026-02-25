@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
 **Last Updated:** 2026-02-26
-**Current Phase:** Phase 6 — Settings
-**Overall Progress:** 6 / 12 phases complete
+**Current Phase:** Phase 7 / 8 / 11 — Parallel
+**Overall Progress:** 7 / 12 phases complete
 
 ---
 
@@ -16,7 +16,7 @@
 | [Phase 3](phase-03-clearance.md)        | Clearance Module             | � Complete     | 3–4  | Core business logic              |
 | [Phase 4](phase-04-payments.md)         | Payments Module              | � Complete     | 4    | Parallel with Phase 5 & 6        |
 | [Phase 5](phase-05-pdf.md)              | PDF Generation               | � Complete     | 5    | Parallel with Phase 4 & 6        |
-| [Phase 6](phase-06-settings.md)         | Settings Module              | 🔴 Not Started | 5    | Parallel with Phase 4 & 5        |
+| [Phase 6](phase-06-settings.md)         | Settings Module              | � Complete     | 5    | Parallel with Phase 4 & 5        |
 | [Phase 7](phase-07-reports.md)          | Reports Module               | 🔴 Not Started | 6    | Parallel with Phase 8            |
 | [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
 | [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
@@ -36,7 +36,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phase 6 — Settings
+**Active phase:** Phase 7 / 8 / 11 (parallel)
 
 ---
 
@@ -191,20 +191,20 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 6 — Settings Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 4, 5
 
 **Checklist:**
 
-- [ ] `BarangaySettings.java` + `FeeConfig.java` entities (singleton pattern)
-- [ ] `BarangaySettingsRepository.java` + `FeeConfigRepository.java`
-- [ ] `SettingsService.java` (get/update settings, logo upload, get/update fees)
-- [ ] `SettingsController.java` (all `/api/v1/settings/**` ADMIN-only)
-- [ ] Logo upload validation (type + size)
-- [ ] `GET /settings/logo` binary endpoint
-- [ ] Multipart size config in `application.yml`
-- [ ] Frontend: settings page (form + logo upload + preview)
-- [ ] Frontend: fees page
+- [x] `BarangaySettings.java` + `FeeConfig.java` entities (singleton pattern)
+- [x] `BarangaySettingsRepository.java` + `FeeConfigRepository.java`
+- [x] `SettingsService.java` (get/update settings, logo upload, get/update fees)
+- [x] `SettingsController.java` (all `/api/v1/settings/**` ADMIN-only)
+- [x] Logo upload validation (type + size)
+- [x] `GET /settings/logo` binary endpoint
+- [x] Multipart size config in `application.yml` (already configured)
+- [x] Frontend: settings page (form + logo upload + preview)
+- [x] Frontend: fees page
 
 ---
 
@@ -323,7 +323,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 ## Progress Log
 
 | Date       | Phase    | Action       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ---------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------- | ------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-02-24 | —        | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 2026-02-24 | Phase 0  | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                                                                                                                                                                                                                                                                                                                                    |
 | 2026-02-24 | Phase 1  | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                                                                                                                                                                                                                                                                                                                                    |
@@ -334,7 +334,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 | 2026-02-25 | Shared   | Refactored   | Added `SpecificationBuilder<T>` to `shared/util/` — generic fluent JPA Specification builder; removed duplicated `buildFilter` from `ClearanceService`. Available for `ReportsService` and any future filtered-list service.                                                                                                                                                                                                                                |
 | 2026-02-25 | Phase 11 | Planned      | Created `phase-11-user-management.md` — covers backend API gaps (activate, role update, profile update, admin password reset, search/filter, `/me` endpoints) and full frontend backoffice UI (user list, create, detail/edit pages, `UserTable`, `RoleBadge`, sidebar link).                                                                                                                                                                               |
 | 2026-02-25 | Phase 8  | Partial      | `StatusTimeline.tsx` enhanced: added Payment step (4th step) between Approved and Released. Orange ring when Unpaid, green check when Paid/Waived, inactive when not yet reached. `portal/requests/[id]/page.tsx` updated to pass `paymentStatus` prop.                                                                                                                                                                                                     |
-| 2026-02-26 | Phase 5  | Completed    | PDF Generation: `ClearancePdfService` interface + `ClearancePdfServiceImpl` (PDFBox 3.x, A4 layout, logo embedding, text wrapping, signature block). Endpoints: `GET /clearances/{id}/pdf` (CLERK/ADMIN) + `GET /me/clearances/{id}/pdf` (RESIDENT, RELEASED only). Frontend: Download PDF buttons on portal request detail and backoffice clearance detail pages. Also created `BarangaySettings` entity + repository (prepares Phase 6).                  |
+| 2026-02-26 | Phase 5  | Completed    | PDF Generation: `ClearancePdfService` interface + `ClearancePdfServiceImpl` (PDFBox 3.x, A4 layout, logo embedding, text wrapping, signature block). Endpoints: `GET /clearances/{id}/pdf` (CLERK/ADMIN) + `GET /me/clearances/{id}/pdf` (RESIDENT, RELEASED only). Frontend: Download PDF buttons on portal request detail and backoffice clearance detail pages. Also created `BarangaySettings` entity + repository (prepares Phase 6).                  |     | 2026-02-26 | Phase 6 | Completed | Settings module: `FeeConfig` entity + `FeeConfigRepository`, `BarangaySettingsDTO` + `FeeConfigDTO`, `SettingsService` (get/update settings, logo upload/retrieval, get/update fees), `SettingsController` (GET/PUT `/settings`, POST/GET `/settings/logo`, GET/PUT `/settings/fees`). Logo validated at service level (PNG/JPEG/GIF, max 2 MB). `ClearanceService.resolveFee()` now reads live `fee_config` row (with fallback). Frontend: `useSettings.ts` hooks, `types/settings.ts` updated (`hasLogo`), `/backoffice/admin/settings` profile+logo page, `/backoffice/admin/settings/fees` fee form. |
 
 ---
 

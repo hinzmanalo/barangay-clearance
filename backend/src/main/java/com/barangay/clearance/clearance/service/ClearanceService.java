@@ -12,6 +12,8 @@ import com.barangay.clearance.clearance.service.mapper.ClearanceMapper;
 import com.barangay.clearance.residents.entity.Resident;
 import com.barangay.clearance.residents.entity.Resident.ResidentStatus;
 import com.barangay.clearance.residents.repository.ResidentRepository;
+import com.barangay.clearance.settings.entity.FeeConfig;
+import com.barangay.clearance.settings.repository.FeeConfigRepository;
 import com.barangay.clearance.shared.exception.AppException;
 import com.barangay.clearance.shared.util.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -50,15 +52,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ClearanceService {
 
-    // Standard fee defaults — overridden when Phase 6 (settings) is wired in.
-    private static final BigDecimal DEFAULT_STANDARD_FEE = new BigDecimal("50.00");
-    private static final BigDecimal DEFAULT_RUSH_FEE = new BigDecimal("100.00");
+    /**
+     * Fallback fees used only if the fee_config row is missing (should never happen
+     * after Flyway V2 runs, but guards against misconfigured environments).
+     */
+    private static final BigDecimal FALLBACK_STANDARD_FEE = new BigDecimal("50.00");
+    private static final BigDecimal FALLBACK_RUSH_FEE = new BigDecimal("100.00");
 
     private final ClearanceRequestRepository clearanceRepo;
     private final ResidentRepository residentRepository;
     private final ClearanceMapper mapper;
     private final ClearanceNumberService numberService;
     private final ApplicationEventPublisher eventPublisher;
+    private final FeeConfigRepository feeConfigRepository;
 
     // ─────────────────────────────────────────────────────────────────
     // Portal — RESIDENT actions
@@ -516,8 +522,20 @@ public class ClearanceService {
                 .build();
     }
 
+    /**
+     * Resolves the fee for the given urgency level by reading the live fee_config
+     * singleton. Falls back to hardcoded defaults if the row is unavailable.
+     *
+     * @param urgency STANDARD or RUSH
+     * @return fee amount from the database (or fallback default)
+     */
     private BigDecimal resolveFee(ClearanceRequest.Urgency urgency) {
-        return urgency == ClearanceRequest.Urgency.RUSH ? DEFAULT_RUSH_FEE : DEFAULT_STANDARD_FEE;
+        FeeConfig config = feeConfigRepository.findById(1).orElse(null);
+        if (config == null) {
+            log.warn("fee_config row not found — using fallback defaults");
+            return urgency == ClearanceRequest.Urgency.RUSH ? FALLBACK_RUSH_FEE : FALLBACK_STANDARD_FEE;
+        }
+        return urgency == ClearanceRequest.Urgency.RUSH ? config.getRushFee() : config.getStandardFee();
     }
 
     private void publishStatusChange(ClearanceRequest cr, ClearanceStatus from, ClearanceStatus to, UUID actorId) {

@@ -7,14 +7,22 @@ import {
   FileText,
   Users,
   BarChart3,
+  Settings,
+  Banknote,
   X,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/backoffice/dashboard', icon: LayoutDashboard },
   { label: 'Clearances', href: '/backoffice/clearances', icon: FileText },
   { label: 'Residents', href: '/backoffice/residents', icon: Users },
   { label: 'Reports', href: '/backoffice/reports', icon: BarChart3 },
+];
+
+const ADMIN_NAV_ITEMS = [
+  { label: 'Barangay Settings', href: '/backoffice/admin/settings', icon: Settings, exact: true },
+  { label: 'Fee Configuration', href: '/backoffice/admin/settings/fees', icon: Banknote, exact: false },
 ];
 
 interface SidebarProps {
@@ -24,6 +32,7 @@ interface SidebarProps {
 
 export default function BackofficeSidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { role } = useAuth();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
@@ -78,6 +87,33 @@ export default function BackofficeSidebar({ open, onClose }: SidebarProps) {
               {label}
             </Link>
           ))}
+
+          {/* Admin-only section */}
+          {role === 'ADMIN' && (
+            <>
+              <div className="pt-4 pb-1 px-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Admin
+                </p>
+              </div>
+              {ADMIN_NAV_ITEMS.map(({ label, href, icon: Icon, exact }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onClose}
+                  className={[
+                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    (exact ? pathname === href : isActive(href))
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                  ].join(' ')}
+                >
+                  <Icon size={16} />
+                  {label}
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
       </aside>
     </>
