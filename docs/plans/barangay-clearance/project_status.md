@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
 **Last Updated:** 2026-02-26
-**Current Phase:** Phase 7 / 8 / 11 — Parallel
-**Overall Progress:** 7 / 12 phases complete
+**Current Phase:** Phase 8 / 11 — Parallel
+**Overall Progress:** 8 / 12 phases complete
 
 ---
 
@@ -17,7 +17,7 @@
 | [Phase 4](phase-04-payments.md)         | Payments Module              | � Complete     | 4    | Parallel with Phase 5 & 6        |
 | [Phase 5](phase-05-pdf.md)              | PDF Generation               | � Complete     | 5    | Parallel with Phase 4 & 6        |
 | [Phase 6](phase-06-settings.md)         | Settings Module              | � Complete     | 5    | Parallel with Phase 4 & 5        |
-| [Phase 7](phase-07-reports.md)          | Reports Module               | 🔴 Not Started | 6    | Parallel with Phase 8            |
+| [Phase 7](phase-07-reports.md)          | Reports Module               | � Complete     | 6    | Parallel with Phase 8            |
 | [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
 | [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
 | [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
@@ -36,7 +36,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phase 7 / 8 / 11 (parallel)
+**Active phase:** Phase 8 / 11 (parallel)
 
 ---
 
@@ -210,15 +210,16 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 7 — Reports Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phase 8
 
 **Checklist:**
 
-- [ ] `ReportsService.java` (dynamic JPQL with nullable params)
-- [ ] `ReportsController.java` (`GET /api/v1/reports/clearances`)
-- [ ] `ReportRowDTO.java` + `ReportMapper.java`
-- [ ] Frontend: reports page (filter form + paginated table + empty state)
+- [x] `ReportsService.java` (native SQL query with nullable params via `ReportRepository`)
+- [x] `ReportsController.java` (`GET /api/v1/reports/clearances`)
+- [x] `ReportRowDTO.java` + `ReportRowProjection.java` (Spring Data interface projection replaces MapStruct for native queries)
+- [x] Frontend: reports page (filter form + paginated table + empty state)
+- [x] `useReports.ts` hook + `ReportRow` type added to `clearance.ts`
 
 ---
 

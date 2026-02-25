@@ -78,3 +78,16 @@ export interface ClearanceSummary {
   awaitingPayment: number;
   releasedToday: number;
 }
+
+// ── Reports ──────────────────────────────────────────────────────────────────
+
+export interface ReportRow {
+  clearanceNumber?: string;
+  residentFullName: string;
+  purpose: Purpose;
+  urgency: Urgency;
+  status: ClearanceStatus;
+  paymentStatus: ClearancePaymentStatus;
+  issuedAt?: string;
+  createdAt: string;
+}
