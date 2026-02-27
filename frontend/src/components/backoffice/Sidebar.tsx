@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
   Banknote,
+  UserCog,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
 const ADMIN_NAV_ITEMS = [
   { label: 'Barangay Settings', href: '/backoffice/admin/settings', icon: Settings, exact: true },
   { label: 'Fee Configuration', href: '/backoffice/admin/settings/fees', icon: Banknote, exact: false },
+  { label: 'User Accounts', href: '/backoffice/admin/users', icon: UserCog, exact: false },
 ];
 
 interface SidebarProps {
