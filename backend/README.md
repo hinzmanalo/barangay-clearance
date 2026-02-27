@@ -138,7 +138,7 @@ src/main/java/com/barangay/clearance/
 └── shared/                  # Cross-cutting concerns
     ├── exception/           # ErrorResponse, AppException, GlobalExceptionHandler
     ├── security/            # JwtAuthFilter, SecurityConfig, UserPrincipal
-    └── util/                # PageResponse<T>
+    └── util/                # PageResponse<T>, SpecificationBuilder<T>
 ```
 
 ---
@@ -147,12 +147,16 @@ src/main/java/com/barangay/clearance/
 
 Flyway migrations are in `src/main/resources/db/migration/`:
 
-| File                         | Description                                                   |
-| ---------------------------- | ------------------------------------------------------------- |
-| `V1__initial_schema.sql`     | All 9 tables with UUID PKs (`gen_random_uuid()`)              |
-| `V2__seed_settings.sql`      | Singleton rows for `barangay_settings` and `fee_config`       |
-| `V3__seed_admin.sql`         | Initial admin user (BCrypt hash, `must_change_password=true`) |
-| `V4__expand_user_status.sql` | Expanded user status values                                   |
+| File                                 | Description                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `V1__initial_schema.sql`             | All 9 tables with UUID PKs (`gen_random_uuid()`)                            |
+| `V2__seed_settings.sql`              | Singleton rows for `barangay_settings` and `fee_config`                     |
+| `V3__seed_admin.sql`                 | Initial admin user (BCrypt hash, `must_change_password=true`)               |
+| `V4__expand_user_status.sql`         | Expanded user status values                                                 |
+| `V5__fix_admin_password.sql`         | Corrects the BCrypt hash for the seeded admin user                          |
+| `V6__clearance_extra_columns.sql`    | Adds `purpose_other` and `copies` columns to `clearance_requests`           |
+| `V7__fix_year_month_column_type.sql` | Alters `year_month` from `CHAR(7)` to `VARCHAR(7)` for Hibernate validation |
+| `V8__payments_add_columns.sql`       | Adds `idempotency_expires_at` and `payment_method` to `payments`            |
 
 Migrations run automatically on application startup. Do **not** modify existing migration files — create a new versioned file instead.
 

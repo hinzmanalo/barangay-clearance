@@ -9,7 +9,130 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ## [Unreleased]
 
-> Work planned but not yet started (Phases 6–10).
+> Work planned but not yet started (Phases 9–11).
+
+---
+
+## [0.6.0] — Phase 8: Frontend Polish & Navigation — 2026-02-26
+
+### Added / Changed
+
+#### Frontend
+
+**Route Guards**
+
+- `src/middleware.ts` — completed Next.js Edge Middleware implementation: unauthenticated requests to protected paths redirect to `/login?next=<path>`; `/backoffice/admin/**` requires `ADMIN` role (non-admins receive a 403 response); public routes (`/login`, `/register`) redirect already-authenticated users to their role home. Token validation is purely JWT claim-based — no network call at the edge.
+
+**Auth Context**
+
+- `src/context/AuthContext.tsx` — completed with `localStorage` persistence and re-hydration on mount. The access token is mirrored to an `accessToken` cookie on login and re-hydration so `middleware.ts` (running at the Edge before the React tree) can read it for route enforcement. On refresh-token failure, `clearAuth()` wipes both `localStorage` and the cookie.
+
+**Dashboard**
+
+- Backoffice dashboard — three summary cards populated from `GET /clearances/summary` (`pendingApproval`, `approvedAwaitingPayment`, `releasedToday`); auto-refreshes every 30 seconds via `refetchInterval: 30_000`; Skeleton placeholders during initial load.
+
+**Error Toast System**
+
+- `src/components/shared/ErrorToast.tsx` — re-exports `toast` from `sonner`. The `<Toaster>` is mounted once in `providers.tsx`. All previous inline `serverError` / local toast-state patterns replaced with `toast.success` / `toast.error` calls across all pages.
+
+**Loading Skeletons**
+
+- `src/components/shared/LoadingSkeleton.tsx` — `TableRowSkeleton`, `DetailPageSkeleton`, `CardSkeleton` Tailwind-animated placeholder components applied to all list and detail pages to prevent layout shift during data fetching.
+
+**Forced Password Change Flow**
+
+- Portal `layout.tsx` and backoffice `layout.tsx` — both check `mustChangePassword` from `useAuth()` on mount and redirect to `/change-password` if set. Prevents access to any protected page until the user updates their temporary password.
+
+**Mobile Layout**
+
+- Tailwind responsive layout applied throughout: backoffice sidebar collapses to an off-canvas drawer on `< md` breakpoints; portal pages stack to a single column; card grids reflow from multi-column to single-column.
+
+**Shared Components**
+
+- `src/components/shared/StatusBadge.tsx` — color-coded badge for `ClearanceStatus` values.
+- `src/components/shared/PaymentBadge.tsx` — color-coded badge for `ClearancePaymentStatus` values.
+- `src/components/shared/PageHeader.tsx` — consistent page title + optional breadcrumb slot used across all detail pages.
+
+---
+
+## [0.5.0] — Phase 7: Reports Module — 2026-02-26
+
+### Added
+
+#### Backend
+
+- `ReportRowProjection.java` — Spring Data interface projection for the native SQL report query. Maps selected column aliases directly to getter methods, avoiding the need for `@SqlResultSetMapping` or a MapStruct mapper for native queries.
+
+- `ReportRowDTO.java` — serializable response DTO populated from `ReportRowProjection` fields. Carries: `clearanceNumber`, `residentName`, `purpose`, `status`, `paymentStatus`, `feeAmount`, `createdAt`, `issuedAt`.
+
+- `ReportRepository.java` — native SQL query interface with nullable optional filters (`status`, `from`, `to`, `residentId`). Uses `COALESCE(:param, col) = col` so passing `null` means "no filter on this column", sidestepping JPQL type-inference issues with nullable enum params.
+
+- `ReportsService.java` — builds the `Pageable` from incoming request params and delegates to `ReportRepository`; wraps the result in `PageResponse<ReportRowDTO>`.
+
+- `ReportsController.java` (`GET /api/v1/reports/clearances`, roles: `ADMIN`, `APPROVER`) — accepts optional query params `status`, `from` (ISO date), `to` (ISO date), `residentId`, `page`, `size`; returns paginated `ReportRowDTO` list.
+
+#### Frontend
+
+- `src/types/clearance.ts` — `ReportRow` type added.
+
+- `src/hooks/useReports.ts` — `useReports(params)` TanStack React Query hook; all filter fields are part of the query key so different filter combinations cache independently.
+
+- `/backoffice/reports/page.tsx` — filter panel (status dropdown, from/to date inputs), paginated results table (clearance number, resident name, purpose, status, payment status, date issued), and empty state with explanatory message.
+
+---
+
+## [0.4.2] — Phase 6: Settings Module — 2026-02-26
+
+### Added
+
+#### Backend
+
+**Entities**
+
+- `FeeConfig.java` — singleton fee configuration entity (singleton row enforced by `CHECK (id = 1)`, matching the pattern of `barangay_settings`). Fields: `standardFee`, `rushFee`, `copyCost`, `waiverNotes`.
+
+**Repositories**
+
+- `FeeConfigRepository.java` — `findById(1)` access to the singleton fee row seeded by Flyway V2.
+
+**DTOs**
+
+- `BarangaySettingsDTO.java` — read/write DTO for the barangay profile (name, municipality, province, captain, `hasLogo` boolean).
+- `FeeConfigDTO.java` — read/write DTO for fee configuration values.
+
+**Service**
+
+- `SettingsService.java` — full settings management:
+  - Get/update barangay profile fields.
+  - Logo upload: validates MIME type (PNG/JPEG/GIF only) and file size (max 2 MB); stores bytes in `barangay_settings.logo`.
+  - Logo binary retrieval: streams raw bytes with the stored MIME type as `Content-Type`.
+  - Get/update fee configuration via `ON CONFLICT (id) DO UPDATE` semantics.
+
+**Controller**
+
+- `SettingsController.java` (`/api/v1/settings`, ADMIN only) — endpoints:
+  - `GET /settings` — retrieve barangay profile.
+  - `PUT /settings` — update barangay profile.
+  - `POST /settings/logo` — upload logo (multipart; validated at service layer).
+  - `GET /settings/logo` — stream logo binary.
+  - `GET /settings/fees` — retrieve fee configuration.
+  - `PUT /settings/fees` — update fee configuration.
+
+### Changed
+
+#### Backend
+
+- `ClearanceService.resolveFee()` — now reads the live `fee_config` row via `FeeConfigRepository` (with a runtime fallback to ₱50/₱100 defaults if the row is absent) instead of hardcoded constants. Fee changes take effect immediately for new clearance requests without a server restart.
+
+#### Frontend
+
+- `src/types/settings.ts` — updated with `BarangaySettings`, `FeeConfig`, `UpdateSettingsPayload`, `UpdateFeesPayload` interfaces; `hasLogo: boolean` flag added to `BarangaySettings`.
+
+- `src/hooks/useSettings.ts` — TanStack React Query hooks: `useBarangaySettings`, `useUpdateSettings`, `useUploadLogo`, `useFeeConfig`, `useUpdateFees`. Logo upload uses Axios `FormData`.
+
+- `/backoffice/admin/settings/page.tsx` — barangay profile form with name, municipality, province, and captain fields; inline logo preview using `GET /settings/logo`; upload button triggers a file input filtered to image types.
+
+- `/backoffice/admin/settings/fees/page.tsx` — fee configuration form: standard fee, rush fee, copy cost, and waiver notes; React Hook Form + Zod validation.
 
 ---
 
@@ -81,6 +204,52 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
   Connector segments are filled green only when the step to their left has a completed/payment-done state, so the visual progression is always accurate. The rejected branch is unchanged — a red dot still appears at the For Approval step.
 
 - `src/app/portal/requests/[id]/page.tsx` — passes `paymentStatus={cr.paymentStatus}` to `StatusTimeline` to satisfy the updated prop interface.
+
+---
+
+## [0.3.4] — Phase 4: Payments Module — 2026-02-26
+
+### Added
+
+#### Backend
+
+**Entities**
+
+- `Payment.java` — clearance payment entity stored in `payments`. Tracks `residentId`, `clearanceRequestId`, `amount`, `status` (`UNPAID`, `PAID`, `WAIVED`), `paymentMethod` (`STUB`, `CASH`), `idempotencyKey`, `idempotencyExpiresAt`, `initiatedByUserId`, and a `responseBody` TEXT column that stores the raw gateway response for audit. The composite unique index on `(idempotency_key, initiated_by_user_id)` enforces idempotency at the database level.
+
+**Payment Gateway Abstraction**
+
+- `PaymentGateway.java` — Java interface defining a single `charge(PaymentChargeRequest)` method. Designed to be swapped for a real provider (PayMongo, Maya) without touching service logic.
+
+- `StubPaymentGateway.java` — `@Primary` implementation for local development and the MVP. Always returns a successful mock response and sets payment status to `PAID`.
+
+**Repository**
+
+- `PaymentRepository.java` — idempotency lookup: `findByIdempotencyKeyAndInitiatedByUserId(key, userId)`; detects duplicate charge attempts within the expiry window before calling the gateway.
+
+**Service**
+
+- `PaymentService.java` — orchestrates the charge flow: checks idempotency key against existing unexpired payments, delegates to `PaymentGateway`, persists the `Payment` row, and returns the `PaymentDTO`. `ClearanceService.markPaid()` delegates here and promotes clearance `paymentStatus` to `PAID`.
+
+**Mapper**
+
+- `PaymentMapper.java` — MapStruct mapper from `Payment` entity to `PaymentDTO`.
+
+**Controller**
+
+- `PaymentController.java` (`/api/v1/payments`) — `POST /initiate` (CLERK, ADMIN): initiates a charge for a clearance. `idempotencyKey` is a required client-generated UUID in the request body.
+
+**Database**
+
+- `V8__payments_add_columns.sql` — adds `idempotency_expires_at TIMESTAMPTZ` (default `now() + INTERVAL '24 hours'`) and `payment_method VARCHAR(10)` (CHECK: `STUB | CASH`) columns to the `payments` table.
+
+#### Frontend
+
+- `src/types/payment.ts` — populated with `Payment`, `InitiatePaymentPayload`, `PaymentStatus` interfaces.
+
+- Backoffice clearance detail (`/backoffice/clearances/[id]`) — **"Mark as Paid"** button (CLERK/ADMIN) visible when status is `APPROVED` and `paymentStatus` is `UNPAID`. Generates `idempotencyKey` via `crypto.randomUUID()` before submission to prevent duplicate charges on retry.
+
+- Portal request detail (`/portal/requests/[id]`) — **"Pay Now"** button visible to the resident when their request is `APPROVED` and `paymentStatus` is `UNPAID`.
 
 ---
 
@@ -433,7 +602,12 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ---
 
-[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/your-org/barangay-clearance/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/your-org/barangay-clearance/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/your-org/barangay-clearance/compare/v0.4.2...v0.5.0
+[0.4.2]: https://github.com/your-org/barangay-clearance/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/your-org/barangay-clearance/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/your-org/barangay-clearance/compare/v0.3.4...v0.4.0
 [0.3.4]: https://github.com/your-org/barangay-clearance/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/your-org/barangay-clearance/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/your-org/barangay-clearance/compare/v0.3.1...v0.3.2
