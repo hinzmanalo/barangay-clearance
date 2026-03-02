@@ -46,8 +46,8 @@
 
 | Symbol | Meaning                           |
 | ------ | --------------------------------- |
-| ✅     | Implemented (Phase 0–1 complete)  |
-| 🔲     | Planned (Phase 2+, not yet built) |
+| ✅     | Implemented (Phases 0–3 complete) |
+| 🔲     | Planned (Phase 4+, not yet built) |
 
 ---
 
@@ -259,9 +259,11 @@ Deactivate a user account. Deactivated users cannot log in.
 
 > All routes require `CLERK` or `ADMIN` role unless noted.
 
-### GET `/residents` 🔲
+### GET `/residents` ✅
 
 Search the resident registry. Supports full-text search and purok filter.
+
+> ⚠️ **Known bug:** when `q` is `null`, Hibernate infers the parameter as `bytea` instead of `text`, causing `ERROR: function lower(bytea) does not exist`. Workaround: always pass an empty string or use explicit `CAST`. Fix tracked in blockers.
 
 **Query params:**
 
@@ -296,7 +298,7 @@ Search the resident registry. Supports full-text search and purok filter.
 
 ---
 
-### POST `/residents` 🔲
+### POST `/residents` ✅
 
 Create a walk-in resident record (no portal account).
 
@@ -322,15 +324,15 @@ Create a walk-in resident record (no portal account).
 
 ---
 
-### GET `/residents/{id}` 🔲
+### GET `/residents/{id}` ✅
 
 **Response `200`:** Single `ResidentDTO`
 
 ---
 
-### PUT `/residents/{id}` 🔲
+### PATCH `/residents/{id}` ✅
 
-Update resident details. Can also be used to link an existing `userId`.
+Partially update resident details. Only fields present in the request body are applied; absent fields are left unchanged.
 
 **Request body:** Same fields as `POST /residents` (all optional — partial update).
 
@@ -338,7 +340,7 @@ Update resident details. Can also be used to link an existing `userId`.
 
 ---
 
-### GET `/residents/pending-users` 🔲
+### GET `/residents/pending-users` ✅
 
 List residents whose linked portal account has `status = PENDING_VERIFICATION`. Used by clerks to review new registrations.
 
@@ -346,23 +348,23 @@ List residents whose linked portal account has `status = PENDING_VERIFICATION`. 
 
 ---
 
-### POST `/residents/users/{userId}/activate` 🔲
+### PATCH `/residents/{id}/activate-user` ✅
 
 Activate a pending resident portal account. Sets `user.status = ACTIVE`.
 
 **Response `200`:** Updated `ResidentDTO`
 
-| Code              | Meaning                                   |
-| ----------------- | ----------------------------------------- |
-| `200 OK`          | Account activated                         |
-| `404 Not Found`   | User not found                            |
-| `400 Bad Request` | User not in `PENDING_VERIFICATION` status |
+| Code              | Meaning                                      |
+| ----------------- | -------------------------------------------- |
+| `200 OK`          | Account activated                            |
+| `404 Not Found`   | Resident not found                           |
+| `400 Bad Request` | Account not in `PENDING_VERIFICATION` status |
 
 ---
 
-### POST `/residents/users/{userId}/reject` 🔲
+### PATCH `/residents/{id}/reject-user` ✅
 
-Reject a pending registration. Sets `user.status = REJECTED`.
+Reject a pending registration. Sets `user.status = REJECTED`. Resident record is preserved.
 
 **Response `200`:** Updated `ResidentDTO`
 
@@ -370,24 +372,26 @@ Reject a pending registration. Sets `user.status = REJECTED`.
 
 ## 4. Clearances — Back-office `CLERK, APPROVER, ADMIN`
 
-### GET `/clearances` 🔲
+### GET `/clearances` ✅
 
-List all clearance requests with optional filters.
+List all clearance requests with optional filters. Filters are combined with AND; omitted params match all values.
 
 **Query params:**
 
-| Param           | Type     | Values                                                      |
-| --------------- | -------- | ----------------------------------------------------------- |
-| `status`        | `string` | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` |
-| `paymentStatus` | `string` | `UNPAID`, `PAID`, `WAIVED`                                  |
-| `page`          | `int`    | Default `0`                                                 |
-| `size`          | `int`    | Default `20`                                                |
+| Param           | Type              | Values                                             |
+| --------------- | ----------------- | -------------------------------------------------- |
+| `status`        | `string`          | `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` |
+| `paymentStatus` | `string`          | `UNPAID`, `PAID`                                   |
+| `from`          | `ISO-8601 string` | Inclusive start of `createdAt` range               |
+| `to`            | `ISO-8601 string` | Inclusive end of `createdAt` range                 |
+| `page`          | `int`             | Default `0`                                        |
+| `size`          | `int`             | Default `20`                                       |
 
 **Response `200`:** `PageResponse<ClearanceRequestDTO>`
 
 ---
 
-### POST `/clearances` 🔲
+### POST `/clearances` ✅
 
 Create a walk-in clearance request. Immediately enters `FOR_APPROVAL` state.
 
@@ -407,40 +411,47 @@ Create a walk-in clearance request. Immediately enters `FOR_APPROVAL` state.
 ```
 
 > `purpose` values: `EMPLOYMENT`, `BUSINESS`, `TRAVEL`, `LOAN`, `SCHOLARSHIP`, `OTHER`  
-> `urgency` values: `REGULAR`, `EXPRESS`  
+> `urgency` values: `REGULAR`, `RUSH`  
 > If `purpose = "OTHER"`, `purposeOther` is required.
+
+> **Fee:** `REGULAR` → ₱50.00, `RUSH` → ₱100.00 (stub values until Phase 6 wires in live settings)
 
 **Response `201 Created`:** `ClearanceRequestDTO`
 
 ---
 
-### GET `/clearances/{id}` 🔲
+### GET `/clearances/{id}` ✅
 
 **Response `200`:** Single `ClearanceRequestDTO`
 
 ```json
 {
   "id": "uuid",
-  "clearanceNumber": "2026-02-0001",
+  "clearanceNumber": "2026-020001",
   "residentId": "uuid",
-  "residentFullName": "Juan dela Cruz",
+  "residentName": "dela Cruz, Juan",
+  "requestedBy": "uuid",
   "status": "APPROVED",
   "paymentStatus": "UNPAID",
   "purpose": "EMPLOYMENT",
+  "purposeOther": null,
   "urgency": "REGULAR",
+  "feeAmount": "50.00",
   "copies": 1,
   "notes": "...",
-  "rejectionReason": null,
-  "createdByUserId": "uuid",
+  "reviewedBy": null,
+  "reviewedAt": null,
+  "issuedAt": null,
   "createdAt": "2026-02-24T08:00:00Z",
-  "updatedAt": "2026-02-24T09:00:00Z",
-  "issuedAt": null
+  "updatedAt": "2026-02-24T09:00:00Z"
 }
 ```
 
+> `residentName` is formatted `lastName, firstName` (denormalized at query time). `clearanceNumber` follows the format `YYYY-MMNNNN` and is `null` until the request is `RELEASED`.
+
 ---
 
-### POST `/clearances/{id}/approve` 🔲
+### POST `/clearances/{id}/approve` ✅
 
 Approve a `FOR_APPROVAL` clearance.
 
@@ -456,7 +467,7 @@ Approve a `FOR_APPROVAL` clearance.
 
 ---
 
-### POST `/clearances/{id}/reject` 🔲
+### POST `/clearances/{id}/reject` ✅
 
 Reject a `FOR_APPROVAL` clearance. Reason is mandatory.
 
@@ -479,7 +490,7 @@ Reject a `FOR_APPROVAL` clearance. Reason is mandatory.
 
 ---
 
-### POST `/clearances/{id}/release` 🔲
+### POST `/clearances/{id}/release` ✅
 
 Release an `APPROVED` + `PAID` clearance. Assigns the clearance number at this point.
 
@@ -494,7 +505,7 @@ Release an `APPROVED` + `PAID` clearance. Assigns the clearance number at this p
 
 ---
 
-### GET `/clearances/summary` 🔲
+### GET `/clearances/summary` ✅
 
 Dashboard count cards broken down by status.
 
@@ -504,16 +515,15 @@ Dashboard count cards broken down by status.
 
 ```json
 {
-  "forApproval": 12,
-  "approved": 5,
-  "released": 230,
-  "rejected": 3
+  "pendingApproval": 12,
+  "approvedAwaitingPayment": 5,
+  "releasedToday": 3
 }
 ```
 
 ---
 
-### GET `/clearances/{id}/pdf` 🔲
+### GET `/clearances/{id}/pdf` 🔲 _(Phase 5)_
 
 Download the clearance certificate PDF. Only available for `RELEASED` clearances.
 
@@ -535,7 +545,7 @@ Download the clearance certificate PDF. Only available for `RELEASED` clearances
 
 > All routes resolve the resident from the JWT principal. The `residentId` is **never** accepted as a request parameter — this prevents horizontal privilege escalation.
 
-### GET `/me/clearances` 🔲
+### GET `/me/clearances` ✅
 
 List the authenticated resident's own clearance requests.
 
@@ -545,7 +555,7 @@ List the authenticated resident's own clearance requests.
 
 ---
 
-### POST `/me/clearances` 🔲
+### POST `/me/clearances` ✅
 
 Submit a new clearance request. Must have `ACTIVE` account status.
 
@@ -570,17 +580,17 @@ Submit a new clearance request. Must have `ACTIVE` account status.
 
 ---
 
-### GET `/me/clearances/{id}` 🔲
+### GET `/me/clearances/{id}` ✅
 
-Get a single clearance request. Returns `403` if the request does not belong to the authenticated resident.
+Get a single clearance request. Returns `404` if the request does not belong to the authenticated resident (ownership enforced, not exposed as 403).
 
 **Response `200`:** `ClearanceRequestDTO`
 
 ---
 
-### PUT `/me/clearances/{id}` 🔲
+### PATCH `/me/clearances/{id}/resubmit` ✅
 
-Resubmit a `REJECTED` clearance (moves it back to `FOR_APPROVAL`). Ownership is verified.
+Resubmit a `REJECTED` clearance (moves it back to `FOR_APPROVAL`). Ownership is verified. All editable fields (purpose, urgency, copies, notes) are replaced with the new values.
 
 **Request body:** Same as `POST /me/clearances` (updated fields).
 
@@ -594,7 +604,7 @@ Resubmit a `REJECTED` clearance (moves it back to `FOR_APPROVAL`). Ownership is 
 
 ---
 
-### GET `/me/clearances/{id}/pdf` 🔲
+### GET `/me/clearances/{id}/pdf` 🔲 _(Phase 5)_
 
 Download the resident's own clearance certificate. Only available when `status = RELEASED`.
 

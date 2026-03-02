@@ -18,7 +18,7 @@ const registerSchema = z
     middleName: z.string().max(100).optional(),
     lastName: z.string().min(1, 'Last name is required').max(100),
     birthDate: z.string().min(1, 'Birth date is required'),
-    gender: z.enum(['MALE', 'FEMALE', 'OTHER'], { required_error: 'Gender is required' }),
+    gender: z.enum(['MALE', 'FEMALE', 'OTHER'], { error: 'Gender is required' }),
     address: z.string().min(1, 'Address is required'),
     contactNumber: z.string().max(20).optional(),
   })

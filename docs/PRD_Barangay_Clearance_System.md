@@ -1,9 +1,9 @@
 # PRD — Barangay Clearance System (MVP)
 
-**Version:** 1.0.0
-**Date:** 2026-02-24
+**Version:** 2.0.0
+**Date:** 2026-02-27
 **Author:** Solo Developer
-**Status:** Ready for Development
+**Status:** Implementation Complete (Phases 0–8, 11 done; Testing & Deployment pending)
 
 ---
 
@@ -26,6 +26,7 @@
 15. [Deployment Architecture](#15-deployment-architecture)
 16. [Phase 2 Roadmap](#16-phase-2-roadmap)
 17. [Technical Decisions Log (ADRs)](#17-technical-decisions-log-adrs)
+18. [Implementation Status](#18-implementation-status) *(added v2.0.0)*
 
 ---
 
@@ -52,15 +53,16 @@ The **Barangay Clearance System** digitizes the end-to-end barangay clearance is
 ### 1.4 Scope (MVP)
 
 **In scope:**
-- Resident registration, login, request submission, status tracking, PDF download
-- Clerk: resident management, request review, payment recording, print & release
-- Approver: approve or reject requests
-- Admin: user management (staff accounts), barangay settings, fee configuration
-- JWT-based authentication with role-based access control
-- Payment stub (simulates PayMongo/Maya for Phase 2)
-- Clearance PDF generation (Apache PDFBox)
-- Basic reports (on-screen, no export)
-- Docker Compose deployment
+- Resident registration, login, request submission, status tracking, PDF download ✅
+- Clerk: resident management, request review, payment recording, print & release ✅
+- Approver: approve or reject requests ✅
+- Admin: user management (staff accounts), barangay settings, fee configuration ✅
+- JWT-based authentication with role-based access control ✅
+- Payment stub (simulates PayMongo/Maya for Phase 2) ✅
+- Clearance PDF generation (Apache PDFBox) ✅
+- Basic reports (on-screen, no export) ✅
+- Docker Compose deployment (infrastructure defined, production deployment pending)
+- **Added:** Password change flow, user self-service profile, role management, dashboard summary API ✅
 
 **Out of scope (Phase 2):**
 - Email/SMS notifications
@@ -487,23 +489,23 @@ The system administrator (usually the barangay IT officer or a senior clerk).
 | Concern | Technology | Version | Notes |
 |---------|-----------|---------|-------|
 | **Language** | Java | 21 (LTS) | Virtual threads via Project Loom available |
-| **Framework** | Spring Boot | 3.3.x | Auto-configuration, embedded Tomcat |
+| **Framework** | Spring Boot | 3.3.4 | Auto-configuration, embedded Tomcat |
 | **Build Tool** | Maven | 3.9.x | `./mvnw` wrapper committed to repo |
 | **Web Layer** | Spring MVC | (Spring Boot managed) | REST controllers, `@RestController` |
 | **Security** | Spring Security | 6.x | JWT filter chain, `@PreAuthorize` RBAC |
-| **JWT** | JJWT (io.jsonwebtoken) | 0.12.x | Access + refresh token signing/validation |
+| **JWT** | JJWT (io.jsonwebtoken) | 0.12.6 | Access + refresh token signing/validation |
 | **Password Hashing** | BCrypt | Spring Security built-in | Strength 12 |
 | **ORM / Persistence** | Spring Data JPA + Hibernate | (Spring Boot managed) | Repositories, JPQL, native queries |
 | **Database (dev)** | PostgreSQL 16 (Docker) | 16 | Local dev via `docker-compose.dev.yml`; same engine as prod |
 | **Database (prod)** | PostgreSQL 16 | 16 | Production database; same image used in all environments |
-| **DB Migrations** | Flyway | 9.x | Versioned `.sql` files under `db/migration/` |
+| **DB Migrations** | Flyway | 10.x | Versioned `.sql` files under `db/migration/` |
 | **Connection Pool** | HikariCP | (Spring Boot managed) | Default pool, configurable via `application.yml` |
 | **Validation** | Jakarta Bean Validation | 3.x | `@Valid`, `@NotBlank`, `@Size`, etc. |
-| **PDF Generation** | Apache PDFBox | 3.0.x | Clearance certificate generation (Apache License 2.0) |
-| **Object Mapping** | MapStruct | 1.5.x | Compile-time DTO ↔ Entity mapping |
-| **Boilerplate Reduction** | Lombok | 1.18.x | `@Data`, `@Builder`, `@Slf4j`, etc. |
-| **API Documentation** | SpringDoc OpenAPI (Swagger UI) | 2.x | Auto-generated from annotations, served at `/swagger-ui.html` |
-| **Testing** | JUnit 5 + Mockito + AssertJ | (Spring Boot managed) | Unit + integration tests |
+| **PDF Generation** | Apache PDFBox | 3.0.3 | Clearance certificate generation (Apache License 2.0) |
+| **Object Mapping** | MapStruct | 1.5.5.Final | Compile-time DTO ↔ Entity mapping |
+| **Boilerplate Reduction** | Lombok | 1.18.34 | `@Data`, `@Builder`, `@Slf4j`, etc. |
+| **API Documentation** | SpringDoc OpenAPI (Swagger UI) | 2.6.0 | Auto-generated from annotations, served at `/swagger-ui.html` |
+| **Testing** | JUnit 5 + Mockito + AssertJ + Testcontainers | (Spring Boot managed) | Unit + integration tests (PostgreSQL Testcontainers 1.20.1) |
 | **Containerization** | Docker + Docker Compose | — | Single-server deployment |
 
 ### 6.1 High-Level Architecture
@@ -556,38 +558,43 @@ The system administrator (usually the barangay IT officer or a senior clerk).
 ```
 src/main/java/com/barangay/clearance/
 ├── identity/
-│   ├── controller/      AuthController, UserController
-│   ├── dto/             LoginRequest, RegisterRequest, TokenResponse, UserDTO
+│   ├── controller/      AuthController, UserController, MeController
+│   ├── dto/             LoginRequest, RegisterRequest, RefreshRequest, TokenResponse,
+│   │                    UserDTO, CreateStaffRequest, UpdateStaffRequest,
+│   │                    UpdateRoleRequest, AdminResetPasswordRequest,
+│   │                    UpdateProfileRequest, ChangePasswordRequest
 │   ├── entity/          User, RefreshToken
 │   ├── repository/      UserRepository, RefreshTokenRepository
 │   └── service/         AuthService, UserService, JwtService
 │
 ├── residents/
 │   ├── controller/      ResidentController
-│   ├── dto/             ResidentDTO, ResidentSearchRequest
+│   ├── dto/             ResidentDTO, CreateResidentRequest, UpdateResidentRequest,
+│   │                    ResidentSearchRequest
 │   ├── entity/          Resident
+│   ├── mapper/          ResidentMapper (MapStruct)
 │   ├── repository/      ResidentRepository
 │   └── service/         ResidentService
 │
 ├── clearance/
 │   ├── controller/      ClearanceController, PortalClearanceController
-│   ├── dto/             ClearanceRequestDTO, CreateClearanceRequest, ApproveRequest, RejectRequest
+│   ├── dto/             ClearanceRequestDTO, ClearanceSummaryDTO,
+│   │                    CreateClearanceRequest, RejectRequest
 │   ├── entity/          ClearanceRequest, ClearanceNumberSequence
+│   ├── event/           ClearanceStatusChangedEvent
+│   ├── mapper/          ClearanceMapper (MapStruct)
 │   ├── repository/      ClearanceRequestRepository, ClearanceNumberSequenceRepository
 │   └── service/         ClearanceService, ClearanceNumberService
 │
 ├── payments/
 │   ├── controller/      PaymentController
-│   ├── dto/             PaymentDTO, InitiatePaymentRequest
+│   ├── dto/             PaymentDTO
 │   ├── entity/          Payment
+│   ├── gateway/         PaymentGateway (interface), StubPaymentGateway
+│   │                    PaymentRequest (record), PaymentResult (record)
+│   ├── mapper/          PaymentMapper (MapStruct)
 │   ├── repository/      PaymentRepository
-│   ├── service/         PaymentService
-│   └── gateway/         PaymentGateway (interface), StubPaymentGateway, PayMongoGateway (Phase 2)
-│
-├── audit/
-│   ├── entity/          AuditLog
-│   ├── repository/      AuditLogRepository
-│   └── service/         AuditService
+│   └── service/         PaymentService
 │
 ├── settings/
 │   ├── controller/      SettingsController
@@ -598,27 +605,41 @@ src/main/java/com/barangay/clearance/
 │
 ├── reports/
 │   ├── controller/      ReportsController
-│   ├── dto/             ReportFilterRequest, ReportRowDTO
+│   ├── dto/             ReportRowDTO
+│   ├── projection/      ReportRowProjection (Spring Data interface projection)
+│   ├── repository/      ReportRepository
 │   └── service/         ReportsService
 │
 ├── pdf/
-│   └── service/         ClearancePdfService
+│   └── service/         ClearancePdfService (interface), ClearancePdfServiceImpl
 │
 └── shared/
     ├── exception/        GlobalExceptionHandler, AppException, ErrorResponse
-    ├── security/         JwtAuthFilter, SecurityConfig
-    └── util/             PageResponse, Constants
+    ├── security/         JwtAuthFilter, SecurityConfig, LocalSecurityConfig, UserPrincipal
+    └── util/             PageResponse<T>, SpecificationBuilder<T>
 ```
+
+> **Implementation additions beyond original PRD:**
+> - `MeController` — self-service profile endpoints (`/users/me`)
+> - MapStruct mapper classes in each module (`ResidentMapper`, `ClearanceMapper`, `PaymentMapper`)
+> - `ClearanceStatusChangedEvent` — Spring Application Event for event-driven workflows
+> - `ClearanceSummaryDTO` — dashboard summary counts
+> - `ReportRowProjection` — Spring Data interface projection for efficient report queries
+> - `SpecificationBuilder<T>` — generic fluent JPA Specification builder in shared utils
+> - `LocalSecurityConfig` — separate security config for local dev (permits all requests)
+> - Audit module (entity + repository) exists in schema but service layer not yet implemented
 
 ### 6.3 Frontend Route Map
 
 ```
 / → redirect based on role
 /login
-/register  (residents only)
+/register               (residents only)
+/change-password        (triggered when must_change_password = true)
 
 /portal/                          (RESIDENT role required)
   /portal/dashboard               My Requests list
+  /portal/requests                Request list view
   /portal/requests/new            Submit new request
   /portal/requests/[id]           Request detail + status timeline + pay/download
 
@@ -633,9 +654,12 @@ src/main/java/com/barangay/clearance/
   /backoffice/reports             Reports with filters
   /backoffice/admin/users         User management  (ADMIN only)
   /backoffice/admin/users/new     Create staff account  (ADMIN only)
+  /backoffice/admin/users/[id]    Staff detail + edit  (ADMIN only)
   /backoffice/admin/settings      Barangay settings + logo  (ADMIN only)
   /backoffice/admin/settings/fees Fee configuration  (ADMIN only)
 ```
+
+> **Implementation additions:** `/change-password` page, `/portal/requests` list view, `/backoffice/admin/users/[id]` staff detail page.
 
 ---
 
@@ -645,21 +669,23 @@ src/main/java/com/barangay/clearance/
 
 ```sql
 CREATE TABLE users (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(255) NOT NULL UNIQUE,
-    password_hash   VARCHAR(255) NOT NULL,
-    first_name      VARCHAR(100) NOT NULL,
-    last_name       VARCHAR(100) NOT NULL,
-    role            VARCHAR(20)  NOT NULL CHECK (role IN ('RESIDENT','CLERK','APPROVER','ADMIN')),
-    status          VARCHAR(30)  NOT NULL DEFAULT 'PENDING_VERIFICATION'
-                    CHECK (status IN ('PENDING_VERIFICATION','ACTIVE','REJECTED','DEACTIVATED')),
-    must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    email               VARCHAR(255) NOT NULL UNIQUE,
+    password_hash       VARCHAR(255) NOT NULL,
+    first_name          VARCHAR(100) NOT NULL,
+    last_name           VARCHAR(100) NOT NULL,
+    role                VARCHAR(20)  NOT NULL CHECK (role IN ('ADMIN','CLERK','APPROVER','RESIDENT')),
+    status              VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'
+                        CHECK (status IN ('ACTIVE','INACTIVE','PENDING_VERIFICATION','REJECTED','DEACTIVATED')),
+    must_change_password BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role_status ON users(role, status);
+CREATE INDEX idx_users_email ON users (email);
+CREATE INDEX idx_users_role_status ON users (role, status);
 ```
+
+> **Implementation note:** The initial V1 migration created `status` with only `ACTIVE`/`INACTIVE`. V4 expanded the constraint to include `PENDING_VERIFICATION`, `REJECTED`, and `DEACTIVATED`.
 
 ---
 
@@ -667,15 +693,16 @@ CREATE INDEX idx_users_role_status ON users(role, status);
 
 ```sql
 CREATE TABLE refresh_tokens (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash      VARCHAR(255) NOT NULL UNIQUE,
-    expires_at      TIMESTAMPTZ  NOT NULL,
-    revoked         BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash  VARCHAR(64) NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    revoked     BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 ```
+
+> **Implementation note:** `token_hash` is `VARCHAR(64)` (SHA-256 hex digest length), not `VARCHAR(255)` as originally planned. No explicit index on `user_id` — CASCADE delete via FK is sufficient.
 
 ---
 
@@ -683,21 +710,32 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 
 ```sql
 CREATE TABLE residents (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID REFERENCES users(id) ON DELETE SET NULL,
+    id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID        REFERENCES users(id) ON DELETE SET NULL,
     first_name      VARCHAR(100) NOT NULL,
+    middle_name     VARCHAR(100),
     last_name       VARCHAR(100) NOT NULL,
-    birthdate       DATE         NOT NULL,
-    address         VARCHAR(500) NOT NULL,
-    purok_zone      VARCHAR(100),
+    birth_date      DATE         NOT NULL,
+    gender          VARCHAR(10)  NOT NULL CHECK (gender IN ('MALE','FEMALE','OTHER')),
+    address         TEXT         NOT NULL,
     contact_number  VARCHAR(20),
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    email           VARCHAR(255),
+    status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_residents_name ON residents(lower(last_name), lower(first_name));
-CREATE INDEX idx_residents_purok ON residents(lower(purok_zone));
-CREATE INDEX idx_residents_user_id ON residents(user_id);
+CREATE INDEX idx_residents_name ON residents (lower(last_name), lower(first_name));
 ```
+
+> **Implementation deviations from original PRD:**
+> - Added `middle_name` column (common in Philippine naming conventions)
+> - Added `gender` column with CHECK constraint
+> - Added `email` column on resident profile (separate from user account email)
+> - Added `status` column for resident-level activation/deactivation
+> - Column `birthdate` renamed to `birth_date` (snake_case consistency)
+> - Column `address` changed from `VARCHAR(500)` to `TEXT`
+> - Removed `purok_zone` column (address field serves the same purpose)
+> - Removed `idx_residents_purok` and `idx_residents_user_id` indexes
 
 ---
 
@@ -705,36 +743,42 @@ CREATE INDEX idx_residents_user_id ON residents(user_id);
 
 ```sql
 CREATE TABLE clearance_requests (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    clearance_number    VARCHAR(20),           -- assigned at RELEASE: YYYY-MM-NNNN
-    resident_id         UUID NOT NULL REFERENCES residents(id),
-    purpose             VARCHAR(50) NOT NULL
-                        CHECK (purpose IN (
-                            'EMPLOYMENT','TRAVEL','LOAN_BUSINESS_LICENSING',
-                            'SCHOOL_POLICE_OTHER','OTHER'
-                        )),
-    purpose_other       VARCHAR(255),          -- required when purpose = OTHER
-    urgency             VARCHAR(10) NOT NULL CHECK (urgency IN ('REGULAR','EXPRESS')),
-    copies              INTEGER NOT NULL DEFAULT 1 CHECK (copies >= 1 AND copies <= 10),
-    notes               TEXT,
-    status              VARCHAR(20) NOT NULL DEFAULT 'FOR_APPROVAL'
-                        CHECK (status IN ('DRAFT','FOR_APPROVAL','APPROVED','REJECTED','RELEASED')),
-    payment_status      VARCHAR(10) NOT NULL DEFAULT 'UNPAID'
-                        CHECK (payment_status IN ('UNPAID','PAID')),
-    rejection_reason    TEXT,
-    submitted_at        TIMESTAMPTZ,
-    approved_at         TIMESTAMPTZ,
-    released_at         TIMESTAMPTZ,
-    issued_at           TIMESTAMPTZ,           -- same as released_at, stamped on PDF
-    created_by_user_id  UUID REFERENCES users(id),
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    clearance_number VARCHAR(12),              -- assigned at RELEASE: YYYY-MMNNNN
+    resident_id      UUID        NOT NULL REFERENCES residents(id),
+    requested_by     UUID        NOT NULL REFERENCES users(id),
+    purpose          VARCHAR(50) NOT NULL,
+    purpose_other    VARCHAR(255),             -- added by V6 migration
+    urgency          VARCHAR(10) NOT NULL DEFAULT 'STANDARD'
+                     CHECK (urgency IN ('STANDARD','RUSH')),
+    copies           INTEGER     NOT NULL DEFAULT 1,  -- added by V6 migration
+    fee_amount       NUMERIC(10,2) NOT NULL,
+    status           VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
+                     CHECK (status IN ('DRAFT','FOR_APPROVAL','APPROVED','REJECTED','RELEASED')),
+    payment_status   VARCHAR(10) NOT NULL DEFAULT 'UNPAID'
+                     CHECK (payment_status IN ('UNPAID','PAID')),
+    notes            TEXT,
+    reviewed_by      UUID        REFERENCES users(id),
+    reviewed_at      TIMESTAMPTZ,
+    issued_at        TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_cr_resident ON clearance_requests(resident_id);
-CREATE INDEX idx_cr_status ON clearance_requests(status);
-CREATE INDEX idx_cr_issued_at ON clearance_requests(issued_at);
-CREATE INDEX idx_cr_clearance_number ON clearance_requests(clearance_number);
+CREATE INDEX idx_cr_status ON clearance_requests (status);
+CREATE INDEX idx_cr_issued_at ON clearance_requests (issued_at);
 ```
+
+> **Implementation deviations from original PRD:**
+> - Urgency values are `STANDARD`/`RUSH` instead of `REGULAR`/`EXPRESS`
+> - `fee_amount` stored on the request itself (snapshot at creation time)
+> - `requested_by` (FK to users) instead of `created_by_user_id`
+> - `reviewed_by` / `reviewed_at` instead of `approved_at` / `released_at` (single review timestamp)
+> - No `rejection_reason` column — rejection reason stored in `notes` or via audit trail
+> - No `submitted_at` column — `created_at` serves as submission timestamp
+> - `clearance_number` is `VARCHAR(12)` (not 20)
+> - No `purpose` CHECK constraint in DDL — validated at application layer via enum
+> - `purpose_other` and `copies` added in V6 migration (not in initial schema)
+> - Removed `idx_cr_resident` and `idx_cr_clearance_number` indexes from initial schema
 
 ---
 
@@ -742,10 +786,12 @@ CREATE INDEX idx_cr_clearance_number ON clearance_requests(clearance_number);
 
 ```sql
 CREATE TABLE clearance_number_sequence (
-    year_month  CHAR(7) PRIMARY KEY,  -- e.g. '2025-02'
-    last_seq    INTEGER NOT NULL DEFAULT 0
+    year_month  VARCHAR(7) PRIMARY KEY,  -- e.g. '2025-02'
+    last_seq    INTEGER    NOT NULL DEFAULT 0
 );
 ```
+
+> **Implementation note:** Column type changed from `CHAR(7)` to `VARCHAR(7)` via V7 migration. Hibernate validates `String @Column(length=7)` as `varchar`; the original `bpchar` (CHAR) type caused schema-validation failure.
 
 The service atomically increments `last_seq` and formats the number:
 ```sql
@@ -760,27 +806,33 @@ RETURNING last_seq;
 
 ```sql
 CREATE TABLE payments (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    clearance_request_id    UUID NOT NULL UNIQUE REFERENCES clearance_requests(id),
-    idempotency_key         VARCHAR(255) NOT NULL,  -- client-supplied UUID v4 header
+    id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    clearance_request_id    UUID        NOT NULL REFERENCES clearance_requests(id),
     amount                  NUMERIC(10,2) NOT NULL,
-    method                  VARCHAR(10) NOT NULL CHECK (method IN ('ONLINE','CASH')),
-    status                  VARCHAR(10) NOT NULL DEFAULT 'PENDING'
+    idempotency_key         VARCHAR(64)  NOT NULL,
+    initiated_by_user_id    UUID        NOT NULL REFERENCES users(id),
+    provider                VARCHAR(50)  NOT NULL DEFAULT 'STUB',
+    status                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
                             CHECK (status IN ('PENDING','SUCCESS','FAILED')),
-    provider                VARCHAR(20) NOT NULL DEFAULT 'STUB'
-                            CHECK (provider IN ('STUB','CASH','PAYMONGO','MAYA','GCASH')),
-    provider_ref            VARCHAR(255),           -- external transaction ID (Phase 2)
-    response_body           JSONB,                  -- cached response for idempotency replay
-    initiated_by_user_id    UUID REFERENCES users(id),
-    idempotency_expires_at  TIMESTAMPTZ NOT NULL,   -- NOW() + 24h; key reusable after expiry
-    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    response_body           TEXT,
+    idempotency_expires_at  TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '24 hours'),  -- V8
+    payment_method          VARCHAR(10)  NOT NULL DEFAULT 'STUB'                          -- V8
+                            CHECK (payment_method IN ('STUB', 'CASH')),
+    created_at              TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at              TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
--- Unique constraint scoped per user: same key from two different users is allowed
-CREATE UNIQUE INDEX idx_payments_idempotency ON payments(idempotency_key, initiated_by_user_id);
-CREATE INDEX idx_payments_clearance ON payments(clearance_request_id);
-CREATE INDEX idx_payments_idempotency_expiry ON payments(idempotency_expires_at);
+CREATE UNIQUE INDEX idx_payments_idempotency ON payments (idempotency_key, initiated_by_user_id);
 ```
+
+> **Implementation deviations from original PRD:**
+> - `idempotency_key` is `VARCHAR(64)` (not 255)
+> - `response_body` is `TEXT` (not `JSONB`) — simpler, sufficient for cached response storage
+> - No `UNIQUE` constraint on `clearance_request_id` — allows multiple payment attempts per clearance
+> - `payment_method` column (`STUB`/`CASH`) added in V8 migration (instead of `method` with `ONLINE`/`CASH`)
+> - `provider` is `VARCHAR(50)` with no CHECK constraint — validated at application layer
+> - `idempotency_expires_at` added in V8 migration with default of `now() + 24 hours`
+> - No `provider_ref` column (deferred to Phase 2 real gateway integration)
+> - Removed `idx_payments_clearance` and `idx_payments_idempotency_expiry` indexes
 
 ---
 
@@ -788,20 +840,22 @@ CREATE INDEX idx_payments_idempotency_expiry ON payments(idempotency_expires_at)
 
 ```sql
 CREATE TABLE audit_logs (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_type          VARCHAR(60) NOT NULL,
-    actor_user_id       UUID REFERENCES users(id) ON DELETE SET NULL,
-    target_entity_type  VARCHAR(60),
-    target_entity_id    UUID,
-    old_value           JSONB,
-    new_value           JSONB,
-    ip_address          VARCHAR(45),
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID        REFERENCES users(id) ON DELETE SET NULL,
+    action      VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id   UUID,
+    details     TEXT,
+    ip_address  VARCHAR(45),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_audit_actor ON audit_logs(actor_user_id);
-CREATE INDEX idx_audit_target ON audit_logs(target_entity_type, target_entity_id);
-CREATE INDEX idx_audit_created ON audit_logs(created_at);
 ```
+
+> **Implementation deviations from original PRD:**
+> - Simplified column names: `actor_user_id` → `user_id`, `event_type` → `action`, `target_entity_type` → `entity_type`, `target_entity_id` → `entity_id`
+> - `details` is `TEXT` instead of separate `old_value`/`new_value` JSONB columns
+> - No indexes on audit_logs table (performance optimization deferred)
+> - **Note:** Audit log table is created but not yet populated with events — audit logging implementation is pending (Phase 9)
 
 ---
 
@@ -809,19 +863,24 @@ CREATE INDEX idx_audit_created ON audit_logs(created_at);
 
 ```sql
 CREATE TABLE barangay_settings (
-    id                  INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),  -- single row
-    barangay_name       VARCHAR(255) NOT NULL DEFAULT 'Barangay Name',
-    municipality        VARCHAR(255) NOT NULL DEFAULT 'Municipality',
-    province            VARCHAR(255) NOT NULL DEFAULT 'Province',
-    captain_name        VARCHAR(255) NOT NULL DEFAULT 'Barangay Captain',
-    captain_position    VARCHAR(100) NOT NULL DEFAULT 'Punong Barangay',
-    logo_image          BYTEA,                 -- PNG/JPG/GIF, max 2 MB
-    logo_content_type   VARCHAR(50),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id              INTEGER     PRIMARY KEY CHECK (id = 1),  -- single row
+    barangay_name   VARCHAR(255) NOT NULL DEFAULT 'Barangay',
+    municipality    VARCHAR(255) NOT NULL DEFAULT 'Municipality',
+    province        VARCHAR(255) NOT NULL DEFAULT 'Province',
+    captain_name    VARCHAR(255) NOT NULL DEFAULT 'Barangay Captain',
+    logo            BYTEA,                 -- PNG/JPG/GIF, max 2 MB
+    logo_mime_type  VARCHAR(50),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 -- Seeded by Flyway V2 migration
 INSERT INTO barangay_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 ```
+
+> **Implementation deviations from original PRD:**
+> - No `DEFAULT 1` on `id` — value must be explicitly provided (always 1)
+> - Removed `captain_position` column (simplified for MVP)
+> - `logo_image` renamed to `logo`
+> - `logo_content_type` renamed to `logo_mime_type`
 
 ---
 
@@ -829,14 +888,18 @@ INSERT INTO barangay_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 
 ```sql
 CREATE TABLE fee_config (
-    id              INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),  -- single row
-    regular_fee     NUMERIC(10,2) NOT NULL DEFAULT 50.00,
-    express_fee     NUMERIC(10,2) NOT NULL DEFAULT 100.00,
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id              INTEGER     PRIMARY KEY CHECK (id = 1),  -- single row
+    standard_fee    NUMERIC(10,2) NOT NULL DEFAULT 50.00,
+    rush_fee        NUMERIC(10,2) NOT NULL DEFAULT 100.00,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 -- Seeded by Flyway V2 migration
 INSERT INTO fee_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 ```
+
+> **Implementation deviations from original PRD:**
+> - `regular_fee` renamed to `standard_fee` (matches `STANDARD` urgency enum)
+> - `express_fee` renamed to `rush_fee` (matches `RUSH` urgency enum)
 
 ---
 
@@ -856,6 +919,7 @@ INSERT INTO fee_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 | POST | `/auth/login` | Public | Login, returns tokens |
 | POST | `/auth/refresh` | Public | Refresh access token |
 | POST | `/auth/logout` | Any | Revoke refresh token |
+| PUT | `/auth/change-password` | Any | Change password (required for `must_change_password` users) |
 
 **POST /auth/register**
 ```json
@@ -978,6 +1042,7 @@ INSERT INTO fee_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 | POST | `/clearances/{id}/mark-paid` | CLERK, ADMIN | Mark as paid (cash) |
 | POST | `/clearances/{id}/release` | CLERK, ADMIN | Release (assigns clearance number) |
 | GET | `/clearances/{id}/pdf` | CLERK, ADMIN | Download/print PDF |
+| GET | `/clearances/summary` | CLERK, APPROVER, ADMIN | Dashboard summary (counts by status/payment status) |
 
 **POST /clearances/{id}/reject**
 ```json
@@ -1016,7 +1081,8 @@ INSERT INTO fee_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 |--------|------|------|-------------|
 | GET | `/settings` | ADMIN | Get barangay settings |
 | PUT | `/settings` | ADMIN | Update barangay settings |
-| POST | `/settings/logo` | ADMIN | Upload logo (multipart/form-data) |
+| POST | `/settings/logo` | ADMIN | Upload logo (multipart/form-data, max 2 MB) |
+| GET | `/settings/logo` | Public | Retrieve logo as binary image |
 | GET | `/settings/fees` | ADMIN | Get fee config |
 | PUT | `/settings/fees` | ADMIN | Update fees |
 
@@ -1026,9 +1092,21 @@ INSERT INTO fee_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 
 | Method | Path | Role | Description |
 |--------|------|------|-------------|
-| GET | `/admin/users` | ADMIN | List staff users |
+| GET | `/admin/users` | ADMIN | List staff users (paginated, filterable by role/status/search) |
+| GET | `/admin/users/{id}` | ADMIN | Get user by ID |
 | POST | `/admin/users` | ADMIN | Create staff account |
+| PUT | `/admin/users/{id}` | ADMIN | Update staff profile (name, email) |
+| PUT | `/admin/users/{id}/activate` | ADMIN | Reactivate deactivated user |
 | PUT | `/admin/users/{id}/deactivate` | ADMIN | Deactivate user |
+| PUT | `/admin/users/{id}/role` | ADMIN | Change user role (cannot demote self) |
+| POST | `/admin/users/{id}/reset-password` | ADMIN | Force password reset + invalidate all refresh tokens |
+
+### 8.7.1 User Profile (Self-Service)
+
+| Method | Path | Role | Description |
+|--------|------|------|-------------|
+| GET | `/users/me` | Any | Get authenticated user's profile |
+| PUT | `/users/me` | Any | Update own profile (first/last name only) |
 
 ---
 
@@ -1129,7 +1207,7 @@ Justification: iText 7 requires a commercial license for proprietary deployments
 <dependency>
     <groupId>org.apache.pdfbox</groupId>
     <artifactId>pdfbox</artifactId>
-    <version>3.0.2</version>
+    <version>3.0.3</version>
 </dependency>
 ```
 
@@ -1500,16 +1578,20 @@ BigDecimal amount = clearance.getUrgency() == Urgency.EXPRESS
 
 ### 12.1 Technology Stack
 
-| Concern | Technology |
-|---------|-----------|
-| Framework | Next.js 14 (App Router) |
-| UI components | shadcn/ui |
-| Styling | Tailwind CSS |
-| Data fetching | TanStack Query v5 |
-| Forms | React Hook Form + Zod |
-| HTTP client | Axios with interceptor for token refresh |
-| Icons | Lucide React |
-| Date formatting | date-fns |
+| Concern | Technology | Version |
+|---------|-----------|---------|
+| Framework | Next.js 14 (App Router) | 14.2.35 |
+| UI components | shadcn/ui (custom components) | — |
+| Styling | Tailwind CSS | 3.4.1 |
+| Data fetching | TanStack React Query | 5.90.21 |
+| Forms | React Hook Form + Zod | 7.71.2 / 4.3.6 |
+| HTTP client | Axios with interceptor for token refresh | 1.13.5 |
+| Icons | Lucide React | 0.575.0 |
+| Toast notifications | Sonner | 2.0.7 |
+| JWT decoding | jwt-decode | 4.0.0 |
+| Form resolvers | @hookform/resolvers | 5.2.2 |
+
+> **Implementation note:** `date-fns` was not included — date formatting handled via native `Intl.DateTimeFormat` or inline formatting. `Sonner` was added for toast notifications (not in original PRD).
 
 ### 12.2 Resident Portal Pages
 
@@ -1809,23 +1891,25 @@ Run PostgreSQL locally for backend development. The Spring Boot app and Next.js 
 
 ```yaml
 # docker-compose.dev.yml
-version: '3.8'
+version: "3.9"
 
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: barangay_postgres_dev
     restart: unless-stopped
     environment:
       POSTGRES_DB: barangay_clearance
-      POSTGRES_USER: barangay_user
-      POSTGRES_PASSWORD: devpassword
+      POSTGRES_USER: barangay
+      POSTGRES_PASSWORD: barangay_dev
     ports:
-      - "5432:5432"          # exposed to host for local app + pgAdmin
+      - "5433:5432"          # mapped to 5433 to avoid conflicts with host PostgreSQL
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U barangay_user"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U barangay -d barangay_clearance"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
 volumes:
@@ -1836,12 +1920,14 @@ volumes:
 # Start local DB
 docker compose -f docker-compose.dev.yml up -d
 
-# Run backend (connects to localhost:5432)
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+# Run backend (connects to localhost:5433)
+cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 
 # Run frontend
-npm run dev
+cd frontend && npm run dev
 ```
+
+> **Implementation note:** Port mapped to `5433:5432` (not 5432:5432) to avoid conflicts with any host PostgreSQL instance. Username is `barangay` (not `barangay_user`).
 
 #### Production — `docker-compose.yml`
 
@@ -1944,9 +2030,15 @@ server {
 
 ```
 src/main/resources/db/migration/
-  V1__initial_schema.sql        -- all CREATE TABLE statements
-  V2__seed_settings.sql         -- INSERT barangay_settings, fee_config defaults
-  V3__seed_admin.sql            -- INSERT initial admin user (bcrypt hash of temp password)
+  V1__initial_schema.sql              -- all 9 CREATE TABLE statements + indexes
+  V2__seed_settings.sql               -- INSERT barangay_settings, fee_config defaults
+  V3__seed_admin.sql                  -- INSERT initial admin user (BCrypt hash)
+  V4__expand_user_status.sql          -- Expand users.status CHECK to include
+                                      --   PENDING_VERIFICATION, REJECTED, DEACTIVATED
+  V5__fix_admin_password.sql          -- Admin password correction
+  V6__clearance_extra_columns.sql     -- Add purpose_other, copies to clearance_requests
+  V7__fix_year_month_column_type.sql  -- Change CHAR(7) to VARCHAR(7) for Hibernate compat
+  V8__payments_add_columns.sql        -- Add idempotency_expires_at, payment_method
 ```
 
 ### 15.5 Build Process
@@ -2214,4 +2306,91 @@ Without idempotency control, either scenario can result in:
 
 ---
 
-*End of Document — Version 1.0.0 — Ready for Development*
+---
+
+## 18. Implementation Status
+
+> **Added in Version 2.0.0** — This section tracks what has been built and how the implementation differs from the original PRD design.
+
+### 18.1 Phase Completion
+
+| Phase | Name | Status | Notes |
+|-------|------|--------|-------|
+| 0 | Scaffolding & Infrastructure | Complete | Foundation: pom.xml, Flyway V1–V3, Docker Compose, Next.js init |
+| 1 | Identity Module: Auth & JWT | Complete | JWT auth, refresh tokens, login/register UI |
+| 2 | Residents Module | Complete | CRUD, search, portal activation workflow |
+| 3 | Clearance Module | Complete | State machine, approval workflow, clearance numbering |
+| 4 | Payments Module | Complete | Stub gateway, idempotency, cash mark-as-paid |
+| 5 | PDF Generation | Complete | PDFBox implementation, logo embedding |
+| 6 | Settings Module | Complete | Barangay config, logo upload, fee management |
+| 7 | Reports Module | Complete | Filtered report queries with pagination |
+| 8 | Frontend Polish | Complete | Middleware, auth context, loading states, toasts |
+| 9 | Testing & QA | Not Started | Unit tests, integration tests pending |
+| 10 | Deployment | Not Started | Dockerfiles, TLS setup pending |
+| 11 | User Management | Complete | Staff CRUD, role management, activate/deactivate |
+
+**Overall:** 10 of 12 phases complete. Testing (Phase 9) and Deployment (Phase 10) remain.
+
+### 18.2 Key Implementation Deviations
+
+#### Naming Convention Changes
+
+| PRD Design | Actual Implementation | Reason |
+|-----------|----------------------|--------|
+| `REGULAR` / `EXPRESS` urgency | `STANDARD` / `RUSH` urgency | Clearer terminology |
+| `regular_fee` / `express_fee` | `standard_fee` / `rush_fee` | Matches urgency enum names |
+| `birthdate` | `birth_date` | Snake_case consistency |
+| `logo_image` / `logo_content_type` | `logo` / `logo_mime_type` | Shorter column names |
+| `created_by_user_id` | `requested_by` | More descriptive of intent |
+| `approved_at` / `released_at` | `reviewed_by` / `reviewed_at` | Unified review tracking |
+
+#### Schema Additions (Beyond PRD)
+
+- `residents.middle_name` — common in Philippine naming conventions
+- `residents.gender` — with CHECK constraint (`MALE`/`FEMALE`/`OTHER`)
+- `residents.email` — separate from user account email
+- `residents.status` — resident-level activation
+- `clearance_requests.fee_amount` — fee snapshot at creation time
+- `payments.payment_method` — `STUB`/`CASH` (added in V8)
+
+#### Schema Simplifications
+
+- `audit_logs` — simplified column names, `TEXT` instead of `JSONB` for details
+- `barangay_settings` — removed `captain_position` column
+- `residents` — removed `purok_zone` (address field serves same purpose)
+- `payments.response_body` — `TEXT` instead of `JSONB`
+
+#### Additional Features (Not in Original PRD)
+
+1. **Password change flow** — `PUT /auth/change-password` + `/change-password` frontend page; `must_change_password` flag forces password change on first login for staff accounts
+2. **User self-service** — `GET/PUT /users/me` for profile viewing/editing
+3. **Role management** — `PUT /admin/users/{id}/role` with self-demotion guard
+4. **Admin password reset** — `POST /admin/users/{id}/reset-password` with token invalidation
+5. **Dashboard summary API** — `GET /clearances/summary` for dashboard stat cards
+6. **Spring Application Events** — `ClearanceStatusChangedEvent` published on state changes (prepared for Phase 2 notifications)
+7. **SpecificationBuilder** — generic fluent JPA Specification builder for type-safe filtering
+8. **ReportRowProjection** — Spring Data interface projection for efficient report queries
+9. **Sonner toast notifications** — frontend toast system for success/error feedback
+10. **Loading skeletons** — skeleton placeholders on all pages during data fetch
+
+### 18.3 Known Issues
+
+1. **Resident search** — `lower(bytea)` error when null query parameters are passed. Root cause: Hibernate passes `null` as `bytea` type. Needs `CAST` or `COALESCE` fix.
+2. **Audit logging** — table exists but events are not yet being written (pending implementation).
+3. **Performance** — 19 issues documented in [performance-improvements.md](plans/barangay-clearance/performance-improvements.md), including N+1 queries and missing indexes.
+
+### 18.4 Documentation Artifacts
+
+| Document | Location |
+|----------|----------|
+| Architecture & System Design | [docs/architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) |
+| API Reference | [docs/architecture/API_REFERENCE.md](architecture/API_REFERENCE.md) |
+| Frontend Architecture | [docs/architecture/FRONTEND_ARCHITECTURE.md](architecture/FRONTEND_ARCHITECTURE.md) |
+| Architecture Decision Records | [docs/architecture/ADR.md](architecture/ADR.md) |
+| Phase Plans | [docs/plans/barangay-clearance/phase-*.md](plans/barangay-clearance/) |
+| Project Status | [docs/plans/barangay-clearance/project_status.md](plans/barangay-clearance/project_status.md) |
+| Performance Audit | [docs/plans/barangay-clearance/performance-improvements.md](plans/barangay-clearance/performance-improvements.md) |
+
+---
+
+*End of Document — Version 2.0.0 — Implementation In Progress (Testing & Deployment Pending)*

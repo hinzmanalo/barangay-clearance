@@ -13,6 +13,8 @@ import {
   useRejectResident,
 } from '@/hooks/useResidents';
 import { AxiosError } from 'axios';
+import { toast } from '@/components/shared/ErrorToast';
+import { DetailPageSkeleton } from '@/components/shared/LoadingSkeleton';
 
 const updateResidentSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
@@ -39,11 +41,10 @@ export default function ResidentDetailPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    if (type === 'success') toast.success(message);
+    else toast.error(message);
   };
 
   const {
@@ -117,7 +118,7 @@ export default function ResidentDetailPage() {
   };
 
   if (isLoading) {
-    return <div className="max-w-2xl mx-auto px-4 py-12 text-center text-gray-500">Loading…</div>;
+    return <DetailPageSkeleton />;
   }
 
   if (error || !resident) {
@@ -133,17 +134,6 @@ export default function ResidentDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       {/* Breadcrumb + header */}
       <div className="flex items-center gap-3">
         <Link href="/backoffice/residents" className="text-sm text-gray-500 hover:text-gray-800">

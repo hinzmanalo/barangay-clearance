@@ -1,6 +1,6 @@
 # Phase 4 — Payments Module
 
-**Status:** Not Started
+**Status:** Complete
 **Estimated Timeline:** Week 4
 **Priority:** High
 
@@ -15,11 +15,13 @@ Implement stub payment processing with full idempotency logic (client-supplied U
 ## Dependencies
 
 **Depends on:**
+
 - Phase 0 (Scaffolding) — database schema, `FeeConfig` table seeded
 - Phase 1 (Auth) — JWT security, `UserPrincipal`
 - Phase 3 (Clearance) — payment attaches to a `ClearanceRequest`; `release()` requires `paymentStatus == PAID`
 
 **Required by:**
+
 - Phase 5 (PDF) — `release()` requires payment, which is now in Phase 4
 - Phase 9 (Testing) — payment idempotency integration tests
 
@@ -30,36 +32,46 @@ Implement stub payment processing with full idempotency logic (client-supplied U
 ## Deliverables
 
 ### Backend
+
 **Entity:**
+
 - `payments/entity/Payment.java` — all PRD Section 7.6 fields; `responseBody` stored as `TEXT`/`JSONB`
 
 **Enums:**
+
 - `PaymentMethod`, `PaymentStatus` (`PENDING`, `SUCCESS`, `FAILED`), `PaymentProvider`
 
 **Repository:**
+
 - `payments/repository/PaymentRepository.java`
   - `findByIdempotencyKeyAndInitiatedByUserIdAndIdempotencyExpiresAtAfter(String key, UUID userId, Instant now)`
   - `findByClearanceRequestId(UUID clearanceRequestId)`
 
 **Gateway Abstraction:**
+
 - `payments/gateway/PaymentGateway.java` — interface: `initiate(PaymentRequest)`, `getProviderCode()`
 - `payments/gateway/PaymentRequest.java` — Java `record`
 - `payments/gateway/PaymentResult.java` — Java `record`
 - `payments/gateway/StubPaymentGateway.java` — `@ConditionalOnProperty(name="payment.provider", havingValue="stub", matchIfMissing=true)`
 
 **Service:**
+
 - `payments/service/PaymentService.java` — full idempotency logic
 
 **MapStruct Mapper:**
+
 - `payments/service/mapper/PaymentMapper.java`
 
 **Controller:**
+
 - `payments/controller/PaymentController.java`
 
 **DTOs:**
+
 - `PaymentDTO.java` — includes `idempotent: boolean` flag
 
 ### Frontend
+
 - "Pay Now" button on `/portal/requests/[id]` — generates `crypto.randomUUID()` per click
 - Payment result feedback (success toast / error message)
 - "Mark as Paid" button on `/backoffice/clearances/[id]` for CLERK role
@@ -69,6 +81,7 @@ Implement stub payment processing with full idempotency logic (client-supplied U
 ## Key Implementation Notes
 
 ### Idempotency Logic (Full Flow)
+
 1. Validate `Idempotency-Key` header is present and valid UUID v4 — else 400
 2. Look up existing payment by `(idempotencyKey, userId)` within 24h TTL
 3. If found and `PENDING` → throw `ConflictException` (409)
@@ -79,22 +92,29 @@ Implement stub payment processing with full idempotency logic (client-supplied U
 8. Update `ClearanceRequest.paymentStatus = PAID` if success
 
 ### Concurrent PENDING Protection
+
 `saveAndFlush` fires the composite unique constraint `(idempotency_key, initiated_by_user_id)` before the gateway call. Concurrent duplicate caught by `DataIntegrityViolationException` → handle as 409.
 
 ### Fee Resolution (ADR-010)
+
 Fee read from `fee_config` at payment initiation time (not at request submission):
+
 ```java
 BigDecimal amount = clearance.getUrgency() == Urgency.EXPRESS ? fees.getExpressFee() : fees.getRegularFee();
 ```
+
 If fee is `0.00` → skip gateway, create `SUCCESS` payment immediately (waived fee edge case).
 
 ### `StubPaymentGateway`
+
 Uses `ThreadLocalRandom` for thread safety. Configurable via `payment.stub.always-success` (default: `true`).
 
 ### Response Caching in `responseBody`
+
 Serialize `PaymentDTO` to JSON string at update time. On replay, deserialize and set `idempotent = true`. Uses `ObjectMapper`.
 
 ### Controller Pattern
+
 ```
 POST /clearances/{id}/payments → 201 (new) or 200 (idempotent replay)
 POST /clearances/{id}/mark-paid → 200 (CLERK cash payment)
@@ -102,6 +122,7 @@ GET /clearances/{id}/payments → 200 (status check)
 ```
 
 ### Frontend Idempotency Key
+
 ```typescript
 const idempotencyKey = crypto.randomUUID(); // browser native, no library
 // Generated fresh per click — not persisted between page loads
@@ -111,12 +132,12 @@ const idempotencyKey = crypto.randomUUID(); // browser native, no library
 
 ## API Endpoints
 
-| Method | Path | Role |
-|--------|------|------|
-| POST | `/api/v1/me/clearances/{id}/pay` | RESIDENT |
-| POST | `/api/v1/clearances/{id}/payments` | RESIDENT, CLERK, ADMIN |
-| POST | `/api/v1/clearances/{id}/mark-paid` | CLERK, ADMIN |
-| GET | `/api/v1/clearances/{id}/payments` | CLERK, ADMIN |
+| Method | Path                                | Role                   |
+| ------ | ----------------------------------- | ---------------------- |
+| POST   | `/api/v1/me/clearances/{id}/pay`    | RESIDENT               |
+| POST   | `/api/v1/clearances/{id}/payments`  | RESIDENT, CLERK, ADMIN |
+| POST   | `/api/v1/clearances/{id}/mark-paid` | CLERK, ADMIN           |
+| GET    | `/api/v1/clearances/{id}/payments`  | CLERK, ADMIN           |
 
 ---
 

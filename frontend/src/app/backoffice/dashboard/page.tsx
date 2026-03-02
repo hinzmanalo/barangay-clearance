@@ -1,65 +1,100 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import { useClearanceSummary } from '@/hooks/useClearances';
+import { CardSkeleton } from '@/components/shared/LoadingSkeleton';
+
+interface StatCardProps {
+  title: string;
+  value: number;
+  href: string;
+  colorClass: string;
+  titleColor: string;
+  valueColor: string;
+}
+
+function StatCard({ title, value, href, colorClass, titleColor, valueColor }: StatCardProps) {
+  return (
+    <Link
+      href={href}
+      className={`block rounded-lg border p-4 bg-white hover:shadow-md transition ${colorClass}`}
+    >
+      <p className={`text-xs font-medium uppercase tracking-wide ${titleColor}`}>{title}</p>
+      <p className={`mt-1 text-3xl font-bold ${valueColor}`}>{value}</p>
+    </Link>
+  );
+}
 
 export default function BackofficeDashboardPage() {
-  const { email, role, logout } = useAuth();
+  const { data: summary, isLoading } = useClearanceSummary({ refetchInterval: 30_000 });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top nav */}
-      <header className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-gray-900">Barangay Clearance — Back Office</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              {email}{' '}
-              <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                {role}
-              </span>
-            </span>
-            <button
-              onClick={logout}
-              className="text-sm text-red-600 hover:text-red-800 font-medium"
-            >
-              Log out
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
 
-      {/* Main content */}
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Dashboard</h2>
-
+      {/* Summary stat cards with auto-refresh */}
+      {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <DashboardCard
-            title="Residents"
-            description="Manage resident registrations and portal activation."
-            href="/backoffice/residents"
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      ) : summary ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StatCard
+            title="Pending Review"
+            value={summary.pendingApproval}
+            href="/backoffice/clearances?status=FOR_APPROVAL"
+            colorClass="border-yellow-200"
+            titleColor="text-yellow-600"
+            valueColor="text-yellow-700"
           />
-          <DashboardCard
-            title="Clearances"
-            description="Review, approve, and release clearance requests."
-            href="/backoffice/clearances"
+          <StatCard
+            title="Approved — Awaiting Payment"
+            value={summary.awaitingPayment}
+            href="/backoffice/clearances?status=APPROVED"
+            colorClass="border-orange-200"
+            titleColor="text-orange-600"
+            valueColor="text-orange-700"
           />
-          <DashboardCard
-            title="Reports"
-            description="View clearance issuance reports and statistics."
-            href="/backoffice/reports"
+          <StatCard
+            title="Released Today"
+            value={summary.releasedToday}
+            href="/backoffice/clearances?status=RELEASED"
+            colorClass="border-blue-200"
+            titleColor="text-blue-600"
+            valueColor="text-blue-700"
           />
         </div>
+      ) : null}
 
-        <p className="mt-8 text-xs text-gray-400">
-          Barangay Clearance System — Phase development build
-        </p>
-      </main>
+      {/* Quick navigation cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <NavCard
+          title="Residents"
+          description="Manage resident registrations and portal activation."
+          href="/backoffice/residents"
+        />
+        <NavCard
+          title="Clearances"
+          description="Review, approve, and release clearance requests."
+          href="/backoffice/clearances"
+        />
+        <NavCard
+          title="Reports"
+          description="View clearance issuance reports and statistics."
+          href="/backoffice/reports"
+        />
+      </div>
+
+      <p className="text-xs text-gray-400">
+        Stats refresh automatically every 30 seconds.
+      </p>
     </div>
   );
 }
 
-function DashboardCard({
+function NavCard({
   title,
   description,
   href,

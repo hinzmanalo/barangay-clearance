@@ -1,26 +1,30 @@
 # Barangay Clearance System — Project Status
 
-**Last Updated:** 2026-02-24
-**Current Phase:** Phase 3 — Clearance Module
-**Overall Progress:** 3 / 11 phases complete (backend of Phase 2 fully complete; frontend Phase 2 complete with known search bug)
+**Last Updated:** 2026-02-27 (Phase 12 audit logging plan added)
+**Current Phase:** Phase 9 / 12
+**Overall Progress:** 10 / 13 phases complete
 
 ---
 
 ## Phase Overview
 
-| Phase                                  | Name                         | Status         | Week | Notes                            |
-| -------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
-| [Phase 0](phase-00-scaffolding.md)     | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
-| [Phase 1](phase-01-auth.md)            | Identity Module: Auth & JWT  | � Complete     | 2    | Blocks all other phases          |
-| [Phase 2](phase-02-residents.md)       | Residents Module             | � Complete     | 2–3  | Blocks Phase 3                   |
-| [Phase 3](phase-03-clearance.md)       | Clearance Module             | 🔴 Not Started | 3–4  | Core business logic              |
-| [Phase 4](phase-04-payments.md)        | Payments Module              | 🔴 Not Started | 4    | Parallel with Phase 5 & 6        |
-| [Phase 5](phase-05-pdf.md)             | PDF Generation               | 🔴 Not Started | 5    | Parallel with Phase 4 & 6        |
-| [Phase 6](phase-06-settings.md)        | Settings Module              | 🔴 Not Started | 5    | Parallel with Phase 4 & 5        |
-| [Phase 7](phase-07-reports.md)         | Reports Module               | 🔴 Not Started | 6    | Parallel with Phase 8            |
-| [Phase 8](phase-08-frontend-polish.md) | Frontend Polish & Navigation | 🔴 Not Started | 6    | Parallel with Phase 7            |
-| [Phase 9](phase-09-testing.md)         | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
-| [Phase 10](phase-10-deployment.md)     | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
+| Phase                                   | Name                         | Status         | Week | Notes                            |
+| --------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
+| [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
+| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | 🟢 Complete    | 2    | Blocks all other phases          |
+| [Phase 2](phase-02-residents.md)        | Residents Module             | 🟢 Complete    | 2–3  | Blocks Phase 3                   |
+| [Phase 3](phase-03-clearance.md)        | Clearance Module             | 🟢 Complete    | 3–4  | Core business logic              |
+| [Phase 4](phase-04-payments.md)         | Payments Module              | 🟢 Complete    | 4    | Parallel with Phase 5 & 6        |
+| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🟢 Complete    | 5    | Parallel with Phase 4 & 6        |
+| [Phase 6](phase-06-settings.md)         | Settings Module              | 🟢 Complete    | 5    | Parallel with Phase 4 & 5        |
+| [Phase 7](phase-07-reports.md)          | Reports Module               | 🟢 Complete    | 6    | Parallel with Phase 8            |
+| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🟢 Complete    | 6    | Parallel with Phase 7            |
+| [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
+| [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
+| [Phase 11](phase-11-user-management.md) | User Management              | 🟢 Complete    | 6–7  | Parallel with Phase 7 & 8        |
+| [Phase 12](phase-12-audit-logging.md)   | Audit Logging                | 🔴 Not Started | 8    | Parallel with Phase 9 & 10       |
+
+| [Perf Review](performance-improvements.md) | Backend Performance Audit | 📋 Documented | — | 19 issues identified, ready to implement |
 
 **Status Legend:**
 
@@ -35,7 +39,7 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phase 3 — Clearance Module
+**Active phase:** Phase 9 (Testing & QA)
 
 ---
 
@@ -44,13 +48,13 @@
 See [dependency-graph.md](dependency-graph.md) for full details.
 
 **Sequential (critical path):**
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8 in parallel] → Phase 9 → Phase 10
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8/11 in parallel] → [Phase 9/12 in parallel] → Phase 10
 
 **Parallel opportunities:**
 
 - After Phase 3: Phases 4, 5, and 6 can all run concurrently
-- After Phases 4/5/6: Phases 7 and 8 can run concurrently
-- During Phase 9: Phase 10 infrastructure setup can begin
+- After Phases 4/5/6: Phases 7, 8, and 11 can run concurrently
+- During Phase 9: Phase 10 infrastructure setup and Phase 12 can begin
 
 ---
 
@@ -71,6 +75,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 - [x] Flyway V3: `V3__seed_admin.sql` (BCrypt hash generated)
 - [x] `ErrorResponse.java`, `AppException.java`, `GlobalExceptionHandler.java`
 - [x] `PageResponse<T>` generic wrapper
+- [x] `SpecificationBuilder<T>` generic fluent JPA Specification builder (`shared/util/`)
 - [x] `docker-compose.dev.yml` (PostgreSQL only)
 - [x] `docker-compose.yml` (full production stack)
 - [x] `nginx/nginx.conf`
@@ -125,112 +130,118 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 3 — Clearance Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Blocking:** Phases 4, 5, 7
 
 **Checklist:**
 
-- [ ] `ClearanceRequest.java` + `ClearanceNumberSequence.java` entities
-- [ ] All clearance enums (`ClearanceStatus`, `ClearancePaymentStatus`, `Purpose`, `Urgency`)
-- [ ] `ClearanceRequestRepository.java` + `ClearanceNumberSequenceRepository.java`
-- [ ] `ClearanceNumberService.java` (atomic PostgreSQL `RETURNING` query)
-- [ ] `ClearanceService.java` (state machine — all transitions with guards)
-- [ ] `ClearanceMapper.java` (MapStruct)
-- [ ] `ClearanceController.java` (backoffice endpoints)
-- [ ] `PortalClearanceController.java` (portal endpoints, scoped by JWT)
-- [ ] Dashboard summary endpoint (`GET /clearances/summary`)
-- [ ] Frontend: portal dashboard, new request, detail pages
-- [ ] Frontend: backoffice clearances list, new, detail pages
-- [ ] Frontend: `StatusTimeline.tsx`, `ClearanceTable.tsx`, `ActionButtons.tsx`
+- [x] `ClearanceRequest.java` + `ClearanceNumberSequence.java` entities
+- [x] All clearance enums (`ClearanceStatus`, `ClearancePaymentStatus`, `Purpose`, `Urgency`)
+- [x] `ClearanceRequestRepository.java` + `ClearanceNumberSequenceRepository.java`
+- [x] `ClearanceNumberService.java` (atomic PostgreSQL `RETURNING` query)
+- [x] `ClearanceService.java` (state machine — all transitions with guards)
+- [x] `ClearanceMapper.java` (MapStruct)
+- [x] `ClearanceController.java` (backoffice endpoints)
+- [x] `PortalClearanceController.java` (portal endpoints, scoped by JWT)
+- [x] Dashboard summary endpoint (`GET /clearances/summary`)
+- [x] `ClearanceStatusChangedEvent.java` (Spring Application Event hook)
+- [x] `V6__clearance_extra_columns.sql` (adds `purpose_other`, `copies`)
+- [x] Frontend: portal dashboard, new request, detail pages
+- [x] Frontend: backoffice clearances list, new, detail pages
+- [x] Frontend: `StatusTimeline.tsx`, `RequestCard.tsx`, `ClearanceTable.tsx`, `ActionButtons.tsx`
+- [x] Frontend: `useClearances.ts` hooks (portal + backoffice)
+- [x] Frontend: `clearance.ts` types fully populated
 
 ---
 
 ### Phase 4 — Payments Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 5, 6
 
 **Checklist:**
 
-- [ ] `Payment.java` entity (with `responseBody` as TEXT/JSONB)
-- [ ] `PaymentGateway.java` interface + `StubPaymentGateway.java`
-- [ ] `PaymentRepository.java` (idempotency lookup query)
-- [ ] `PaymentService.java` (full idempotency logic)
-- [ ] `PaymentMapper.java` (MapStruct)
-- [ ] `PaymentController.java` (initiate + mark-paid endpoints)
-- [ ] Frontend: "Pay Now" button + idempotency key generation
-- [ ] Frontend: "Mark as Paid" button (clerk)
+- [x] `Payment.java` entity (with `responseBody` as TEXT/JSONB)
+- [x] `PaymentGateway.java` interface + `StubPaymentGateway.java`
+- [x] `PaymentRepository.java` (idempotency lookup query)
+- [x] `PaymentService.java` (full idempotency logic)
+- [x] `PaymentMapper.java` (MapStruct)
+- [x] `PaymentController.java` (initiate + mark-paid endpoints)
+- [x] Frontend: "Pay Now" button + idempotency key generation
+- [x] Frontend: "Mark as Paid" button (clerk)
 
 ---
 
 ### Phase 5 — PDF Generation
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 4, 6
 
 **Checklist:**
 
-- [ ] `ClearancePdfService.java` interface
-- [ ] `ClearancePdfServiceImpl.java` (PDFBox 3.x)
-  - [ ] Header with logo + barangay info
-  - [ ] Title + metadata block
-  - [ ] Body paragraph with text wrapping
-  - [ ] Signature block
-- [ ] Wire `GET /clearances/{id}/pdf` into `ClearanceController`
-- [ ] Wire `GET /me/clearances/{id}/pdf` into `PortalClearanceController`
-- [ ] Frontend: "Download PDF" button with blob download trigger
+- [x] `ClearancePdfService.java` interface
+- [x] `ClearancePdfServiceImpl.java` (PDFBox 3.x)
+  - [x] Header with logo + barangay info
+  - [x] Title + metadata block
+  - [x] Body paragraph with text wrapping
+  - [x] Signature block
+- [x] Wire `GET /clearances/{id}/pdf` into `ClearanceController`
+- [x] Wire `GET /me/clearances/{id}/pdf` into `PortalClearanceController`
+- [x] Frontend: "Download PDF" button with blob download trigger
+- [x] `BarangaySettings` entity + repository (needed by PDF, also prepares Phase 6)
 
 ---
 
 ### Phase 6 — Settings Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 4, 5
 
 **Checklist:**
 
-- [ ] `BarangaySettings.java` + `FeeConfig.java` entities (singleton pattern)
-- [ ] `BarangaySettingsRepository.java` + `FeeConfigRepository.java`
-- [ ] `SettingsService.java` (get/update settings, logo upload, get/update fees)
-- [ ] `SettingsController.java` (all `/api/v1/settings/**` ADMIN-only)
-- [ ] Logo upload validation (type + size)
-- [ ] `GET /settings/logo` binary endpoint
-- [ ] Multipart size config in `application.yml`
-- [ ] Frontend: settings page (form + logo upload + preview)
-- [ ] Frontend: fees page
+- [x] `BarangaySettings.java` + `FeeConfig.java` entities (singleton pattern)
+- [x] `BarangaySettingsRepository.java` + `FeeConfigRepository.java`
+- [x] `SettingsService.java` (get/update settings, logo upload, get/update fees)
+- [x] `SettingsController.java` (all `/api/v1/settings/**` ADMIN-only)
+- [x] Logo upload validation (type + size)
+- [x] `GET /settings/logo` binary endpoint
+- [x] Multipart size config in `application.yml` (already configured)
+- [x] Frontend: settings page (form + logo upload + preview)
+- [x] Frontend: fees page
 
 ---
 
 ### Phase 7 — Reports Module
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phase 8
 
 **Checklist:**
 
-- [ ] `ReportsService.java` (dynamic JPQL with nullable params)
-- [ ] `ReportsController.java` (`GET /api/v1/reports/clearances`)
-- [ ] `ReportRowDTO.java` + `ReportMapper.java`
-- [ ] Frontend: reports page (filter form + paginated table + empty state)
+- [x] `ReportsService.java` (native SQL query with nullable params via `ReportRepository`)
+- [x] `ReportsController.java` (`GET /api/v1/reports/clearances`)
+- [x] `ReportRowDTO.java` + `ReportRowProjection.java` (Spring Data interface projection replaces MapStruct for native queries)
+- [x] Frontend: reports page (filter form + paginated table + empty state)
+- [x] `useReports.ts` hook + `ReportRow` type added to `clearance.ts`
 
 ---
 
 ### Phase 8 — Frontend Polish & Navigation
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phase 7
 
 **Checklist:**
 
-- [ ] `middleware.ts` — complete route guard with `jwt-decode`
-- [ ] `AuthContext.tsx` — complete with `localStorage` persistence + re-hydration
-- [ ] Backoffice dashboard with summary cards + 30s auto-refresh
-- [ ] `StatusTimeline.tsx` — all status steps with visual states
-- [ ] Error toast system (Radix UI Toast / shadcn/ui)
-- [ ] Loading skeletons on all list/detail pages
-- [ ] `must_change_password` flow + `/change-password` page
-- [ ] Mobile-first Tailwind responsive layout
-- [ ] Shared components: `StatusBadge`, `PaymentBadge`, `PageHeader`
+- [x] `middleware.ts` — complete route guard with `jwt-decode`, admin guard, public route redirect for authenticated users
+- [x] `AuthContext.tsx` — complete with `localStorage` persistence + re-hydration
+- [x] Backoffice dashboard with summary cards + 30s auto-refresh (`refetchInterval: 30_000`) + Skeleton placeholders
+- [x] `StatusTimeline.tsx` — all status steps with visual states (payment step added: Unpaid/orange, Paid/green)
+- [x] Error toast system — `sonner` `<Toaster>` in `providers.tsx`; `toast.success/error` replacing all inline local-state toasts
+- [x] Loading skeletons on all list/detail pages (`TableRowSkeleton`, `DetailPageSkeleton`, `CardSkeleton`)
+- [x] `must_change_password` flow — portal/backoffice layouts redirect to `/change-password` on mount
+- [x] Mobile-first Tailwind responsive layout (sidebar + single column stack at mobile)
+- [x] Shared components: `StatusBadge`, `PaymentBadge`, `PageHeader`, `LoadingSkeleton`, `ErrorToast`
 
 ---
 
@@ -281,16 +292,91 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ---
 
+### Phase 11 — User Management
+
+**Status:** 🔴 Not Started
+**Parallel with:** Phases 7, 8
+
+**Checklist:**
+
+**Backend:**
+
+- [ ] `UpdateStaffRequest.java`, `UpdateRoleRequest.java`, `AdminResetPasswordRequest.java`, `UpdateProfileRequest.java` DTOs
+- [ ] `UserService` — `activate`, `updateRole`, `updateStaff`, `adminResetPassword`, `getCurrentUser`, `updateCurrentUser`
+- [ ] `listStaff` enhanced with `role`, `status`, `search` query params (JPA Specification)
+- [ ] `UserController` — `PUT /{id}/activate`, `PUT /{id}/role`, `PUT /{id}`, `POST /{id}/reset-password`
+- [ ] `MeController` — `GET /api/v1/users/me`, `PUT /api/v1/users/me`
+- [ ] All endpoints documented with `@Operation`, `@ApiResponses`, `@SecurityRequirement`
+- [ ] `adminResetPassword` invalidates all refresh tokens for target user
+- [ ] Role-change guard: cannot change own role
+
+**Frontend:**
+
+- [ ] `types/auth.ts` updated (`StaffUser`, payload types, `UserStatus`)
+- [ ] `hooks/useUsers.ts` (all CRUD + action hooks + `useCurrentUser`)
+- [ ] `components/backoffice/UserTable.tsx`
+- [ ] `components/shared/RoleBadge.tsx`
+- [ ] `/backoffice/admin/users` — list with search, role/status filter, pagination
+- [ ] `/backoffice/admin/users/new` — create staff form (Zod validation)
+- [ ] `/backoffice/admin/users/[id]` — detail/edit + role change + activate/deactivate + reset password modal
+- [ ] `Sidebar.tsx` updated with "Users" link (ADMIN role only)
+- [ ] `npm run build` passes with no type errors
+
+---
+
+### Phase 12 — Audit Logging
+
+**Status:** 🔴 Not Started
+**Parallel with:** Phases 9, 10
+
+**Checklist:**
+
+**Backend:**
+
+- [ ] `AuditLog.java` entity (`shared/audit/`)
+- [ ] `AuditLogRepository.java` with paginated queries + specification support
+- [ ] `AuditAction.java` constants (27 action types across all modules)
+- [ ] `AuditService.java` (`@Async`, `REQUIRES_NEW` propagation, IP resolution)
+- [ ] `AuditAsyncConfig.java` — bounded thread pool for async audit writes
+- [ ] `ClearanceAuditListener.java` — `@EventListener` for `ClearanceStatusChangedEvent`
+- [ ] Instrument `AuthService` (register, login, login failed, logout, refresh, change password)
+- [ ] Instrument `UserService` (create staff, activate, deactivate, role change, password reset)
+- [ ] Instrument `ResidentService` (create, update, activate)
+- [ ] Instrument `PaymentService` (initiate, success, failed, cash recorded)
+- [ ] Instrument `SettingsService` (update settings, upload logo, update fees)
+- [ ] `AuditLogDTO.java` with actor email enrichment
+- [ ] `AuditLogController.java` (`GET /api/v1/audit-logs`, ADMIN only)
+- [ ] Optional: `V9__audit_logs_indexes.sql` (indexes for query performance)
+
+**Frontend:**
+
+- [ ] `types/audit.ts`
+- [ ] `hooks/useAuditLogs.ts` (React Query)
+- [ ] `/backoffice/admin/audit-logs/page.tsx` — filterable, paginated table with expandable details
+- [ ] `AuditLogTable.tsx` component
+- [ ] `Sidebar.tsx` updated with "Audit Logs" link (ADMIN only)
+- [ ] `npm run build` passes with no type errors
+
+---
+
 ## Progress Log
 
-| Date       | Phase   | Action       | Notes                                                                                                                                                                                                                                                                         |
-| ---------- | ------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-02-24 | —       | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                                                                                                                                           |
-| 2026-02-24 | Phase 0 | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                                                                                                                                                      |
-| 2026-02-24 | Phase 1 | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                                                                                                                                                      |
-| 2026-02-24 | Docs    | Added        | `backend/docs/Security.md` — full security reference with Mermaid sequence diagram and prose process flow walkthrough for all six authentication flows                                                                                                                        |
-| 2026-02-24 | Phase 2 | Completed    | Residents module: `Resident` entity, `ResidentRepository` search, `ResidentService` (CRUD + portal activation workflow), `ResidentMapper` (MapStruct, `hasPortalAccount`), `ResidentController`, frontend list/new/detail pages, `ResidentTable.tsx`, `useResidents.ts` hooks |
-| 2026-02-24 | Docs    | Added        | `frontend/docs/system-design-and-architecture.md` — frontend architecture reference: routing, auth flow, API client interceptors, state management rationale, component patterns, type system, key user flows                                                                 |
+| Date       | Phase    | Action       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------- | ------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-02-24 | —        | Plan created | All feature plans split from IMPLEMENTATION_PLAN.md                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-02-24 | Phase 0  | Completed    | Backend scaffold, Flyway migrations, shared exceptions, Next.js frontend, Docker Compose                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-02-24 | Phase 1  | Completed    | Identity module: JWT auth, refresh tokens, user management, Spring Security config, frontend login/register/auth context                                                                                                                                                                                                                                                                                                                                    |
+| 2026-02-24 | Docs     | Added        | `backend/docs/Security.md` — full security reference with Mermaid sequence diagram and prose process flow walkthrough for all six authentication flows                                                                                                                                                                                                                                                                                                      |
+| 2026-02-24 | Phase 2  | Completed    | Residents module: `Resident` entity, `ResidentRepository` search, `ResidentService` (CRUD + portal activation workflow), `ResidentMapper` (MapStruct, `hasPortalAccount`), `ResidentController`, frontend list/new/detail pages, `ResidentTable.tsx`, `useResidents.ts` hooks                                                                                                                                                                               |
+| 2026-02-24 | Docs     | Added        | `frontend/docs/system-design-and-architecture.md` — frontend architecture reference: routing, auth flow, API client interceptors, state management rationale, component patterns, type system, key user flows                                                                                                                                                                                                                                               |
+| 2026-02-24 | Phase 3  | Completed    | Clearance module: `ClearanceRequest`/`ClearanceNumberSequence` entities + enums, atomic number sequence (PostgreSQL `ON CONFLICT RETURNING`), full state machine (`submit → FOR_APPROVAL → APPROVED → RELEASED`, rejection/resubmit), backoffice + portal controllers, `ClearanceStatusChangedEvent`, V6 migration, frontend portal/backoffice pages + `StatusTimeline`, `ClearanceTable`, `ActionButtons`, `RequestCard` components, `useClearances` hooks |
+| 2026-02-25 | Shared   | Refactored   | Added `SpecificationBuilder<T>` to `shared/util/` — generic fluent JPA Specification builder; removed duplicated `buildFilter` from `ClearanceService`. Available for `ReportsService` and any future filtered-list service.                                                                                                                                                                                                                                |
+| 2026-02-25 | Phase 11 | Planned      | Created `phase-11-user-management.md` — covers backend API gaps (activate, role update, profile update, admin password reset, search/filter, `/me` endpoints) and full frontend backoffice UI (user list, create, detail/edit pages, `UserTable`, `RoleBadge`, sidebar link).                                                                                                                                                                               |
+| 2026-02-25 | Phase 8  | Partial      | `StatusTimeline.tsx` enhanced: added Payment step (4th step) between Approved and Released. Orange ring when Unpaid, green check when Paid/Waived, inactive when not yet reached. `portal/requests/[id]/page.tsx` updated to pass `paymentStatus` prop.                                                                                                                                                                                                     |
+| 2026-02-26 | Phase 5  | Completed    | PDF Generation: `ClearancePdfService` interface + `ClearancePdfServiceImpl` (PDFBox 3.x, A4 layout, logo embedding, text wrapping, signature block). Endpoints: `GET /clearances/{id}/pdf` (CLERK/ADMIN) + `GET /me/clearances/{id}/pdf` (RESIDENT, RELEASED only). Frontend: Download PDF buttons on portal request detail and backoffice clearance detail pages. Also created `BarangaySettings` entity + repository (prepares Phase 6).                  |     | 2026-02-26 | Phase 6 | Completed | Settings module: `FeeConfig` entity + `FeeConfigRepository`, `BarangaySettingsDTO` + `FeeConfigDTO`, `SettingsService` (get/update settings, logo upload/retrieval, get/update fees), `SettingsController` (GET/PUT `/settings`, POST/GET `/settings/logo`, GET/PUT `/settings/fees`). Logo validated at service level (PNG/JPEG/GIF, max 2 MB). `ClearanceService.resolveFee()` now reads live `fee_config` row (with fallback). Frontend: `useSettings.ts` hooks, `types/settings.ts` updated (`hasLogo`), `/backoffice/admin/settings` profile+logo page, `/backoffice/admin/settings/fees` fee form. |
+
+| 2026-02-27 | Perf | Documented | Backend performance audit: 19 issues identified (5 critical, 5 high, 6 medium, 3 low). Key findings: N+1 queries in `ClearanceService.enrich()` and `ResidentService.findPendingUsers()`, 5 missing DB indexes, no caching for singleton settings, no HikariCP tuning. Full report: [`performance-improvements.md`](performance-improvements.md). |
+| 2026-02-27 | Phase 12 | Planned | Created [`phase-12-audit-logging.md`](phase-12-audit-logging.md) — audit trail for all state-changing operations. `audit_logs` table exists (V1) but has zero code implementation. Plan covers: `AuditLog` entity/repo/service in `shared/audit/`, 27 audit action constants, `@Async` + `REQUIRES_NEW` writes, `ClearanceStatusChangedEvent` listener, instrumentation of 5 services (auth, users, residents, payments, settings), ADMIN-only query endpoints, and frontend audit log viewer page. |
 
 ---
 

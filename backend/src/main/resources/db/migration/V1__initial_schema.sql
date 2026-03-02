@@ -82,8 +82,8 @@ CREATE TABLE fee_config (
 -- 6. clearance_number_sequence
 -- ─────────────────────────────────────────
 CREATE TABLE clearance_number_sequence (
-    year_month  CHAR(7)  PRIMARY KEY,  -- e.g. '2025-02'
-    last_seq    INTEGER  NOT NULL DEFAULT 0
+    year_month  VARCHAR(7)  PRIMARY KEY,  -- e.g. '2025-02'
+    last_seq    INTEGER     NOT NULL DEFAULT 0
 );
 
 -- ─────────────────────────────────────────

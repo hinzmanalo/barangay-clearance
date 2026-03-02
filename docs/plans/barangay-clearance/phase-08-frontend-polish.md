@@ -1,6 +1,6 @@
 # Phase 8 — Frontend Polish & Role-Based Navigation
 
-**Status:** Not Started
+**Status:** Complete
 **Estimated Timeline:** Week 6
 **Priority:** High
 
@@ -15,6 +15,7 @@ Wire up all frontend pages with real API integration, complete the `middleware.t
 ## Dependencies
 
 **Depends on:**
+
 - Phase 1 (Auth) — `AuthContext`, login/register pages (skeletons already in Phase 1)
 - Phase 2 (Residents) — resident pages exist but may need final integration
 - Phase 3 (Clearance) — clearance pages exist; dashboard summary endpoint
@@ -33,7 +34,9 @@ Wire up all frontend pages with real API integration, complete the `middleware.t
 ## Deliverables
 
 ### Frontend
+
 **Route Guard (`middleware.ts` — complete):**
+
 - Public routes: `/login`, `/register` — if already authenticated, redirect to role home
 - Protected routes: redirect unauthenticated users to `/login`
 - Role routing: RESIDENT → `/portal/*` only; CLERK/APPROVER/ADMIN → `/backoffice/*` only
@@ -41,16 +44,19 @@ Wire up all frontend pages with real API integration, complete the `middleware.t
 - Add `jwt-decode` package for client-side JWT decoding (routing only; verification on backend)
 
 **`AuthContext.tsx` — complete:**
+
 - Interface: `user`, `accessToken`, `login`, `logout`, `refreshToken`
 - Persist `accessToken` to `localStorage` on login; re-hydrate on app init
 - Expose `refreshToken()` method called by Axios 401 interceptor
 
 **Backoffice Dashboard:**
+
 - `src/app/backoffice/dashboard/page.tsx` — 3 summary `<Card>` components (Pending Review, Approved Awaiting Payment, Released Today)
 - Auto-refresh every 30s with `refetchInterval: 30000`
 - `<Skeleton>` placeholders while loading
 
 **Shared Components:**
+
 - `src/components/shared/StatusBadge.tsx` — color-coded clearance status badge
 - `src/components/shared/PaymentBadge.tsx` — payment status badge
 - `src/components/shared/LoadingSkeleton.tsx` — reusable skeleton layouts
@@ -67,12 +73,14 @@ Configure Radix UI `Toast` (shadcn/ui). `useToast` hook. All API errors trigger 
 Apply `<Skeleton>` for all list and detail pages while TanStack Query `isLoading = true`.
 
 **"Must Change Password" Flow:**
+
 - Frontend detects `mustChangePassword: true` claim in JWT after login
 - Redirects to `/change-password` page
 - Backend: `PUT /api/v1/auth/change-password` validates current password, sets new, clears flag, returns new tokens
 - Form: current password + new password + confirm fields
 
 **Mobile-First Tailwind Breakpoints:**
+
 - Default (mobile): single column stack
 - `md:` (768px+): sidebar + main content for backoffice
 - `lg:` (1024px+): wider sidebar, more table columns
@@ -82,22 +90,27 @@ Apply `<Skeleton>` for all list and detail pages while TanStack Query `isLoading
 ## Key Implementation Notes
 
 ### `middleware.ts` Pattern
+
 ```typescript
 // Uses jwt-decode for client-side role extraction (no signature verify — backend handles that)
 const { role } = jwtDecode<{ role: string }>(token);
 ```
+
 Matcher: `['/portal/:path*', '/backoffice/:path*', '/login', '/register']`
 
 ### `AuthContext` Re-hydration
+
 On app init, read `accessToken` from `localStorage`. If present, decode to get `user` info and populate context. On `logout`, clear `localStorage` + context state.
 
 ### TanStack Query Integration
+
 - `useQuery` for all GET requests
 - `useMutation` for POST/PUT/DELETE
 - `queryClient.invalidateQueries(...)` after mutations to refresh stale data
 - Error handling in `onError` callback → trigger toast
 
 ### Backoffice Layout (Sidebar)
+
 - Sidebar links filter by role (CLERK doesn't see Admin menu)
 - Use Next.js `usePathname()` for active link highlighting
 
@@ -105,12 +118,12 @@ On app init, read `accessToken` from `localStorage`. If present, decode to get `
 
 ## Definition of Done
 
-- [ ] Navigating to `/portal/dashboard` without token → redirects to `/login`
-- [ ] CLERK token trying `/portal/dashboard` → redirected to `/backoffice/dashboard`
-- [ ] RESIDENT token trying `/backoffice/clearances` → redirected to `/portal/dashboard`
-- [ ] CLERK/APPROVER token trying `/backoffice/admin/users` → redirected to `/backoffice/dashboard`
-- [ ] Dashboard stat cards load and show correct counts
-- [ ] Status timeline shows correct step for each clearance status
-- [ ] Loading skeletons appear before data loads; no layout shift on load
-- [ ] Toast notifications appear on success and error
-- [ ] First-login admin (`mustChangePassword=true`) is prompted to change password before accessing other pages
+- [x] Navigating to `/portal/dashboard` without token → redirects to `/login`
+- [x] CLERK token trying `/portal/dashboard` → redirected to `/backoffice/dashboard`
+- [x] RESIDENT token trying `/backoffice/clearances` → redirected to `/portal/dashboard`
+- [x] CLERK/APPROVER token trying `/backoffice/admin/users` → redirected to `/backoffice/dashboard`
+- [x] Dashboard stat cards load and show correct counts
+- [x] Status timeline shows correct step for each clearance status (payment step added 2026-02-25)
+- [x] Loading skeletons appear before data loads; no layout shift on load
+- [x] Toast notifications appear on success and error
+- [x] First-login admin (`mustChangePassword=true`) is prompted to change password before accessing other pages
