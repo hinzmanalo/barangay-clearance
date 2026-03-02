@@ -8,26 +8,27 @@
 
 ## Index
 
-| ID | Title | Status |
-|----|-------|--------|
-| [ADR-001](#adr-001-modular-monolith-over-microservices) | Modular Monolith over Microservices | Accepted |
-| [ADR-002](#adr-002-stateless-jwt-authentication) | Stateless JWT Authentication | Accepted |
-| [ADR-003](#adr-003-refresh-token-non-rotation) | Refresh Token Non-Rotation | Accepted |
-| [ADR-004](#adr-004-sha-256-hashing-of-refresh-tokens) | SHA-256 Hashing of Refresh Tokens | Accepted |
-| [ADR-005](#adr-005-method-level-authorization-with-preauthorize) | Method-Level Authorization with @PreAuthorize | Accepted |
-| [ADR-006](#adr-006-clearance-state-machine-enforced-in-service-layer) | Clearance State Machine Enforced in Service Layer | Accepted |
-| [ADR-007](#adr-007-atomic-clearance-number-generation-via-postgresql) | Atomic Clearance Number Generation via PostgreSQL | Accepted |
-| [ADR-008](#adr-008-singleton-tables-for-configuration) | Singleton Tables for Configuration | Accepted |
-| [ADR-009](#adr-009-payment-gateway-strategy-pattern) | Payment Gateway Strategy Pattern | Accepted |
-| [ADR-010](#adr-010-idempotent-payments-via-composite-unique-index) | Idempotent Payments via Composite Unique Index | Accepted |
-| [ADR-011](#adr-011-resident-identity-from-jwt-not-request-parameters) | Resident Identity from JWT, Not Request Parameters | Accepted |
-| [ADR-012](#adr-012-cross-module-denormalization-for-resident-name) | Cross-Module Denormalization for Resident Name | Accepted |
-| [ADR-013](#adr-013-flyway-for-schema-migration) | Flyway for Schema Migration | Accepted |
-| [ADR-014](#adr-014-mapstruct-for-entity-dto-mapping) | MapStruct for Entity-DTO Mapping | Accepted |
-| [ADR-015](#adr-015-postgresql-uuid-primary-keys) | PostgreSQL UUID Primary Keys | Accepted |
-| [ADR-016](#adr-016-server-side-pdf-generation-with-pdfbox) | Server-Side PDF Generation with PDFBox | Accepted |
-| [ADR-017](#adr-017-profile-driven-security-configuration) | Profile-Driven Security Configuration | Accepted |
-| [ADR-018](#adr-018-resident-account-activation-workflow) | Resident Account Activation Workflow | Accepted |
+| ID                                                                             | Title                                                      | Status   |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------- | -------- |
+| [ADR-001](#adr-001-modular-monolith-over-microservices)                        | Modular Monolith over Microservices                        | Accepted |
+| [ADR-002](#adr-002-stateless-jwt-authentication)                               | Stateless JWT Authentication                               | Accepted |
+| [ADR-003](#adr-003-refresh-token-non-rotation)                                 | Refresh Token Non-Rotation                                 | Accepted |
+| [ADR-004](#adr-004-sha-256-hashing-of-refresh-tokens)                          | SHA-256 Hashing of Refresh Tokens                          | Accepted |
+| [ADR-005](#adr-005-method-level-authorization-with-preauthorize)               | Method-Level Authorization with @PreAuthorize              | Accepted |
+| [ADR-006](#adr-006-clearance-state-machine-enforced-in-service-layer)          | Clearance State Machine Enforced in Service Layer          | Accepted |
+| [ADR-007](#adr-007-atomic-clearance-number-generation-via-postgresql)          | Atomic Clearance Number Generation via PostgreSQL          | Accepted |
+| [ADR-008](#adr-008-singleton-tables-for-configuration)                         | Singleton Tables for Configuration                         | Accepted |
+| [ADR-009](#adr-009-payment-gateway-strategy-pattern)                           | Payment Gateway Strategy Pattern                           | Accepted |
+| [ADR-010](#adr-010-idempotent-payments-via-composite-unique-index)             | Idempotent Payments via Composite Unique Index             | Accepted |
+| [ADR-011](#adr-011-resident-identity-from-jwt-not-request-parameters)          | Resident Identity from JWT, Not Request Parameters         | Accepted |
+| [ADR-012](#adr-012-cross-module-denormalization-for-resident-name)             | Cross-Module Denormalization for Resident Name             | Accepted |
+| [ADR-013](#adr-013-flyway-for-schema-migration)                                | Flyway for Schema Migration                                | Accepted |
+| [ADR-014](#adr-014-mapstruct-for-entity-dto-mapping)                           | MapStruct for Entity-DTO Mapping                           | Accepted |
+| [ADR-015](#adr-015-postgresql-uuid-primary-keys)                               | PostgreSQL UUID Primary Keys                               | Accepted |
+| [ADR-016](#adr-016-server-side-pdf-generation-with-pdfbox)                     | Server-Side PDF Generation with PDFBox                     | Accepted |
+| [ADR-017](#adr-017-profile-driven-security-configuration)                      | Profile-Driven Security Configuration                      | Accepted |
+| [ADR-018](#adr-018-resident-account-activation-workflow)                       | Resident Account Activation Workflow                       | Accepted |
+| [ADR-019](#adr-019-cross-module-uuid-references-over-jpa-entity-relationships) | Cross-Module UUID References over JPA Entity Relationships | Accepted |
 
 ---
 
@@ -47,17 +48,20 @@ Implement a **modular monolith** — a single deployable Spring Boot application
 ### Consequences
 
 **Positive:**
+
 - Single deployment artifact simplifies operations for a barangay with limited IT staff
 - No distributed transaction complexity — all writes are within a single PostgreSQL instance
 - Module boundaries allow a future microservices split without major refactoring
 - Development and testing are significantly simpler than a distributed system
 
 **Negative:**
+
 - Entire application must be redeployed to update any single module
 - All modules share the same JVM heap; a memory leak in one module affects all
 - Horizontal scaling applies to the entire application, not individual hot modules
 
 **Mitigation:**
+
 - Module boundaries are strictly enforced by code convention (verified during code review)
 - The system's expected load (dozens to hundreds of concurrent users per barangay) does not require per-module scaling
 
@@ -89,15 +93,18 @@ Use **stateless JWT** with HMAC-SHA256 signed access tokens (15-minute TTL) and 
 ### Consequences
 
 **Positive:**
+
 - No per-request database lookup for authentication
 - Access tokens are self-contained — role and user ID are embedded in the token
 - Horizontally scalable without a shared session store
 
 **Negative:**
+
 - Access tokens cannot be revoked until they expire (15 minutes maximum blast radius for a compromised token)
 - Token validation logic must be kept consistent across services if the system is ever split
 
 **Mitigation:**
+
 - 15-minute TTL limits the compromise window to an acceptable range for the use case
 - Refresh token revocation provides a mechanism to force re-authentication when needed (e.g., password change revokes all refresh tokens)
 
@@ -125,14 +132,17 @@ Refresh tokens can be rotated (issue a new refresh token on each refresh) or not
 ### Consequences
 
 **Positive:**
+
 - Simpler implementation — no rotation state to track
 - Fewer database writes per token refresh
 
 **Negative:**
+
 - A stolen refresh token can be used until it naturally expires (7 days) or the user changes their password
 - No automatic detection of refresh token theft
 
 **Future Path:**
+
 - Implement token rotation with a "token family" approach (revoking all siblings on replay detection) when the security requirement warrants it
 
 ---
@@ -159,10 +169,12 @@ Store only the **SHA-256 hex hash** of the refresh token in the `refresh_tokens.
 ### Consequences
 
 **Positive:**
+
 - Database breach does not expose usable refresh tokens
 - No performance concern — SHA-256 computation is fast
 
 **Negative:**
+
 - Slight CPU overhead per refresh request (one SHA-256 computation)
 - Loss of the raw token is permanent — no recovery mechanism
 
@@ -176,6 +188,7 @@ Store only the **SHA-256 hex hash** of the refresh token in the `refresh_tokens.
 ### Context
 
 Spring Security supports authorization at two levels:
+
 1. **URL patterns** in `SecurityConfig` (`requestMatchers(...).hasRole(...)`)
 2. **Method level** via `@PreAuthorize("hasRole(...)")` on controller methods
 
@@ -193,11 +206,13 @@ Use `@PreAuthorize` at the **controller method level** as the primary authorizat
 ### Consequences
 
 **Positive:**
+
 - Security rules are self-documenting — visible at the method site
 - Resilient to URL refactoring
 - Supports complex role expressions
 
 **Negative:**
+
 - Security rules are distributed across controller classes — no single place to audit all rules
 - Requires `@EnableMethodSecurity` (enabled globally in `SecurityConfig`)
 
@@ -225,14 +240,17 @@ Enforce state transitions in `ClearanceService` using **explicit guard checks** 
 ### Consequences
 
 **Positive:**
+
 - State transitions are explicit, readable, and unit-testable
 - Business logic is entirely in Java — no database-specific code
 
 **Negative:**
+
 - Guards are code convention, not a framework guarantee — a future developer could bypass them with a direct repository call
 - Must be duplicated for every transition entry point
 
 **Mitigation:**
+
 - Document the state machine clearly (see [ARCHITECTURE.md](ARCHITECTURE.md#8-clearance-state-machine))
 - Code reviews must verify that no state changes bypass `ClearanceService`
 
@@ -274,15 +292,18 @@ Execute in a `@Transactional(propagation = REQUIRES_NEW)` method to ensure the s
 ### Consequences
 
 **Positive:**
+
 - Guaranteed unique clearance numbers under concurrent load
 - No Redis or external coordination service required
 - Self-healing — if the sequence row doesn't exist for a month, it's created atomically
 
 **Negative:**
+
 - `REQUIRES_NEW` creates a nested transaction — requires careful understanding of Spring transaction semantics
 - Sequence numbers are never "recycled" — a failed release will leave a gap in the numbering
 
 **Note on Gaps:**
+
 - Gaps in clearance numbers are acceptable — they occur when a release operation fails after the sequence has been incremented but before the clearance record is updated. This is a known and documented trade-off.
 
 ---
@@ -314,11 +335,13 @@ Use **typed singleton tables** (`barangay_settings`, `fee_config`) with `CHECK (
 ### Consequences
 
 **Positive:**
+
 - Schema enforces data integrity at the database level
 - Typed columns enable validation without application logic
 - Simple repository access pattern
 
 **Negative:**
+
 - Adding a new config field requires a Flyway migration
 - The `CHECK (id = 1)` pattern is unconventional — developers must understand the intent
 
@@ -346,11 +369,13 @@ Define `PaymentGateway` as a **Java interface**. Implement `StubPaymentGateway` 
 ### Consequences
 
 **Positive:**
+
 - Zero `PaymentService` changes required when adding a real gateway
 - Full workflow testable from day one
 - Clean separation of concerns
 
 **Negative:**
+
 - `StubPaymentGateway` must be clearly disabled in production to prevent test payments being treated as real
 - Developers must remember to implement idempotency in any new gateway
 
@@ -378,11 +403,13 @@ Require clients to provide an `Idempotency-Key: <UUID v4>` header. Enforce idemp
 ### Consequences
 
 **Positive:**
+
 - Database constraint as final guard — no race condition possible
 - Standard protocol — compliant with payment industry best practices
 - Duplicate requests within 24 hours return cached responses
 
 **Negative:**
+
 - Clients must generate and manage idempotency keys (UUID v4)
 - Key collision is theoretically possible (UUID v4 birthday problem) — negligible in practice
 
@@ -414,10 +441,12 @@ For all portal endpoints, the resident's identity is **always resolved from the 
 ### Consequences
 
 **Positive:**
+
 - Eliminates IDOR vulnerabilities on portal endpoints by design
 - Single source of truth for resident identity — the JWT
 
 **Negative:**
+
 - Slightly more complex service code (must resolve `userId` → `residentId` mapping)
 - Portal endpoints cannot act on behalf of another resident (intentional)
 
@@ -449,10 +478,12 @@ For all portal endpoints, the resident's identity is **always resolved from the 
 ### Consequences
 
 **Positive:**
+
 - Module boundaries are preserved — clearance module has no JPA dependency on resident entities
 - Future microservices split would only require replacing the direct `ResidentService` call with an HTTP call
 
 **Negative:**
+
 - N+1 query risk for list endpoints — mitigated by batching resident lookups where possible
 - Resident name at the time of the query may differ from the name at the time of the request (name changes)
 
@@ -486,11 +517,13 @@ Use **Flyway** with `ddl-auto: validate` in all profiles except test. Flyway run
 ### Consequences
 
 **Positive:**
+
 - Reproducible schema — any environment can be brought to any version
 - Migration history is stored in the database (`flyway_schema_history`)
 - Rollback is explicit (write a new migration) — no accidental reversions
 
 **Negative:**
+
 - Every schema change requires a new migration file
 - Migrations are irreversible by default — accidental migrations in production require a compensating migration
 
@@ -523,10 +556,12 @@ Use **MapStruct** with `@Mapper(componentModel = "spring")` for all entity↔DTO
 ### Consequences
 
 **Positive:**
+
 - Type-safe mapping with compile-time error detection
 - No runtime performance overhead
 
 **Negative:**
+
 - Requires `./mvnw clean compile` after every entity or DTO change
 - `lombok-mapstruct-binding` must be correctly ordered in `annotationProcessorPaths` — easy to misconfigure
 
@@ -540,6 +575,7 @@ Use **MapStruct** with `@Mapper(componentModel = "spring")` for all entity↔DTO
 ### Context
 
 Primary key strategy options:
+
 1. **Auto-increment INTEGER/BIGINT** — sequential, predictable, enumerable
 2. **UUID v4** — random, non-guessable, globally unique
 
@@ -556,11 +592,13 @@ Use **UUID v4** (`gen_random_uuid()`) as primary keys for all tables except sing
 ### Consequences
 
 **Positive:**
+
 - Non-enumerable — reduces surface area for IDOR attacks
 - No coordination required for ID generation (no central sequence)
 - Safe to expose in URLs
 
 **Negative:**
+
 - UUIDs are larger than integers (16 bytes vs 4/8 bytes) — slightly larger indexes
 - UUID v4 is random — index insertions cause B-tree page splits more frequently than sequential IDs (at the scale of a barangay, this is negligible)
 
@@ -574,6 +612,7 @@ Use **UUID v4** (`gen_random_uuid()`) as primary keys for all tables except sing
 ### Context
 
 Clearance PDFs can be generated:
+
 1. **Server-side** (Java: iTextPDF, PDFBox, JasperReports)
 2. **Client-side** (JavaScript: jsPDF, Puppeteer/Headless Chrome)
 3. **Template engine** (Thymeleaf → HTML → Puppeteer/wkhtmltopdf)
@@ -593,11 +632,13 @@ Use **Apache PDFBox 3.x** for server-side PDF generation in `ClearancePdfService
 ### Consequences
 
 **Positive:**
+
 - Consistent output across all environments
 - No licensing concerns (Apache License 2.0)
 - No external dependencies (no Chrome, no native libs)
 
 **Negative:**
+
 - PDF layout is programmatic (no visual template designer) — changes to the layout require code changes
 - PDFBox API is lower-level than JasperReports — more boilerplate for layout
 
@@ -615,6 +656,7 @@ Frontend developers need to work against the API without managing JWT tokens. Th
 ### Decision
 
 Use **Spring profiles** to switch security configurations:
+
 - `@Profile("!no-auth")` → `SecurityConfig` — JWT authentication enabled (default)
 - `@Profile("no-auth")` → `LocalSecurityConfig` — all requests permitted, no JWT validation
 
@@ -627,11 +669,13 @@ Use **Spring profiles** to switch security configurations:
 ### Consequences
 
 **Positive:**
+
 - Frontend development is frictionless — no token management needed
 - Security configuration is explicit and clearly differentiated by profile
 - Production cannot accidentally run with security disabled (profile name is not `prod`)
 
 **Negative:**
+
 - Two `SecurityConfig` classes must be kept in sync for non-security settings (CORS, CSRF, etc.)
 - Developers must remember to test with auth enabled before submitting changes
 
@@ -663,13 +707,64 @@ Use **staff activation** (`PENDING_VERIFICATION` → `ACTIVE`). New registration
 ### Consequences
 
 **Positive:**
+
 - Prevents fraudulent clearance requests from unverified identities
 - No email infrastructure required for the MVP
 - Matches the existing barangay operational process
 
 **Negative:**
+
 - Residents cannot immediately submit clearance requests after registration — they must wait for staff activation
 - Adds a manual step to the onboarding process
 
 **Future Path:**
+
 - Email verification can be added as an alternative or complementary verification step when email infrastructure is available
+
+---
+
+## ADR-019: Cross-Module UUID References over JPA Entity Relationships
+
+**Date:** 2026-02
+**Status:** Accepted
+
+### Context
+
+Several modules need to reference data owned by another module. For example, `ClearanceRequest` (in the `clearance` module) must identify which `Resident` (in the `residents` module) the request belongs to. Two approaches were considered:
+
+1. **JPA entity relationship** — declare a `@ManyToOne Resident resident` field, letting Hibernate manage the join
+2. **UUID reference** — store only the foreign key (`UUID residentId`) and resolve data via a service call when needed
+
+### Decision
+
+Store only the **UUID foreign key** across module boundaries. Never declare a `@ManyToOne` (or any JPA association) that references an entity from a different module.
+
+### Rationale
+
+A JPA cross-module relationship creates an invisible compile-time and runtime coupling between modules:
+
+- Hibernate eagerly or lazily joins across module tables, breaking the encapsulation boundary
+- Any schema change in the `residents` table (e.g., a new column, a renamed column) risks breaking the `clearance` entity mapping
+- The `clearance` module's persistence context begins managing `Resident` lifecycle, violating module ownership
+- Unit testing the `clearance` module in isolation requires mocking or loading the `residents` schema
+
+Storing a UUID keeps the dependency explicit and one-directional: the `clearance` module knows a resident ID exists; it calls `ResidentService.getById(residentId)` only when it actually needs resident data, making the cross-module call visible and intentional.
+
+### Consequences
+
+**Positive:**
+
+- Modules remain independently testable and reasonably portable
+- Schema changes in one module do not cascade into another module's entity mappings
+- Cross-module data access is explicit and auditable — a service call rather than a transparent Hibernate join
+- Consistent with the modular monolith constraint established in ADR-001
+
+**Negative:**
+
+- No JPA lazy-loading or JPQL joins across modules — data from two modules must be assembled in the service or response-mapping layer
+- Referential integrity between modules is not enforced by Hibernate; it relies on application logic and database-level foreign key constraints in migrations
+
+**Mitigation:**
+
+- Database-level `FOREIGN KEY` constraints in Flyway migrations preserve referential integrity at the persistence layer
+- Service-layer composition (e.g., `ClearanceResponseMapper` enriching a response with resident name) handles multi-module data assembly in one place

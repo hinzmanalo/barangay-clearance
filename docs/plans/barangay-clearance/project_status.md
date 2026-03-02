@@ -1,8 +1,8 @@
 # Barangay Clearance System — Project Status
 
-**Last Updated:** 2026-02-27
-**Current Phase:** Phase 9 / 11
-**Overall Progress:** 10 / 12 phases complete
+**Last Updated:** 2026-02-27 (Phase 12 audit logging plan added)
+**Current Phase:** Phase 9 / 12
+**Overall Progress:** 10 / 13 phases complete
 
 ---
 
@@ -11,17 +11,20 @@
 | Phase                                   | Name                         | Status         | Week | Notes                            |
 | --------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
 | [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
-| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | � Complete     | 2    | Blocks all other phases          |
-| [Phase 2](phase-02-residents.md)        | Residents Module             | � Complete     | 2–3  | Blocks Phase 3                   |
-| [Phase 3](phase-03-clearance.md)        | Clearance Module             | � Complete     | 3–4  | Core business logic              |
-| [Phase 4](phase-04-payments.md)         | Payments Module              | � Complete     | 4    | Parallel with Phase 5 & 6        |
-| [Phase 5](phase-05-pdf.md)              | PDF Generation               | � Complete     | 5    | Parallel with Phase 4 & 6        |
-| [Phase 6](phase-06-settings.md)         | Settings Module              | � Complete     | 5    | Parallel with Phase 4 & 5        |
-| [Phase 7](phase-07-reports.md)          | Reports Module               | � Complete     | 6    | Parallel with Phase 8            |
-| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | � Complete     | 6    | Parallel with Phase 7            |
+| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | 🟢 Complete    | 2    | Blocks all other phases          |
+| [Phase 2](phase-02-residents.md)        | Residents Module             | 🟢 Complete    | 2–3  | Blocks Phase 3                   |
+| [Phase 3](phase-03-clearance.md)        | Clearance Module             | 🟢 Complete    | 3–4  | Core business logic              |
+| [Phase 4](phase-04-payments.md)         | Payments Module              | 🟢 Complete    | 4    | Parallel with Phase 5 & 6        |
+| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🟢 Complete    | 5    | Parallel with Phase 4 & 6        |
+| [Phase 6](phase-06-settings.md)         | Settings Module              | 🟢 Complete    | 5    | Parallel with Phase 4 & 5        |
+| [Phase 7](phase-07-reports.md)          | Reports Module               | 🟢 Complete    | 6    | Parallel with Phase 8            |
+| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🟢 Complete    | 6    | Parallel with Phase 7            |
 | [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
 | [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
-| [Phase 11](phase-11-user-management.md) | User Management              | � Complete     | 6–7  | Parallel with Phase 7 & 8        |
+| [Phase 11](phase-11-user-management.md) | User Management              | 🟢 Complete    | 6–7  | Parallel with Phase 7 & 8        |
+| [Phase 12](phase-12-audit-logging.md)   | Audit Logging                | 🔴 Not Started | 8    | Parallel with Phase 9 & 10       |
+
+| [Perf Review](performance-improvements.md) | Backend Performance Audit | 📋 Documented | — | 19 issues identified, ready to implement |
 
 **Status Legend:**
 
@@ -45,13 +48,13 @@
 See [dependency-graph.md](dependency-graph.md) for full details.
 
 **Sequential (critical path):**
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8/11 in parallel] → Phase 9 → Phase 10
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8/11 in parallel] → [Phase 9/12 in parallel] → Phase 10
 
 **Parallel opportunities:**
 
 - After Phase 3: Phases 4, 5, and 6 can all run concurrently
 - After Phases 4/5/6: Phases 7, 8, and 11 can run concurrently
-- During Phase 9: Phase 10 infrastructure setup can begin
+- During Phase 9: Phase 10 infrastructure setup and Phase 12 can begin
 
 ---
 
@@ -321,6 +324,41 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ---
 
+### Phase 12 — Audit Logging
+
+**Status:** 🔴 Not Started
+**Parallel with:** Phases 9, 10
+
+**Checklist:**
+
+**Backend:**
+
+- [ ] `AuditLog.java` entity (`shared/audit/`)
+- [ ] `AuditLogRepository.java` with paginated queries + specification support
+- [ ] `AuditAction.java` constants (27 action types across all modules)
+- [ ] `AuditService.java` (`@Async`, `REQUIRES_NEW` propagation, IP resolution)
+- [ ] `AuditAsyncConfig.java` — bounded thread pool for async audit writes
+- [ ] `ClearanceAuditListener.java` — `@EventListener` for `ClearanceStatusChangedEvent`
+- [ ] Instrument `AuthService` (register, login, login failed, logout, refresh, change password)
+- [ ] Instrument `UserService` (create staff, activate, deactivate, role change, password reset)
+- [ ] Instrument `ResidentService` (create, update, activate)
+- [ ] Instrument `PaymentService` (initiate, success, failed, cash recorded)
+- [ ] Instrument `SettingsService` (update settings, upload logo, update fees)
+- [ ] `AuditLogDTO.java` with actor email enrichment
+- [ ] `AuditLogController.java` (`GET /api/v1/audit-logs`, ADMIN only)
+- [ ] Optional: `V9__audit_logs_indexes.sql` (indexes for query performance)
+
+**Frontend:**
+
+- [ ] `types/audit.ts`
+- [ ] `hooks/useAuditLogs.ts` (React Query)
+- [ ] `/backoffice/admin/audit-logs/page.tsx` — filterable, paginated table with expandable details
+- [ ] `AuditLogTable.tsx` component
+- [ ] `Sidebar.tsx` updated with "Audit Logs" link (ADMIN only)
+- [ ] `npm run build` passes with no type errors
+
+---
+
 ## Progress Log
 
 | Date       | Phase    | Action       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -336,6 +374,9 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 | 2026-02-25 | Phase 11 | Planned      | Created `phase-11-user-management.md` — covers backend API gaps (activate, role update, profile update, admin password reset, search/filter, `/me` endpoints) and full frontend backoffice UI (user list, create, detail/edit pages, `UserTable`, `RoleBadge`, sidebar link).                                                                                                                                                                               |
 | 2026-02-25 | Phase 8  | Partial      | `StatusTimeline.tsx` enhanced: added Payment step (4th step) between Approved and Released. Orange ring when Unpaid, green check when Paid/Waived, inactive when not yet reached. `portal/requests/[id]/page.tsx` updated to pass `paymentStatus` prop.                                                                                                                                                                                                     |
 | 2026-02-26 | Phase 5  | Completed    | PDF Generation: `ClearancePdfService` interface + `ClearancePdfServiceImpl` (PDFBox 3.x, A4 layout, logo embedding, text wrapping, signature block). Endpoints: `GET /clearances/{id}/pdf` (CLERK/ADMIN) + `GET /me/clearances/{id}/pdf` (RESIDENT, RELEASED only). Frontend: Download PDF buttons on portal request detail and backoffice clearance detail pages. Also created `BarangaySettings` entity + repository (prepares Phase 6).                  |     | 2026-02-26 | Phase 6 | Completed | Settings module: `FeeConfig` entity + `FeeConfigRepository`, `BarangaySettingsDTO` + `FeeConfigDTO`, `SettingsService` (get/update settings, logo upload/retrieval, get/update fees), `SettingsController` (GET/PUT `/settings`, POST/GET `/settings/logo`, GET/PUT `/settings/fees`). Logo validated at service level (PNG/JPEG/GIF, max 2 MB). `ClearanceService.resolveFee()` now reads live `fee_config` row (with fallback). Frontend: `useSettings.ts` hooks, `types/settings.ts` updated (`hasLogo`), `/backoffice/admin/settings` profile+logo page, `/backoffice/admin/settings/fees` fee form. |
+
+| 2026-02-27 | Perf | Documented | Backend performance audit: 19 issues identified (5 critical, 5 high, 6 medium, 3 low). Key findings: N+1 queries in `ClearanceService.enrich()` and `ResidentService.findPendingUsers()`, 5 missing DB indexes, no caching for singleton settings, no HikariCP tuning. Full report: [`performance-improvements.md`](performance-improvements.md). |
+| 2026-02-27 | Phase 12 | Planned | Created [`phase-12-audit-logging.md`](phase-12-audit-logging.md) — audit trail for all state-changing operations. `audit_logs` table exists (V1) but has zero code implementation. Plan covers: `AuditLog` entity/repo/service in `shared/audit/`, 27 audit action constants, `@Async` + `REQUIRES_NEW` writes, `ClearanceStatusChangedEvent` listener, instrumentation of 5 services (auth, users, residents, payments, settings), ADMIN-only query endpoints, and frontend audit log viewer page. |
 
 ---
 
