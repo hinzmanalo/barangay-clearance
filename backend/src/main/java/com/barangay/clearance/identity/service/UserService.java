@@ -4,6 +4,8 @@ import com.barangay.clearance.identity.dto.*;
 import com.barangay.clearance.identity.entity.User;
 import com.barangay.clearance.identity.repository.RefreshTokenRepository;
 import com.barangay.clearance.identity.repository.UserRepository;
+import com.barangay.clearance.shared.audit.AuditAction;
+import com.barangay.clearance.shared.audit.AuditService;
 import com.barangay.clearance.shared.exception.AppException;
 import com.barangay.clearance.shared.util.PageResponse;
 import jakarta.persistence.criteria.Predicate;
@@ -29,13 +31,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     /**
      * List all non-resident staff accounts — paginated with optional filters.
      *
-     * @param role   optional role filter
-     * @param status optional status filter
-     * @param search optional keyword matched against firstName, lastName, or email (case-insensitive)
+     * @param role     optional role filter
+     * @param status   optional status filter
+     * @param search   optional keyword matched against firstName, lastName, or
+     *                 email (case-insensitive)
      * @param pageable pagination / sort
      * @return paginated staff list
      */
@@ -61,8 +65,8 @@ public class UserService {
             if (StringUtils.hasText(search)) {
                 String pattern = "%" + search.toLowerCase() + "%";
                 Predicate firstNameLike = cb.like(cb.lower(root.get("firstName")), pattern);
-                Predicate lastNameLike  = cb.like(cb.lower(root.get("lastName")), pattern);
-                Predicate emailLike     = cb.like(cb.lower(root.get("email")), pattern);
+                Predicate lastNameLike = cb.like(cb.lower(root.get("lastName")), pattern);
+                Predicate emailLike = cb.like(cb.lower(root.get("email")), pattern);
                 predicates.add(cb.or(firstNameLike, lastNameLike, emailLike));
             }
 
@@ -107,6 +111,8 @@ public class UserService {
 
         User saved = userRepository.save(user);
         log.info("Staff account created: {} ({})", saved.getEmail(), saved.getRole());
+        auditService.log(saved.getId(), AuditAction.STAFF_CREATED, "User", saved.getId(),
+                "Staff account created: " + saved.getEmail() + " role=" + saved.getRole());
         return toDTO(saved);
     }
 
@@ -125,6 +131,8 @@ public class UserService {
         user.setStatus(User.UserStatus.DEACTIVATED);
         userRepository.save(user);
         log.info("User deactivated: {}", user.getEmail());
+        auditService.log(user.getId(), AuditAction.STAFF_DEACTIVATED, "User", user.getId(),
+                "User deactivated: " + user.getEmail());
         return toDTO(user);
     }
 
@@ -148,21 +156,26 @@ public class UserService {
         user.setStatus(User.UserStatus.ACTIVE);
         userRepository.save(user);
         log.info("User activated: {}", user.getEmail());
+        auditService.log(user.getId(), AuditAction.STAFF_ACTIVATED, "User", user.getId(),
+                "User activated: " + user.getEmail());
         return toDTO(user);
     }
 
     /**
      * Change a staff user's role.
      *
-     * <p>Guards:</p>
+     * <p>
+     * Guards:
+     * </p>
      * <ul>
-     *   <li>Role cannot be set to RESIDENT.</li>
-     *   <li>Admin cannot demote their own account.</li>
+     * <li>Role cannot be set to RESIDENT.</li>
+     * <li>Admin cannot demote their own account.</li>
      * </ul>
      *
      * @param userId       target user
      * @param newRole      the desired new role
-     * @param callerUserId the authenticated admin's own ID (to prevent self-demotion)
+     * @param callerUserId the authenticated admin's own ID (to prevent
+     *                     self-demotion)
      * @return updated user DTO
      */
     @Transactional
@@ -181,6 +194,8 @@ public class UserService {
         user.setRole(newRole);
         userRepository.save(user);
         log.info("User role changed: {} ({} → {})", user.getEmail(), oldRole, newRole);
+        auditService.log(user.getId(), AuditAction.STAFF_ROLE_CHANGED, "User", user.getId(),
+                "{\"from\":\"" + oldRole + "\",\"to\":\"" + newRole + "\"}");
         return toDTO(user);
     }
 
@@ -234,6 +249,8 @@ public class UserService {
         // Invalidate all active sessions for this user
         refreshTokenRepository.deleteByUserId(userId);
         log.info("Admin reset password for user: {}", user.getEmail());
+        auditService.log(userId, AuditAction.STAFF_PASSWORD_RESET, "User", userId,
+                "Admin force-reset password for: " + user.getEmail());
     }
 
     /**
@@ -251,7 +268,8 @@ public class UserService {
 
     /**
      * Update the authenticated user's own profile.
-     * Only first name and last name may be changed — email and role changes are admin-only.
+     * Only first name and last name may be changed — email and role changes are
+     * admin-only.
      *
      * @param userId  the caller's user ID
      * @param request fields to update (nulls ignored)

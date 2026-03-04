@@ -33,12 +33,12 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 
 ### Actors
 
-| Actor | Description |
-|-------|-------------|
-| **Resident** | Applies for a clearance via the resident portal (online or walk-in) |
-| **Clerk** | Barangay staff who creates walk-in requests, collects cash payments, and releases clearances |
-| **Approver** | Barangay officer who reviews and approves or rejects clearance requests |
-| **Admin** | System administrator who manages staff accounts, barangay settings, and fee configuration |
+| Actor        | Description                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| **Resident** | Applies for a clearance via the resident portal (online or walk-in)                          |
+| **Clerk**    | Barangay staff who creates walk-in requests, collects cash payments, and releases clearances |
+| **Approver** | Barangay officer who reviews and approves or rejects clearance requests                      |
+| **Admin**    | System administrator who manages staff accounts, barangay settings, and fee configuration    |
 
 ### Core Workflows
 
@@ -52,39 +52,39 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 
 ### Backend
 
-| Component | Technology | Version | Rationale |
-|-----------|-----------|---------|-----------|
-| Language | Java | 21 (LTS) | Virtual threads ready; long-term support |
-| Framework | Spring Boot | 3.3.4 | Convention over configuration; mature ecosystem |
-| Security | Spring Security + JJWT | 6.x + 0.12.6 | Stateless JWT; no session backend needed |
-| ORM | Spring Data JPA / Hibernate | 6.x | Reduces boilerplate; dynamic query via Specifications |
-| Database | PostgreSQL | 16 | ACID transactions; `gen_random_uuid()`; `ON CONFLICT DO UPDATE` |
-| Migrations | Flyway | 10.x | Version-controlled schema; audit trail of changes |
-| PDF | Apache PDFBox | 3.0.3 | Pure Java; no native dependencies; A4/custom layout |
-| Mapping | MapStruct | 1.5.5 | Compile-time safe entity↔DTO mapping; zero reflection overhead |
-| Boilerplate | Lombok | 1.18.34 | Getters/setters/builders at compile time |
-| API Docs | SpringDoc OpenAPI | 2.6.0 | Auto-generates Swagger UI from annotations |
-| Build | Maven | 3.x (wrapper) | Standard Java build; reproducible builds |
+| Component   | Technology                  | Version       | Rationale                                                       |
+| ----------- | --------------------------- | ------------- | --------------------------------------------------------------- |
+| Language    | Java                        | 21 (LTS)      | Virtual threads ready; long-term support                        |
+| Framework   | Spring Boot                 | 3.3.4         | Convention over configuration; mature ecosystem                 |
+| Security    | Spring Security + JJWT      | 6.x + 0.12.6  | Stateless JWT; no session backend needed                        |
+| ORM         | Spring Data JPA / Hibernate | 6.x           | Reduces boilerplate; dynamic query via Specifications           |
+| Database    | PostgreSQL                  | 16            | ACID transactions; `gen_random_uuid()`; `ON CONFLICT DO UPDATE` |
+| Migrations  | Flyway                      | 10.x          | Version-controlled schema; audit trail of changes               |
+| PDF         | Apache PDFBox               | 3.0.3         | Pure Java; no native dependencies; A4/custom layout             |
+| Mapping     | MapStruct                   | 1.5.5         | Compile-time safe entity↔DTO mapping; zero reflection overhead  |
+| Boilerplate | Lombok                      | 1.18.34       | Getters/setters/builders at compile time                        |
+| API Docs    | SpringDoc OpenAPI           | 2.6.0         | Auto-generates Swagger UI from annotations                      |
+| Build       | Maven                       | 3.x (wrapper) | Standard Java build; reproducible builds                        |
 
 ### Frontend
 
-| Component | Technology | Version | Rationale |
-|-----------|-----------|---------|-----------|
-| Framework | Next.js | 14 | App Router; SSR/SSG; React 18 |
-| Language | TypeScript | 5.x | Type safety across API boundaries |
-| Styling | Tailwind CSS | 3.x | Utility-first; no runtime style computation |
-| UI Components | shadcn/ui | latest | Accessible; composable; Radix UI primitives |
-| Forms | React Hook Form + Zod | latest | Validation schema shared with types |
-| Data Fetching | TanStack React Query | v5 | Caching; background refresh; optimistic updates |
-| HTTP Client | Axios | 1.x | Interceptors for 401→refresh→retry flow |
+| Component     | Technology            | Version | Rationale                                       |
+| ------------- | --------------------- | ------- | ----------------------------------------------- |
+| Framework     | Next.js               | 14      | App Router; SSR/SSG; React 18                   |
+| Language      | TypeScript            | 5.x     | Type safety across API boundaries               |
+| Styling       | Tailwind CSS          | 3.x     | Utility-first; no runtime style computation     |
+| UI Components | shadcn/ui             | latest  | Accessible; composable; Radix UI primitives     |
+| Forms         | React Hook Form + Zod | latest  | Validation schema shared with types             |
+| Data Fetching | TanStack React Query  | v5      | Caching; background refresh; optimistic updates |
+| HTTP Client   | Axios                 | 1.x     | Interceptors for 401→refresh→retry flow         |
 
 ### Infrastructure
 
-| Component | Technology | Notes |
-|-----------|-----------|-------|
-| Container | Docker Compose | Local dev + production |
-| Reverse Proxy | Nginx | Routes `/api` → Spring Boot, `/` → Next.js |
-| Database | PostgreSQL 16 | Managed via Docker volume in dev |
+| Component     | Technology     | Notes                                      |
+| ------------- | -------------- | ------------------------------------------ |
+| Container     | Docker Compose | Local dev + production                     |
+| Reverse Proxy | Nginx          | Routes `/api` → Spring Boot, `/` → Next.js |
+| Database      | PostgreSQL 16  | Managed via Docker volume in dev           |
 
 ---
 
@@ -95,6 +95,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** Single deployable artifact with strict module boundaries.
 
 **Rationale:**
+
 - The system is **small domain** — 6 bounded contexts, all tightly coupled around a single PostgreSQL database
 - Microservices would introduce distributed transaction complexity with no meaningful scalability benefit at barangay scale (dozens to hundreds of concurrent users)
 - Module boundaries are enforced **by convention** (no cross-module JPA relationships), making a future split to microservices feasible without major refactoring
@@ -104,6 +105,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** Short-lived access tokens (15 min) + long-lived opaque refresh tokens (7 days) stored as SHA-256 hashes in the database.
 
 **Rationale:**
+
 - No session state means horizontal scaling without sticky sessions or shared session stores
 - Refresh token rotation is not implemented (token is NOT rotated on refresh) — a deliberate simplicity trade-off for an MVP. See [ADR-003](./ADR.md#adr-003-refresh-token-non-rotation)
 - SHA-256 hashing of refresh tokens means a database breach does not expose valid tokens
@@ -113,6 +115,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** `@PreAuthorize("hasRole(...)")` on controller methods, not URL patterns.
 
 **Rationale:**
+
 - Method-level security is more maintainable — the security rule lives next to the business logic
 - Avoids brittle URL-pattern matching in `SecurityConfig` that breaks on route changes
 - Roles (`ADMIN`, `CLERK`, `APPROVER`, `RESIDENT`) map directly to barangay organizational roles
@@ -122,6 +125,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** For portal (resident) endpoints, the authenticated resident's identity is always resolved from the JWT, never from request parameters.
 
 **Rationale:**
+
 - Prevents horizontal privilege escalation (resident A accessing resident B's clearances by changing an ID in the URL)
 - The service layer validates ownership before returning any data
 
@@ -130,6 +134,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** `PaymentGateway` is a Java interface with `StubPaymentGateway` as the initial implementation.
 
 **Rationale:**
+
 - Barangay systems in the Philippines often start with cash-only operations
 - The stub simulates a successful online payment gateway, allowing the full workflow to be tested without real payment integration
 - Future plug-in of PayMongo or Maya requires only a new `PaymentGateway` implementation — no service layer changes
@@ -139,6 +144,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** Composite unique index on `(idempotency_key, initiated_by_user_id)` with 24-hour TTL enforced in application logic.
 
 **Rationale:**
+
 - Prevents duplicate charges on network retries or browser refresh
 - DB constraint as final guard even if application-level check races
 
@@ -147,6 +153,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** PostgreSQL `ON CONFLICT DO UPDATE RETURNING` on `clearance_number_sequence` table.
 
 **Rationale:**
+
 - Prevents duplicate clearance numbers under concurrent requests without application-level locking
 - `REQUIRES_NEW` transaction propagation ensures the sequence commit is independent of the parent transaction, preventing rollback of the sequence increment on outer transaction failure
 
@@ -155,6 +162,7 @@ The **Barangay Clearance System** is a web application that digitizes the issuan
 **Decision:** `barangay_settings` and `fee_config` tables use `CHECK (id = 1)` to enforce a single row at the database level.
 
 **Rationale:**
+
 - Simpler than a key-value store for a fixed, small configuration set
 - The constraint is enforced at the DB level, not just the application level
 - `PUT` semantics (upsert) rather than `POST` — no resource creation, just update
@@ -250,14 +258,14 @@ GlobalExceptionHandler (@RestControllerAdvice)
 
 ### 4.3 Layer Responsibilities
 
-| Layer | Responsibility | Annotations |
-|-------|---------------|-------------|
-| **Controller** | HTTP routing, input validation, authorization gate | `@RestController`, `@PreAuthorize`, `@Valid` |
-| **Service** | Business logic, state machine, transaction boundary | `@Service`, `@Transactional` |
-| **Repository** | Data access, dynamic queries | `@Repository`, extends `JpaRepository` |
-| **Entity** | Database schema mapping, constraints | `@Entity`, `@Table`, `@Column` |
-| **DTO** | Data contract between layers, never exposes entity | `@Data`, `@Builder` (Lombok) |
-| **Mapper** | Compile-time entity↔DTO conversion | `@Mapper` (MapStruct) |
+| Layer          | Responsibility                                      | Annotations                                  |
+| -------------- | --------------------------------------------------- | -------------------------------------------- |
+| **Controller** | HTTP routing, input validation, authorization gate  | `@RestController`, `@PreAuthorize`, `@Valid` |
+| **Service**    | Business logic, state machine, transaction boundary | `@Service`, `@Transactional`                 |
+| **Repository** | Data access, dynamic queries                        | `@Repository`, extends `JpaRepository`       |
+| **Entity**     | Database schema mapping, constraints                | `@Entity`, `@Table`, `@Column`               |
+| **DTO**        | Data contract between layers, never exposes entity  | `@Data`, `@Builder` (Lombok)                 |
+| **Mapper**     | Compile-time entity↔DTO conversion                  | `@Mapper` (MapStruct)                        |
 
 ---
 
@@ -326,7 +334,8 @@ com.barangay.clearance/
 │   └── service/
 │       ├── ClearanceService.java
 │       ├── ClearanceNumberService.java
-│       ├── ClearanceStatusChangedEvent.java
+│       ├── ClearanceStatusChangedEvent.java  # Spring ApplicationEvent for status transitions
+│       ├── ClearanceAuditListener.java       # @EventListener — translates events → audit entries
 │       └── mapper/
 │           └── ClearanceMapper.java
 │
@@ -381,6 +390,12 @@ com.barangay.clearance/
 │       └── ReportsService.java
 │
 └── shared/                            # Cross-Cutting Concerns
+    ├── audit/
+    │   ├── AuditAction.java           # String constants for every auditable event
+    │   ├── AuditAsyncConfig.java      # Dedicated audit-pool thread pool + TaskDecorator
+    │   ├── AuditLog.java              # Immutable @Entity mapped to audit_logs
+    │   ├── AuditLogRepository.java    # JpaRepository + JpaSpecificationExecutor
+    │   └── AuditService.java          # @Async + REQUIRES_NEW write gateway
     ├── exception/
     │   ├── AppException.java
     │   ├── ErrorResponse.java
@@ -408,6 +423,7 @@ reports ────────────────────────
 ```
 
 **Rules enforced by convention:**
+
 - No module imports JPA entities from another module
 - Cross-module data is passed as primitive types or DTOs (never entity references)
 - `clearance` module references `resident` data by UUID only; name is enriched post-fetch (denormalization)
@@ -535,41 +551,41 @@ reports ────────────────────────
 
 ### 6.2 Table Catalog
 
-| Table | Rows | PK Type | Notes |
-|-------|------|---------|-------|
-| `users` | Many | UUID | `gen_random_uuid()` default |
-| `refresh_tokens` | Many | UUID | `token_hash` is SHA-256 hex |
-| `residents` | Many | UUID | `user_id` nullable (walk-ins) |
-| `barangay_settings` | **1** | INTEGER | `CHECK (id = 1)` singleton |
-| `fee_config` | **1** | INTEGER | `CHECK (id = 1)` singleton |
-| `clearance_number_sequence` | 1 per month | VARCHAR(7) | `year_month` = "YYYY-MM" |
-| `clearance_requests` | Many | UUID | Core workflow table |
-| `payments` | Many | UUID | Composite unique on idempotency |
-| `audit_logs` | Many | UUID | Append-only; never updated |
+| Table                       | Rows        | PK Type    | Notes                           |
+| --------------------------- | ----------- | ---------- | ------------------------------- |
+| `users`                     | Many        | UUID       | `gen_random_uuid()` default     |
+| `refresh_tokens`            | Many        | UUID       | `token_hash` is SHA-256 hex     |
+| `residents`                 | Many        | UUID       | `user_id` nullable (walk-ins)   |
+| `barangay_settings`         | **1**       | INTEGER    | `CHECK (id = 1)` singleton      |
+| `fee_config`                | **1**       | INTEGER    | `CHECK (id = 1)` singleton      |
+| `clearance_number_sequence` | 1 per month | VARCHAR(7) | `year_month` = "YYYY-MM"        |
+| `clearance_requests`        | Many        | UUID       | Core workflow table             |
+| `payments`                  | Many        | UUID       | Composite unique on idempotency |
+| `audit_logs`                | Many        | UUID       | Append-only; never updated      |
 
 ### 6.3 Key Indexes
 
-| Index | Table | Columns | Type |
-|-------|-------|---------|------|
-| `idx_users_email` | `users` | `email` | B-tree |
-| `idx_users_role_status` | `users` | `role, status` | B-tree (composite) |
-| `idx_residents_name` | `residents` | `lower(last_name), lower(first_name)` | B-tree (functional) |
-| `idx_cr_status` | `clearance_requests` | `status` | B-tree |
-| `idx_cr_issued_at` | `clearance_requests` | `issued_at` | B-tree |
-| `idx_payments_idempotency` | `payments` | `idempotency_key, initiated_by_user_id` | **UNIQUE** B-tree |
+| Index                      | Table                | Columns                                 | Type                |
+| -------------------------- | -------------------- | --------------------------------------- | ------------------- |
+| `idx_users_email`          | `users`              | `email`                                 | B-tree              |
+| `idx_users_role_status`    | `users`              | `role, status`                          | B-tree (composite)  |
+| `idx_residents_name`       | `residents`          | `lower(last_name), lower(first_name)`   | B-tree (functional) |
+| `idx_cr_status`            | `clearance_requests` | `status`                                | B-tree              |
+| `idx_cr_issued_at`         | `clearance_requests` | `issued_at`                             | B-tree              |
+| `idx_payments_idempotency` | `payments`           | `idempotency_key, initiated_by_user_id` | **UNIQUE** B-tree   |
 
 ### 6.4 Flyway Migration History
 
-| Version | File | Changes |
-|---------|------|---------|
-| V1 | `V1__initial_schema.sql` | All 9 tables, PKs, FKs, basic indexes |
-| V2 | `V2__seed_settings.sql` | Insert singleton rows for settings + fee config |
-| V3 | `V3__seed_admin.sql` | Insert initial admin user (`must_change_password=true`) |
-| V4 | `V4__expand_user_status.sql` | Add `PENDING_VERIFICATION`, `REJECTED`, `DEACTIVATED` to `users.status` CHECK |
-| V5 | `V5__fix_admin_password.sql` | Admin password correction |
-| V6 | `V6__clearance_extra_columns.sql` | Add `purpose_other`, `copies` columns to `clearance_requests` |
-| V7 | `V7__fix_year_month_column_type.sql` | ALTER `year_month` to VARCHAR(7) |
-| V8 | `V8__payments_add_columns.sql` | Add `idempotency_expires_at`, `payment_method` to `payments` |
+| Version | File                                 | Changes                                                                       |
+| ------- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| V1      | `V1__initial_schema.sql`             | All 9 tables, PKs, FKs, basic indexes                                         |
+| V2      | `V2__seed_settings.sql`              | Insert singleton rows for settings + fee config                               |
+| V3      | `V3__seed_admin.sql`                 | Insert initial admin user (`must_change_password=true`)                       |
+| V4      | `V4__expand_user_status.sql`         | Add `PENDING_VERIFICATION`, `REJECTED`, `DEACTIVATED` to `users.status` CHECK |
+| V5      | `V5__fix_admin_password.sql`         | Admin password correction                                                     |
+| V6      | `V6__clearance_extra_columns.sql`    | Add `purpose_other`, `copies` columns to `clearance_requests`                 |
+| V7      | `V7__fix_year_month_column_type.sql` | ALTER `year_month` to VARCHAR(7)                                              |
+| V8      | `V8__payments_add_columns.sql`       | Add `idempotency_expires_at`, `payment_method` to `payments`                  |
 
 ---
 
@@ -639,12 +655,13 @@ Client Request (Authorization: Bearer <accessToken>)
 
 ### 7.3 Token Specifications
 
-| Token | Type | Algorithm | Expiry | Storage |
-|-------|------|-----------|-------|---------|
-| Access Token | JWT | HMAC-SHA256 | 15 minutes | Client memory / localStorage |
-| Refresh Token | Opaque UUID v4 | — | 7 days | DB (SHA-256 hash only) |
+| Token         | Type           | Algorithm   | Expiry     | Storage                      |
+| ------------- | -------------- | ----------- | ---------- | ---------------------------- |
+| Access Token  | JWT            | HMAC-SHA256 | 15 minutes | Client memory / localStorage |
+| Refresh Token | Opaque UUID v4 | —           | 7 days     | DB (SHA-256 hash only)       |
 
 **JWT Claims:**
+
 ```json
 {
   "sub": "uuid-of-user",
@@ -658,32 +675,32 @@ Client Request (Authorization: Bearer <accessToken>)
 
 ### 7.4 Role Permission Matrix
 
-| Endpoint Category | ADMIN | APPROVER | CLERK | RESIDENT |
-|------------------|-------|----------|-------|----------|
-| Create staff account | ✓ | — | — | — |
-| Manage barangay settings | ✓ | — | — | — |
-| View all clearances | ✓ | ✓ | ✓ | — |
-| Create walk-in clearance | ✓ | — | ✓ | — |
-| Approve / Reject clearance | ✓ | ✓ | — | — |
-| Release clearance | ✓ | — | ✓ | — |
-| Record cash payment | ✓ | — | ✓ | — |
-| Download any PDF | ✓ | — | ✓ | — |
-| Manage residents | ✓ | — | ✓ | — |
-| Activate pending accounts | ✓ | — | ✓ | — |
-| View dashboard summary | ✓ | ✓ | ✓ | — |
-| Submit own clearance | — | — | — | ✓ |
-| View own clearances | — | — | — | ✓ |
-| Download own PDF | — | — | — | ✓ |
-| Pay own clearance | — | — | — | ✓ |
+| Endpoint Category          | ADMIN | APPROVER | CLERK | RESIDENT |
+| -------------------------- | ----- | -------- | ----- | -------- |
+| Create staff account       | ✓     | —        | —     | —        |
+| Manage barangay settings   | ✓     | —        | —     | —        |
+| View all clearances        | ✓     | ✓        | ✓     | —        |
+| Create walk-in clearance   | ✓     | —        | ✓     | —        |
+| Approve / Reject clearance | ✓     | ✓        | —     | —        |
+| Release clearance          | ✓     | —        | ✓     | —        |
+| Record cash payment        | ✓     | —        | ✓     | —        |
+| Download any PDF           | ✓     | —        | ✓     | —        |
+| Manage residents           | ✓     | —        | ✓     | —        |
+| Activate pending accounts  | ✓     | —        | ✓     | —        |
+| View dashboard summary     | ✓     | ✓        | ✓     | —        |
+| Submit own clearance       | —     | —        | —     | ✓        |
+| View own clearances        | —     | —        | —     | ✓        |
+| Download own PDF           | —     | —        | —     | ✓        |
+| Pay own clearance          | —     | —        | —     | ✓        |
 
 ### 7.5 CORS Configuration
 
-| Setting | Value |
-|---------|-------|
-| Allowed Origins | `http://localhost:3000` (dev) |
-| Allowed Methods | GET, POST, PUT, PATCH, DELETE |
-| Allow Credentials | true |
-| CSRF | Disabled (stateless JWT) |
+| Setting           | Value                         |
+| ----------------- | ----------------------------- |
+| Allowed Origins   | `http://localhost:3000` (dev) |
+| Allowed Methods   | GET, POST, PUT, PATCH, DELETE |
+| Allow Credentials | true                          |
+| CSRF              | Disabled (stateless JWT)      |
 
 ---
 
@@ -736,14 +753,14 @@ Client Request (Authorization: Bearer <accessToken>)
 
 ### 8.2 Transition Guards
 
-| Transition | Guard Conditions |
-|-----------|-----------------|
-| → FOR_APPROVAL | Resident has ACTIVE status |
-| FOR_APPROVAL → APPROVED | Caller has APPROVER or ADMIN role |
-| FOR_APPROVAL → REJECTED | Caller has APPROVER or ADMIN role; rejection reason required |
-| REJECTED → DRAFT (resubmit) | Caller is the original requester (ownership validated) |
-| APPROVED → RELEASED | Caller has CLERK or ADMIN role; `payment_status = PAID` |
-| Any state → RELEASED | Blocked if `payment_status = UNPAID` |
+| Transition                  | Guard Conditions                                             |
+| --------------------------- | ------------------------------------------------------------ |
+| → FOR_APPROVAL              | Resident has ACTIVE status                                   |
+| FOR_APPROVAL → APPROVED     | Caller has APPROVER or ADMIN role                            |
+| FOR_APPROVAL → REJECTED     | Caller has APPROVER or ADMIN role; rejection reason required |
+| REJECTED → DRAFT (resubmit) | Caller is the original requester (ownership validated)       |
+| APPROVED → RELEASED         | Caller has CLERK or ADMIN role; `payment_status = PAID`      |
+| Any state → RELEASED        | Blocked if `payment_status = UNPAID`                         |
 
 ### 8.3 Clearance Number Format
 
@@ -758,6 +775,7 @@ where:
 ```
 
 **Generation algorithm:**
+
 ```sql
 INSERT INTO clearance_number_sequence (year_month, last_seq)
 VALUES ('2025-02', 1)
@@ -910,23 +928,23 @@ ResponseEntity<byte[]>
 
 ### 11.1 Profile Summary
 
-| Profile | Database | Auth | Use Case |
-|---------|----------|------|----------|
-| `local` | PostgreSQL :5433 | JWT enabled | Default local development |
+| Profile   | Database              | Auth         | Use Case                              |
+| --------- | --------------------- | ------------ | ------------------------------------- |
+| `local`   | PostgreSQL :5433      | JWT enabled  | Default local development             |
 | `no-auth` | (combined with local) | **Disabled** | Frontend dev without token management |
-| `test` | H2 / test PostgreSQL | JWT enabled | Integration tests |
-| `prod` | PostgreSQL (env vars) | JWT enabled | Production deployment |
+| `test`    | H2 / test PostgreSQL  | JWT enabled  | Integration tests                     |
+| `prod`    | PostgreSQL (env vars) | JWT enabled  | Production deployment                 |
 
 ### 11.2 Key Configuration Properties
 
 ```yaml
 # JWT
 app.jwt.secret: <256-bit minimum HMAC secret>
-app.jwt.access-token-expiry-ms: 900000      # 15 minutes
-app.jwt.refresh-token-expiry-ms: 604800000  # 7 days
+app.jwt.access-token-expiry-ms: 900000 # 15 minutes
+app.jwt.refresh-token-expiry-ms: 604800000 # 7 days
 
 # Payment
-payment.provider: stub                      # stub | paymongo | maya
+payment.provider: stub # stub | paymongo | maya
 payment.stub.always-success: true
 
 # Flyway
@@ -934,19 +952,19 @@ spring.flyway.enabled: true
 spring.flyway.locations: classpath:db/migration
 
 # JPA
-spring.jpa.hibernate.ddl-auto: validate    # Flyway owns schema
+spring.jpa.hibernate.ddl-auto: validate # Flyway owns schema
 ```
 
 ### 11.3 Environment Variables (Production)
 
-| Variable | Description |
-|----------|-------------|
-| `DB_URL` | `jdbc:postgresql://host:5432/barangay_clearance` |
-| `DB_USERNAME` | PostgreSQL username |
-| `DB_PASSWORD` | PostgreSQL password |
-| `JWT_SECRET` | HMAC-SHA256 secret (min 256 bits) |
-| `JWT_ACCESS_EXPIRY_MS` | Access token expiry in milliseconds |
-| `JWT_REFRESH_EXPIRY_MS` | Refresh token expiry in milliseconds |
+| Variable                | Description                                      |
+| ----------------------- | ------------------------------------------------ |
+| `DB_URL`                | `jdbc:postgresql://host:5432/barangay_clearance` |
+| `DB_USERNAME`           | PostgreSQL username                              |
+| `DB_PASSWORD`           | PostgreSQL password                              |
+| `JWT_SECRET`            | HMAC-SHA256 secret (min 256 bits)                |
+| `JWT_ACCESS_EXPIRY_MS`  | Access token expiry in milliseconds              |
+| `JWT_REFRESH_EXPIRY_MS` | Refresh token expiry in milliseconds             |
 
 ---
 
@@ -1016,14 +1034,14 @@ All exceptions are normalized by `GlobalExceptionHandler` into a standard `Error
 
 **Handled exceptions:**
 
-| Exception | HTTP Status |
-|-----------|-------------|
-| `AppException` | Configured (400/401/403/404/409) |
-| `MethodArgumentNotValidException` | 400 (with field-level details) |
-| `ConstraintViolationException` | 400 |
-| `AccessDeniedException` | 403 |
-| `AuthenticationException` | 401 |
-| Unhandled `RuntimeException` | 500 |
+| Exception                         | HTTP Status                      |
+| --------------------------------- | -------------------------------- |
+| `AppException`                    | Configured (400/401/403/404/409) |
+| `MethodArgumentNotValidException` | 400 (with field-level details)   |
+| `ConstraintViolationException`    | 400                              |
+| `AccessDeniedException`           | 403                              |
+| `AuthenticationException`         | 401                              |
+| Unhandled `RuntimeException`      | 500                              |
 
 ### 13.2 Pagination
 
@@ -1067,21 +1085,86 @@ Compilation order:
 ```
 
 After any entity or mapper change:
+
 ```bash
 ./mvnw clean compile
 ```
 
 ### 13.5 Audit Trail
 
-`audit_logs` is append-only. It records every state-changing operation with:
-- `user_id` — who performed the action
-- `action` — verb (e.g., `CLEARANCE_APPROVED`)
-- `entity_type` + `entity_id` — what was affected
-- `details` — JSON or text context
-- `ip_address` — client IP
-- `created_at` — when (immutable)
+Audit logging is fully implemented across all modules via the `shared/audit/` package.
 
-**Note:** As of Phase 2, audit log writes are a planned enhancement — the table exists but service-level audit calls are not yet universally implemented across all modules.
+#### Architecture
+
+`audit_logs` is append-only. Every state-changing operation is recorded with:
+
+- `user_id` — actor UUID (`null` for unauthenticated events such as failed logins)
+- `action` — string constant from `AuditAction` (e.g., `CLEARANCE_APPROVED`)
+- `entity_type` — affected entity class name (max 50 chars)
+- `entity_id` — affected entity's primary key
+- `details` — human-readable or JSON description of what changed
+- `ip_address` — real client IP (resolved via `X-Forwarded-For` → `remoteAddr`)
+- `created_at` — database-set timestamp, immutable
+
+#### `AuditService` Design
+
+```java
+@Async("auditTaskExecutor")
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void log(UUID userId, String action, String entityType, UUID entityId, String details)
+```
+
+Two key design decisions:
+
+1. **`@Async` on a dedicated thread pool** (`audit-pool-*`, 2 core / 5 max / 500 queue) — audit writes are dispatched off the request thread so they add zero latency to user-facing responses.
+2. **`REQUIRES_NEW` propagation** — the audit write commits in its own transaction, independent of the caller. If the caller's transaction rolls back (e.g. a downstream constraint violation), the audit record is still persisted.
+
+Audit failure is silently swallowed: the `catch` block logs the error at `ERROR` level but never re-throws. A missing audit entry is always preferable to a failed user request.
+
+#### IP Address Resolution
+
+`AuditService` reads the client IP from `RequestContextHolder` — no need to pass `HttpServletRequest` into every service method. The `AuditAsyncConfig` task decorator copies the request context to the async thread so the IP is available even after the request thread has moved on.
+
+```
+Request thread  ──► AuditService.log() dispatched to audit-pool
+                         └── RequestContext propagated via TaskDecorator
+                              └── X-Forwarded-For / remoteAddr resolved
+```
+
+#### Clearance State Machine — Event-Driven Auditing
+
+Clearance status transitions use a Spring `ApplicationEvent` pattern instead of direct `AuditService` calls. `ClearanceService` publishes a `ClearanceStatusChangedEvent`; `ClearanceAuditListener` translates it to an audit entry. This keeps audit concerns out of the state machine logic.
+
+```
+ClearanceService.approve() ──► publishEvent(ClearanceStatusChangedEvent)
+                                    └── ClearanceAuditListener.onStatusChanged()
+                                             └── AuditService.log(actorId, "CLEARANCE_APPROVED", ...)
+```
+
+#### Audit Action Catalog
+
+All action constants live in `AuditAction` (a non-instantiable constants class, not an enum, to keep the set open for extension):
+
+| Category       | Action Constants                                                                                                                             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**       | `USER_REGISTERED`, `USER_LOGIN`, `USER_LOGIN_FAILED`, `USER_LOGOUT`, `USER_TOKEN_REFRESHED`, `USER_PASSWORD_CHANGED`                         |
+| **Staff**      | `STAFF_CREATED`, `STAFF_ACTIVATED`, `STAFF_DEACTIVATED`, `STAFF_ROLE_CHANGED`, `STAFF_PASSWORD_RESET`                                        |
+| **Residents**  | `RESIDENT_CREATED`, `RESIDENT_UPDATED`, `RESIDENT_ACTIVATED`                                                                                 |
+| **Clearances** | `CLEARANCE_SUBMITTED`, `CLEARANCE_RESUBMITTED`, `CLEARANCE_APPROVED`, `CLEARANCE_REJECTED`, `CLEARANCE_RELEASED`, `CLEARANCE_PDF_DOWNLOADED` |
+| **Payments**   | `PAYMENT_INITIATED`, `PAYMENT_SUCCESS`, `PAYMENT_FAILED`, `PAYMENT_CASH_RECORDED`                                                            |
+| **Settings**   | `SETTINGS_UPDATED`, `SETTINGS_LOGO_UPLOADED`, `FEES_UPDATED`                                                                                 |
+
+#### Call Sites by Module
+
+| Module    | File                                               | Actions logged                                                                     |
+| --------- | -------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| identity  | `AuthService`                                      | Auth events (login, logout, register, token refresh, password change)              |
+| identity  | `UserService`                                      | Staff lifecycle events (create, activate, deactivate, role change, password reset) |
+| residents | `ResidentService`                                  | Resident create, update, portal activation                                         |
+| clearance | `ClearanceAuditListener`                           | All clearance state transitions (via event)                                        |
+| clearance | `ClearanceController`, `PortalClearanceController` | PDF downloads (direct call — not a state transition)                               |
+| payments  | `PaymentService`                                   | Payment initiated, success, failed, cash recorded                                  |
+| settings  | `SettingsService`                                  | Settings update, logo upload, fee update                                           |
 
 ---
 
@@ -1150,19 +1233,19 @@ Optional<ClearanceRequest> findById(UUID id);
 
 Spring Boot uses an embedded Tomcat with a default thread pool:
 
-| Setting | Default | Notes |
-|---------|---------|-------|
-| Max threads | 200 | `server.tomcat.threads.max` |
-| Min spare threads | 10 | `server.tomcat.threads.min-spare` |
-| Connection timeout | 60s | `server.tomcat.connection-timeout` |
+| Setting            | Default | Notes                              |
+| ------------------ | ------- | ---------------------------------- |
+| Max threads        | 200     | `server.tomcat.threads.max`        |
+| Min spare threads  | 10      | `server.tomcat.threads.min-spare`  |
+| Connection timeout | 60s     | `server.tomcat.connection-timeout` |
 
 At barangay scale (expected < 50 concurrent users), the default pool is more than sufficient. HikariCP manages the PostgreSQL connection pool independently:
 
-| Setting | Default | Notes |
-|---------|---------|-------|
-| Max pool size | 10 | `spring.datasource.hikari.maximum-pool-size` |
-| Min idle | 10 | `spring.datasource.hikari.minimum-idle` |
-| Connection timeout | 30s | `spring.datasource.hikari.connection-timeout` |
+| Setting            | Default | Notes                                         |
+| ------------------ | ------- | --------------------------------------------- |
+| Max pool size      | 10      | `spring.datasource.hikari.maximum-pool-size`  |
+| Min idle           | 10      | `spring.datasource.hikari.minimum-idle`       |
+| Connection timeout | 30s     | `spring.datasource.hikari.connection-timeout` |
 
 ---
 
@@ -1183,11 +1266,11 @@ This design eliminates the need for application-level distributed locks for the 
 
 Transactions are scoped at the **service layer**. Controllers never open transactions directly. Repositories participate in existing transactions.
 
-| Annotation | Used For |
-|-----------|----------|
-| `@Transactional` | Write operations (insert, update, delete) |
-| `@Transactional(readOnly = true)` | Read-only queries — enables Hibernate optimizations, prevents accidental writes |
-| `@Transactional(propagation = REQUIRES_NEW)` | Clearance number generation — must commit independently |
+| Annotation                                   | Used For                                                                        |
+| -------------------------------------------- | ------------------------------------------------------------------------------- |
+| `@Transactional`                             | Write operations (insert, update, delete)                                       |
+| `@Transactional(readOnly = true)`            | Read-only queries — enables Hibernate optimizations, prevents accidental writes |
+| `@Transactional(propagation = REQUIRES_NEW)` | Clearance number generation — must commit independently                         |
 
 ---
 
@@ -1224,10 +1307,11 @@ HTTP Request
 The system uses PostgreSQL's default isolation level: **Read Committed**.
 
 | Isolation Level | Dirty Read | Non-Repeatable Read | Phantom Read |
-|----------------|-----------|---------------------|--------------|
-| Read Committed | Prevented | Possible | Possible |
+| --------------- | ---------- | ------------------- | ------------ |
+| Read Committed  | Prevented  | Possible            | Possible     |
 
 **Implications:**
+
 - A service method reading a `ClearanceRequest` twice within the same transaction may see different values if another transaction commits between reads (non-repeatable read). This is not a concern in the current codebase because service methods typically read an entity once and operate on it.
 - The `ON CONFLICT DO UPDATE` for clearance numbers uses PostgreSQL row-level locking internally, providing stronger guarantees than the session isolation level for that specific operation.
 
@@ -1238,6 +1322,7 @@ The system uses PostgreSQL's default isolation level: **Read Committed**.
 ### 15.4 Read-Only Transaction Optimizations
 
 Methods annotated `@Transactional(readOnly = true)` benefit from:
+
 - **Hibernate flush mode set to `NEVER`** — no dirty checking at flush time; slightly faster for large result sets
 - **PostgreSQL routing** — if a read replica is configured, Spring can route read-only transactions there (not currently configured, but the annotation makes future adoption zero-cost)
 - **Connection tagging** — HikariCP can mark read-only connections, enabling the database driver to optimize accordingly
@@ -1268,14 +1353,14 @@ AuthService.register()  @Transactional
 
 All high-frequency query patterns are covered by indexes:
 
-| Query Pattern | Index Used | Notes |
-|--------------|-----------|-------|
-| Login by email | `idx_users_email` (B-tree unique) | Single lookup per login |
-| Resident search by name | `idx_residents_name` (functional: `lower()`) | Case-insensitive search |
-| Filter clearances by status | `idx_cr_status` (B-tree) | Dashboard / list views |
-| Report filter by issued_at | `idx_cr_issued_at` (B-tree) | Date range report queries |
-| Payment idempotency check | `idx_payments_idempotency` (unique B-tree) | Composite: key + userId |
-| Refresh token lookup | `token_hash` column (unique) | Per-refresh-request |
+| Query Pattern               | Index Used                                   | Notes                     |
+| --------------------------- | -------------------------------------------- | ------------------------- |
+| Login by email              | `idx_users_email` (B-tree unique)            | Single lookup per login   |
+| Resident search by name     | `idx_residents_name` (functional: `lower()`) | Case-insensitive search   |
+| Filter clearances by status | `idx_cr_status` (B-tree)                     | Dashboard / list views    |
+| Report filter by issued_at  | `idx_cr_issued_at` (B-tree)                  | Date range report queries |
+| Payment idempotency check   | `idx_payments_idempotency` (unique B-tree)   | Composite: key + userId   |
+| Refresh token lookup        | `token_hash` column (unique)                 | Per-refresh-request       |
 
 #### Avoiding N+1 Queries
 
@@ -1284,6 +1369,7 @@ All high-frequency query patterns are covered by indexes:
 **Current behavior:** Acceptable at barangay scale where list results are typically paginated to 20 records. Each page incurs at most 20 additional resident lookups.
 
 **Future optimization (if needed):**
+
 ```java
 // Batch resident lookups in a single query:
 List<UUID> residentIds = clearances.stream()
@@ -1307,6 +1393,7 @@ pool size = (core count × 2) + effective_spindle_count
 ```
 
 For a single-core VM with SSD storage (spindle count ≈ 1):
+
 ```
 pool size = (1 × 2) + 1 = 3  (minimum)
 ```
@@ -1314,15 +1401,16 @@ pool size = (1 × 2) + 1 = 3  (minimum)
 The default of 10 provides headroom for burst traffic. Avoid over-provisioning — PostgreSQL allocates ~5–10 MB of shared memory per connection.
 
 **Recommended production settings:**
+
 ```yaml
 spring:
   datasource:
     hikari:
-      maximum-pool-size: 10      # tune based on actual load
+      maximum-pool-size: 10 # tune based on actual load
       minimum-idle: 5
-      idle-timeout: 600000       # 10 minutes
-      connection-timeout: 30000  # 30 seconds (fail fast)
-      max-lifetime: 1800000      # 30 minutes (recycle connections)
+      idle-timeout: 600000 # 10 minutes
+      connection-timeout: 30000 # 30 seconds (fail fast)
+      max-lifetime: 1800000 # 30 minutes (recycle connections)
 ```
 
 ---
@@ -1331,16 +1419,17 @@ spring:
 
 PDF generation via PDFBox is CPU-bound and synchronous. Key characteristics:
 
-| Factor | Detail |
-|--------|--------|
-| Execution model | Synchronous on the request thread |
-| Expected duration | < 500ms for a single-page clearance |
-| Memory allocation | ~2–5 MB per PDF generation (PDFBox document object graph) |
-| Concurrency impact | Blocks one Tomcat thread per PDF request |
+| Factor             | Detail                                                    |
+| ------------------ | --------------------------------------------------------- |
+| Execution model    | Synchronous on the request thread                         |
+| Expected duration  | < 500ms for a single-page clearance                       |
+| Memory allocation  | ~2–5 MB per PDF generation (PDFBox document object graph) |
+| Concurrency impact | Blocks one Tomcat thread per PDF request                  |
 
 **At barangay scale:** PDF downloads are infrequent (one per released clearance). No optimization needed for the MVP.
 
 **If PDF load increases significantly:**
+
 - Move PDF generation to a background job (store result in object storage or DB)
 - Return a `202 Accepted` with a job ID; client polls for completion
 
@@ -1357,6 +1446,7 @@ Default page size is 20; clients can request up to the framework's configured ma
 ### 16.5 JWT Validation Cost
 
 Access token validation in `JwtAuthFilter` is:
+
 - **CPU-only** — HMAC-SHA256 signature verification is fast (microseconds)
 - **No I/O** — no database lookup per request
 - **No caching needed** — tokens are short-lived (15 min); no revocation check on access tokens
@@ -1379,12 +1469,12 @@ Flyway runs migrations on **every application startup** before the application b
 
 Spring Boot Actuator with Micrometer is included in the dependency tree. Key metrics available at `/actuator/metrics`:
 
-| Metric | Key |
-|--------|-----|
-| HTTP request duration | `http.server.requests` |
-| HikariCP pool usage | `hikaricp.connections.active` |
-| JVM heap | `jvm.memory.used` |
-| JVM GC pause | `jvm.gc.pause` |
+| Metric                | Key                           |
+| --------------------- | ----------------------------- |
+| HTTP request duration | `http.server.requests`        |
+| HikariCP pool usage   | `hikaricp.connections.active` |
+| JVM heap              | `jvm.memory.used`             |
+| JVM GC pause          | `jvm.gc.pause`                |
 
 For production observability, expose the Prometheus endpoint (`/actuator/prometheus`) and scrape with a Prometheus + Grafana stack. No code changes required — only configuration:
 
