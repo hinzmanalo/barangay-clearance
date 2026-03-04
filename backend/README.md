@@ -97,21 +97,42 @@ To run with a specific profile:
 ## Common Commands
 
 ```bash
-# Run all tests
-./mvnw test
-
-# Run a single test class
-./mvnw test -Dtest=ClearanceServiceTest
-
+# ────────── Building ──────────────
 # Build the JAR (skip tests)
 ./mvnw clean install -DskipTests
+
+# Build the JAR with tests
+./mvnw clean package
 
 # Regenerate MapStruct mappers and JPA metamodel (required after entity/mapper changes)
 ./mvnw clean compile
 
-# Build the JAR with tests
-./mvnw clean package
+# ────────── Unit Tests ──────────────
+# Run all tests
+./mvnw test
+
+# Run all unit tests only (excluding integration tests)
+./mvnw test -Dtest=JwtServiceTest,AuthServiceTest,ClearanceServiceTest,ClearanceNumberServiceTest,PaymentServiceTest,ClearancePdfServiceTest
+
+# Run a single test class
+./mvnw test -Dtest=ClearanceServiceTest
+
+# Run a specific test method
+./mvnw test -Dtest=ClearanceServiceTest#approve_fromForApproval_setsApprovedStatus
+
+# Run tests with verbose output
+./mvnw test -X
+
+# Run tests and generate code coverage report
+./mvnw test jacoco:report
+# Coverage report: target/site/jacoco/index.html
+
+# ────────── Integration Tests ──────────────
+# Run integration tests only (when available)
+./mvnw test -Dgroups=integration
 ```
+
+For more details on the unit test architecture and design, see [docs/AUTOMATED_TEST_PLAN.md](docs/AUTOMATED_TEST_PLAN.md).
 
 ---
 

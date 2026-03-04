@@ -1,28 +1,28 @@
 # Barangay Clearance System — Project Status
 
-**Last Updated:** 2026-03-02 (Phase 12 audit logging implemented)
+**Last Updated:** 2026-03-04 (Phase 9 backend unit tests steps 1-7 complete)
 **Current Phase:** Phase 9 / 12
-**Overall Progress:** 11 / 13 phases complete
+**Overall Progress:** 8.5 / 13 phases (backend unit tests 56/56 passing)
 
 ---
 
 ## Phase Overview
 
-| Phase                                   | Name                         | Status         | Week | Notes                            |
-| --------------------------------------- | ---------------------------- | -------------- | ---- | -------------------------------- |
-| [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first |
-| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | 🟢 Complete    | 2    | Blocks all other phases          |
-| [Phase 2](phase-02-residents.md)        | Residents Module             | 🟢 Complete    | 2–3  | Blocks Phase 3                   |
-| [Phase 3](phase-03-clearance.md)        | Clearance Module             | 🟢 Complete    | 3–4  | Core business logic              |
-| [Phase 4](phase-04-payments.md)         | Payments Module              | 🟢 Complete    | 4    | Parallel with Phase 5 & 6        |
-| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🟢 Complete    | 5    | Parallel with Phase 4 & 6        |
-| [Phase 6](phase-06-settings.md)         | Settings Module              | 🟢 Complete    | 5    | Parallel with Phase 4 & 5        |
-| [Phase 7](phase-07-reports.md)          | Reports Module               | 🟢 Complete    | 6    | Parallel with Phase 8            |
-| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🟢 Complete    | 6    | Parallel with Phase 7            |
-| [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🔴 Not Started | 7    | Requires all phases complete     |
-| [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                 |
-| [Phase 11](phase-11-user-management.md) | User Management              | 🟢 Complete    | 6–7  | Parallel with Phase 7 & 8        |
-| [Phase 12](phase-12-audit-logging.md)   | Audit Logging                | � Complete     | 8    | Parallel with Phase 9 & 10       |
+| Phase                                   | Name                         | Status         | Week | Notes                                   |
+| --------------------------------------- | ---------------------------- | -------------- | ---- | --------------------------------------- |
+| [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first        |
+| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | 🟢 Complete    | 2    | Blocks all other phases                 |
+| [Phase 2](phase-02-residents.md)        | Residents Module             | 🟢 Complete    | 2–3  | Blocks Phase 3                          |
+| [Phase 3](phase-03-clearance.md)        | Clearance Module             | 🟢 Complete    | 3–4  | Core business logic                     |
+| [Phase 4](phase-04-payments.md)         | Payments Module              | 🟢 Complete    | 4    | Parallel with Phase 5 & 6               |
+| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🟢 Complete    | 5    | Parallel with Phase 4 & 6               |
+| [Phase 6](phase-06-settings.md)         | Settings Module              | 🟢 Complete    | 5    | Parallel with Phase 4 & 5               |
+| [Phase 7](phase-07-reports.md)          | Reports Module               | 🟢 Complete    | 6    | Parallel with Phase 8                   |
+| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🟢 Complete    | 6    | Parallel with Phase 7                   |
+| [Phase 9](phase-09-testing.md)          | Testing & QA                 | � In Progress  | 7    | Backend unit tests (steps 1-7) complete |
+| [Phase 10](phase-10-deployment.md)      | Deployment                   | 🔴 Not Started | 7–8  | Requires Phase 9                        |
+| [Phase 11](phase-11-user-management.md) | User Management              | 🟢 Complete    | 6–7  | Parallel with Phase 7 & 8               |
+| [Phase 12](phase-12-audit-logging.md)   | Audit Logging                | � Complete     | 8    | Parallel with Phase 9 & 10              |
 
 | [Perf Review](performance-improvements.md) | Backend Performance Audit | 📋 Documented | — | 19 issues identified, ready to implement |
 
@@ -40,6 +40,8 @@
 > Update this section when starting a new phase.
 
 **Active phase:** Phase 9 (Testing & QA)
+**Current work:** Backend unit tests (steps 1-7 complete: JwtServiceTest, AuthServiceTest, ClearanceServiceTest, ClearanceNumberServiceTest, PaymentServiceTest, ClearancePdfServiceTest — 56 tests, all passing)
+**Next:** Integration tests (steps 8+) with Testcontainers and controllers
 
 ---
 
@@ -247,16 +249,17 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 9 — Testing & QA
 
-**Status:** 🔴 Not Started
+**Status:** � In Progress (Backend unit tests 1-7 complete: 56 tests passing)
 
 **Checklist:**
 
-- [ ] `JwtServiceTest` (unit)
-- [ ] `AuthServiceTest` (unit)
-- [ ] `ClearanceServiceTest` (unit — all state transitions)
-- [ ] `ClearanceNumberServiceTest` (unit — concurrency test)
-- [ ] `PaymentServiceTest` (unit — idempotency scenarios)
-- [ ] `ClearancePdfServiceTest` (unit — `%PDF` magic bytes)
+- [x] `JwtServiceTest` (unit — 14 tests)
+- [x] `AuthServiceTest` (unit — 11 tests)
+- [x] `ClearanceServiceTest` (unit — all state transitions, 10 tests)
+- [x] `ClearanceNumberServiceTest` (unit — placeholder, 1 test)
+- [x] `PaymentServiceTest` (unit — idempotency scenarios, 12 tests)
+- [x] `ClearancePdfServiceTest` (unit — `%PDF` magic bytes, 8 tests)
+- [x] All unit tests passing (56 tests, 0 failures)
 - [ ] `BaseIntegrationTest` with Testcontainers
 - [ ] `AuthControllerIT`
 - [ ] `ResidentControllerIT`

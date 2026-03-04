@@ -7,5 +7,9 @@ spring:
 app:
   jwt:
     secret: test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm
-    access-token-expiry-ms: 900000
+    access-token-expiry-ms: 3600000
     refresh-token-expiry-ms: 604800000
+
+payment:
+  stub:
+    always-success: true
