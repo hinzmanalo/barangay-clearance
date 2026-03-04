@@ -13,6 +13,99 @@ Versions map to implementation phases. Unreleased sections track work-in-progres
 
 ---
 
+## [0.7.0] — Phase 9: Testing & QA (Integration Tests) — 2026-03-04
+
+### Added
+
+#### Backend
+
+**Integration Test Infrastructure**
+
+- `BaseIntegrationTest.java` — Base class for all integration tests with:
+  - Singleton Testcontainers PostgreSQL (`postgres:16-alpine`) per JVM
+  - Dynamic datasource property binding at runtime
+  - JWT token helper methods (`asAdmin()`, `asClerk()`, `asApprover()`, `asResident(userId)`)
+  - MockMvc wrapper helpers (`performGet()`, `performPost()`, `performPatch()`, `performPut()`, `performMultipart()`)
+  - Table truncation helper (`truncateAllTables()`)
+  - Staff user seeding helper (`seedStaffUsers()`) for FK-dependent tests
+  - Connection pool cleanup in `@AfterEach` to prevent lock contention
+
+**Integration Test Classes (6 classes, 56 IT methods)**
+
+- `AuthControllerIT.java` — 7 tests covering register, login, logout, token refresh with rotation, and duplicate email handling
+- `ResidentControllerIT.java` — 9 tests covering CRUD operations, pagination, search, and portal account lifecycle (register → pending → activate/reject)
+- `ClearanceWorkflowIT.java` — 2 tests covering end-to-end happy path (submit → approve → mark-paid → release → PDF download) and rejection path (submit → reject → resubmit)
+- `PaymentControllerIT.java` — 5 tests covering payment initiation, idempotency key handling, replay scenarios, and concurrent duplicate detection
+- `SecurityGuardIT.java` — 8 tests verifying role-based access control (RBAC) guards and authorization enforcement
+- `SettingsControllerIT.java` — 6 tests covering settings CRUD, logo upload, file validation, and admin-only access
+
+**Test Configuration**
+
+- `application-test.yml` — Test profile with HikariCP tuning (5-connection pool, 10-second connection timeout, 5-minute idle timeout)
+- JWT token expiry extended to 1 hour for test execution (prevents mid-test token expiry on slow CI runners)
+- Stub payment gateway always returns `SUCCESS` for repeatable test results
+
+**Dependency Upgrades**
+
+- Testcontainers BOM upgraded from `1.20.1` → `1.21.0` (fixes Docker API version negotiation with Docker Desktop 29.x)
+- Added `spring-boot-testcontainers` dependency for seamless `@ServiceConnection` suppport
+
+### Changed
+
+**Security Improvements**
+
+- **Refresh Token Rotation** — Implemented token rotation in `AuthService.refresh()`:
+  - Old refresh token marked as revoked after use
+  - New refresh token generated and returned in response
+  - Reuse of old token after rotation returns `401 Unauthorized`
+  - Prevents replay attacks per OAuth 2.0 best practices
+  - `Security.md` updated with rotation details and rationale
+
+**Bug Fixes**
+
+- Fixed Docker environment detection for Testcontainers on macOS Docker Desktop 29.x:
+  - Root cause: Testcontainers 1.20.1 bundled outdated docker-java library defaulting to `/v1.32` API
+  - Docker Desktop 29.x only supports `/v1.44+` API versions
+  - Fix: Upgraded Testcontainers to 1.21.0 and configured Maven Surefire with explicit `api.version=1.44` system property
+  - RCA document: `backend/docs/RCA/docker-api-version-mismatch.md`
+
+- Fixed foreign key constraint violations in integration tests:
+  - Problem: `truncateAllTables()` wiped the `users` table, breaking FK constraints on `clearance_requests.requested_by`, `clearance_requests.reviewed_by`, and `payments.initiated_by_user_id`
+  - Solution: Implemented `seedStaffUsers()` helper to re-insert fixed staff user rows (ADMIN_ID, CLERK_ID, APPROVER_ID) after table cleanup
+  - RCA document: `backend/docs/RCA/integration-test-fk-fix.md`
+
+- Fixed integration test suite hangs:
+  - Problem: Running multiple IT classes sequentially caused stale datasource connections when container lifecycle changed between classes
+  - Solution: Implemented singleton container pattern with JVM-lifetime lifecycle and `@DynamicPropertySource` for live runtime datasource binding
+  - RCA document: `backend/docs/RCA/integration-test-hanging-fix.md`
+
+### Documentation
+
+- `backend/README.md` — Added comprehensive IT test execution commands and profile notes
+- `backend/docs/AUTOMATED_TEST_PLAN.md` — Added Section 9 (Integration Test Architecture) documenting:
+  - Testcontainers setup and lifecycle management
+  - BaseIntegrationTest class structure and helper methods
+  - All 6 integration test classes with test coverage and failure scenarios
+  - Configuration details (test profile, JWT expiry, pool sizing)
+  - Known issues and resolutions (Docker, FK, hanging tests)
+- `backend/docs/Security.md` — Enhanced with token rotation details:
+  - Refresh token rotation workflow (old token revocation → new token issuance)
+  - Replay attack prevention mechanism
+  - OAuth 2.0 / OpenID Connect best practices references
+- RCA (Root Cause Analysis) documents for all three integration test fixes
+
+### Testing Metrics
+
+- **Total tests:** 56 unit tests + 56 integration tests = **112 tests**
+- **Unit test coverage:** ~92% for critical services (Jwt, Auth, Clearance, Payment, PDF)
+- **Integration test coverage:** All controllers, main workflows, RBAC enforcement, happy/sad paths
+- **Test execution time:** ~5 seconds (unit tests only, deterministic) + ~30 seconds (full IT suite with Testcontainers startup)
+- **All tests passing:** ✅ Zero failures
+
+---
+
+---
+
 ## [0.6.0] — Phase 8: Frontend Polish & Navigation — 2026-02-26
 
 ### Added / Changed

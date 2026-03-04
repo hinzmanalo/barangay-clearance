@@ -126,9 +126,10 @@ public class AuthService {
     }
 
     /**
-     * Issue a new access token from a valid refresh token.
+     * Issue a new access token from a valid refresh token with rotation.
+     * The old refresh token is revoked; a new one is generated and returned.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public TokenResponse refresh(RefreshRequest request) {
         String hash = jwtService.hashRefreshToken(request.getRefreshToken());
 
@@ -145,13 +146,31 @@ public class AuthService {
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> AppException.unauthorized("User not found"));
 
-        log.debug("Access token refreshed for user: {}", user.getId());
+        // Revoke the old refresh token (token rotation)
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+
+        // Generate new refresh token
+        String rawRefresh = jwtService.generateRawRefreshToken();
+        String hashedRefresh = jwtService.hashRefreshToken(rawRefresh);
+        Instant expiresAt = jwtService.refreshTokenExpiry();
+
+        RefreshToken newRefreshToken = RefreshToken.builder()
+                .userId(user.getId())
+                .tokenHash(hashedRefresh)
+                .expiresAt(expiresAt)
+                .revoked(false)
+                .build();
+        refreshTokenRepository.save(newRefreshToken);
+
+        log.debug("Access token refreshed with token rotation for user: {}", user.getId());
         auditService.log(user.getId(), AuditAction.USER_TOKEN_REFRESHED, "User", user.getId(), null);
         String newAccessToken = jwtService.generateAccessToken(
                 user.getId(), user.getEmail(), user.getRole(), user.isMustChangePassword());
 
         return TokenResponse.builder()
                 .accessToken(newAccessToken)
+                .refreshToken(rawRefresh)
                 .tokenType("Bearer")
                 .expiresIn(jwtService.getAccessTokenExpirySeconds())
                 .build();

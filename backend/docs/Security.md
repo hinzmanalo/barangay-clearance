@@ -169,10 +169,11 @@ Refresh tokens are **opaque random UUIDs**. Only the SHA-256 hash of the raw tok
 
 1. **Issue:** On successful login, `UUID.randomUUID().toString()` generates the raw token; `JwtService.hashRefreshToken(raw)` computes the SHA-256 hex digest that is stored in the DB.
 2. **Return:** The **raw** token is returned to the client in the login response. The client is responsible for secure storage.
-3. **Refresh:** Client POSTs the raw token; server hashes it and looks it up in the DB, then issues a new access token.
+3. **Refresh with Rotation:** Client POSTs the raw token; server hashes it and looks it up in the DB, validates it, **revokes the old token**, generates a **new refresh token**, and issues both a new access token and new refresh token. This rotation pattern prevents token replay attacks.
 4. **Revoke (logout):** Server hashes the token, finds the record, sets `revoked = true`.
 5. **Expiry:** `expiresAt` is checked on every refresh attempt.
-6. **Rotation on password change:** All refresh tokens for the user are hard-deleted when the password is changed.
+6. **Reuse after rotation:** Attempting to reuse the same refresh token after it has been rotated returns `401 Unauthorized` because the token is marked as revoked.
+7. **Rotation on password change:** All refresh tokens for the user are hard-deleted when the password is changed.
 
 ### Schema
 
@@ -367,7 +368,7 @@ Authenticate and receive tokens.
 
 ### POST `/refresh`
 
-Obtain a new access token using a valid refresh token.
+Obtain a new access token and refresh token using a valid refresh token. **Token rotation is performed:** the old refresh token is revoked and a new one is issued.
 
 **Request:**
 
@@ -377,15 +378,24 @@ Obtain a new access token using a valid refresh token.
 }
 ```
 
-**Response:** `200 OK`
+**Response:** `200 OK` (includes new refresh token)
 
 ```json
 {
   "accessToken": "<new-JWT>",
+  "refreshToken": "<new-opaque-uuid>",
   "tokenType": "Bearer",
   "expiresIn": 900
 }
 ```
+
+**Token Rotation Details:**
+
+- The refresh token provided in the request is marked as revoked after successful use.
+- A new refresh token is generated and returned in the response.
+- Clients **must** use the returned refresh token for subsequent refresh operations.
+- Attempting to reuse the old token after rotation returns `401 Unauthorized`.
+- This rotation strategy prevents token replay attacks as per OAuth 2.0 security best practices.
 
 ---
 
@@ -586,9 +596,12 @@ Used when the access token expires but the refresh token is still valid.
    - `revoked = true` → `401 Unauthorized` (`Refresh token has been revoked`)
    - `expiresAt` is in the past → `401 Unauthorized` (`Refresh token has expired`)
 4. The associated `User` is loaded by `userId` from the token record.
-5. A new access token is generated with current user data (picks up any role/status changes since last login).
-6. The **existing refresh token is not rotated** — the same refresh token remains valid until it expires or is revoked.
-7. The API returns `200 OK` with `{ accessToken, tokenType, expiresIn }`.
+5. The old refresh token is **marked as revoked** (`revoked = true`), preventing its reuse.
+6. A **new refresh token** is generated: `UUID.randomUUID()` is hashed and inserted into `refresh_tokens`.
+7. A new access token is generated with current user data (picks up any role/status changes since last login).
+8. The API returns `200 OK` with `{ accessToken, refreshToken (new), tokenType, expiresIn }`. **Clients must use the returned refresh token for subsequent refresh operations.**
+
+**Token Rotation Rationale:** Refreshing a token immediately invalidates the old one. If the refresh token is intercepted during network transmission, an attacker can use it once, but subsequent attempts fail because the token is already revoked. This follows OAuth 2.0 and OpenID Connect security best practices.
 
 ---
 
@@ -712,6 +725,7 @@ All JWT settings are under the `app.jwt` namespace.
 | **No DB roundtrip per request**              | Access token claims are self-contained; only the signature is verified on every request, keeping latency low.     |
 | **Refresh token never stored in plain text** | SHA-256 hash in DB means a DB breach does not expose usable refresh tokens.                                       |
 | **Short-lived access tokens**                | 15-minute expiry limits the window of a stolen token.                                                             |
+| **Token rotation on refresh**                | Old refresh token is revoked after use; new token is issued. Prevents replay attacks from intercepted tokens.     |
 | **Immediate revocation on password change**  | All refresh tokens are hard-deleted, forcing all sessions to re-authenticate.                                     |
 | **Generic login error message**              | Both invalid email and wrong password return `"Invalid email or password"` to prevent user enumeration.           |
 | **BCrypt cost 12**                           | Balances security against brute-force with acceptable login latency (~300 ms on modern hardware).                 |
