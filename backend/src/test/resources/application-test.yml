@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    hikari:
+      # Smaller pool for tests since we're not under high concurrency
+      maximum-pool-size: 5
+      minimum-idle: 1
+      # Faster connection timeout to fail fast if pool exhausted
+      connection-timeout: 10000
+      # Idle timeout: close idle connections after 5 minutes
+      idle-timeout: 300000
+      # Max lifetime: 10 minutes, force new connections periodically to avoid stale state
+      max-lifetime: 600000
+      auto-commit: true
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    secret: test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm
+    access-token-expiry-ms: 3600000
+    refresh-token-expiry-ms: 604800000
+
+payment:
+  stub:
+    always-success: true
+
+logging:
+  level:
+    root: WARN
+    com.barangay.clearance: DEBUG
+    org.springframework.test: DEBUG
+    com.zaxxer.hikari: DEBUG

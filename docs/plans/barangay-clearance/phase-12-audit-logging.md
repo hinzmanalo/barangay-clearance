@@ -2,7 +2,7 @@
 
 > **Goal:** Implement a complete audit trail that records every state-changing operation in the system, leveraging the existing `audit_logs` table and `ClearanceStatusChangedEvent` hook.
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Depends on:** Phase 0 (table exists), Phase 1–8 (services to instrument)
 **Parallel with:** Phase 9 (Testing), Phase 10 (Deployment)
 
@@ -10,16 +10,16 @@
 
 ## Current State Assessment
 
-| Component | Status |
-|-----------|--------|
-| `audit_logs` table (V1 migration) | Exists — schema ready |
-| `AuditLog` entity | Missing |
-| `AuditLogRepository` | Missing |
-| `AuditService` | Missing |
+| Component                              | Status                                    |
+| -------------------------------------- | ----------------------------------------- |
+| `audit_logs` table (V1 migration)      | Exists — schema ready                     |
+| `AuditLog` entity                      | Missing                                   |
+| `AuditLogRepository`                   | Missing                                   |
+| `AuditService`                         | Missing                                   |
 | `ClearanceStatusChangedEvent` listener | Missing — event published but no listener |
-| Audit calls in services | None — only `log.info()` statements |
-| IP address extraction | Not implemented |
-| Frontend audit log viewer | Not implemented |
+| Audit calls in services                | None — only `log.info()` statements       |
+| IP address extraction                  | Not implemented                           |
+| Frontend audit log viewer              | Not implemented                           |
 
 ---
 
@@ -32,12 +32,14 @@
 Create under `shared/audit/` (cross-cutting concern, used by all modules):
 
 **`AuditLog.java`** — JPA entity mapping to `audit_logs` table:
+
 - Fields: `id` (UUID), `userId` (UUID, nullable), `action` (String, 100), `entityType` (String, 50), `entityId` (UUID), `details` (String/TEXT), `ipAddress` (String, 45), `createdAt` (Instant)
 - `@Entity`, `@Table(name = "audit_logs")`
 - Immutable: no setters after construction; use `@Builder` + `@AllArgsConstructor` + `@NoArgsConstructor(access = PROTECTED)`
 - `createdAt` uses `@CreationTimestamp` or DB default
 
 **`AuditLogRepository.java`** — Spring Data JPA:
+
 - `JpaRepository<AuditLog, UUID>` + `JpaSpecificationExecutor<AuditLog>`
 - Derived query: `findByEntityTypeAndEntityId(String entityType, UUID entityId, Pageable pageable)` — for viewing history of a specific entity
 - Derived query: `findByUserId(UUID userId, Pageable pageable)` — for viewing a user's actions
@@ -46,6 +48,7 @@ Create under `shared/audit/` (cross-cutting concern, used by all modules):
 #### 2. AuditService (`shared/audit/`)
 
 **`AuditService.java`**:
+
 - `@Service` with `@Transactional(propagation = REQUIRES_NEW)` — audit writes must not roll back with the parent transaction
 - Primary method:
   ```java
@@ -58,6 +61,7 @@ Create under `shared/audit/` (cross-cutting concern, used by all modules):
 #### 3. IP Address Extraction
 
 Use `RequestContextHolder.getRequestAttributes()` to get the current `HttpServletRequest`:
+
 ```java
 private String resolveIpAddress() {
     ServletRequestAttributes attrs = (ServletRequestAttributes)
@@ -75,35 +79,35 @@ This handles both direct connections and requests behind Nginx reverse proxy.
 
 **`AuditAction.java`** — constants class (not enum, for extensibility):
 
-| Constant | Module | Triggered By |
-|----------|--------|-------------|
-| `USER_REGISTERED` | identity | `AuthService.register()` |
-| `USER_LOGIN` | identity | `AuthService.login()` |
-| `USER_LOGIN_FAILED` | identity | `AuthService.login()` (invalid credentials) |
-| `USER_LOGOUT` | identity | `AuthService.logout()` |
-| `USER_TOKEN_REFRESHED` | identity | `AuthService.refresh()` |
-| `USER_PASSWORD_CHANGED` | identity | `AuthService.changePassword()` |
-| `STAFF_CREATED` | identity | `UserService.createStaff()` |
-| `STAFF_ACTIVATED` | identity | `UserService.activate()` |
-| `STAFF_DEACTIVATED` | identity | `UserService.deactivate()` |
-| `STAFF_ROLE_CHANGED` | identity | `UserService.updateRole()` |
-| `STAFF_PASSWORD_RESET` | identity | `UserService.adminResetPassword()` |
-| `RESIDENT_CREATED` | residents | `ResidentService.create()` |
-| `RESIDENT_UPDATED` | residents | `ResidentService.update()` |
-| `RESIDENT_ACTIVATED` | residents | `ResidentService.activatePortalAccount()` |
-| `CLEARANCE_SUBMITTED` | clearance | `ClearanceService.submit()` |
-| `CLEARANCE_APPROVED` | clearance | `ClearanceService.approve()` |
-| `CLEARANCE_REJECTED` | clearance | `ClearanceService.reject()` |
-| `CLEARANCE_RESUBMITTED` | clearance | `ClearanceService.resubmit()` |
-| `CLEARANCE_RELEASED` | clearance | `ClearanceService.release()` |
-| `CLEARANCE_PDF_DOWNLOADED` | clearance | `ClearanceController.downloadPdf()` |
-| `PAYMENT_INITIATED` | payments | `PaymentService.initiate()` |
-| `PAYMENT_SUCCESS` | payments | `PaymentService.initiate()` (after gateway success) |
-| `PAYMENT_FAILED` | payments | `PaymentService.initiate()` (after gateway failure) |
-| `PAYMENT_CASH_RECORDED` | payments | `PaymentService.markPaid()` |
-| `SETTINGS_UPDATED` | settings | `SettingsService.updateSettings()` |
-| `SETTINGS_LOGO_UPLOADED` | settings | `SettingsService.uploadLogo()` |
-| `FEES_UPDATED` | settings | `SettingsService.updateFees()` |
+| Constant                   | Module    | Triggered By                                        |
+| -------------------------- | --------- | --------------------------------------------------- |
+| `USER_REGISTERED`          | identity  | `AuthService.register()`                            |
+| `USER_LOGIN`               | identity  | `AuthService.login()`                               |
+| `USER_LOGIN_FAILED`        | identity  | `AuthService.login()` (invalid credentials)         |
+| `USER_LOGOUT`              | identity  | `AuthService.logout()`                              |
+| `USER_TOKEN_REFRESHED`     | identity  | `AuthService.refresh()`                             |
+| `USER_PASSWORD_CHANGED`    | identity  | `AuthService.changePassword()`                      |
+| `STAFF_CREATED`            | identity  | `UserService.createStaff()`                         |
+| `STAFF_ACTIVATED`          | identity  | `UserService.activate()`                            |
+| `STAFF_DEACTIVATED`        | identity  | `UserService.deactivate()`                          |
+| `STAFF_ROLE_CHANGED`       | identity  | `UserService.updateRole()`                          |
+| `STAFF_PASSWORD_RESET`     | identity  | `UserService.adminResetPassword()`                  |
+| `RESIDENT_CREATED`         | residents | `ResidentService.create()`                          |
+| `RESIDENT_UPDATED`         | residents | `ResidentService.update()`                          |
+| `RESIDENT_ACTIVATED`       | residents | `ResidentService.activatePortalAccount()`           |
+| `CLEARANCE_SUBMITTED`      | clearance | `ClearanceService.submit()`                         |
+| `CLEARANCE_APPROVED`       | clearance | `ClearanceService.approve()`                        |
+| `CLEARANCE_REJECTED`       | clearance | `ClearanceService.reject()`                         |
+| `CLEARANCE_RESUBMITTED`    | clearance | `ClearanceService.resubmit()`                       |
+| `CLEARANCE_RELEASED`       | clearance | `ClearanceService.release()`                        |
+| `CLEARANCE_PDF_DOWNLOADED` | clearance | `ClearanceController.downloadPdf()`                 |
+| `PAYMENT_INITIATED`        | payments  | `PaymentService.initiate()`                         |
+| `PAYMENT_SUCCESS`          | payments  | `PaymentService.initiate()` (after gateway success) |
+| `PAYMENT_FAILED`           | payments  | `PaymentService.initiate()` (after gateway failure) |
+| `PAYMENT_CASH_RECORDED`    | payments  | `PaymentService.markPaid()`                         |
+| `SETTINGS_UPDATED`         | settings  | `SettingsService.updateSettings()`                  |
+| `SETTINGS_LOGO_UPLOADED`   | settings  | `SettingsService.uploadLogo()`                      |
+| `FEES_UPDATED`             | settings  | `SettingsService.updateFees()`                      |
 
 #### 5. Instrument Existing Services
 
@@ -116,6 +120,7 @@ auditService.log(actorId, AuditAction.CLEARANCE_APPROVED, "ClearanceRequest",
 ```
 
 **Placement rules:**
+
 - Log **after** the operation succeeds (not before) — to avoid recording actions that fail
 - For `REQUIRES_NEW` audit transactions, log even if the outer transaction hasn't committed yet (acceptable trade-off: rare false-positive audit entry vs. missing audit entry)
 - For failed login attempts, log with `userId = null` and `details` containing the attempted email
@@ -141,6 +146,7 @@ public class ClearanceAuditListener {
 ```
 
 **Note:** This may create duplicate audit entries if services also call `auditService.log()` directly. Choose one approach per transition:
+
 - **Option A (recommended):** Use the event listener for all clearance transitions; remove direct `auditService.log()` calls from `ClearanceService` for status changes.
 - **Option B:** Keep direct calls and don't register the listener. Simpler but misses future event publishers.
 
@@ -150,12 +156,13 @@ Recommended: **Option A** — single source of truth via the event.
 
 **`AuditLogController.java`** (`/api/v1/audit-logs`, ADMIN only):
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/v1/audit-logs` | GET | Paginated list with filters |
-| `GET /api/v1/audit-logs/entity/{type}/{id}` | GET | History for a specific entity |
+| Endpoint                                    | Method | Description                   |
+| ------------------------------------------- | ------ | ----------------------------- |
+| `GET /api/v1/audit-logs`                    | GET    | Paginated list with filters   |
+| `GET /api/v1/audit-logs/entity/{type}/{id}` | GET    | History for a specific entity |
 
 **Query parameters for the list endpoint:**
+
 - `action` — filter by action (exact match)
 - `entityType` — filter by entity type
 - `userId` — filter by actor
@@ -167,6 +174,7 @@ Use `SpecificationBuilder<AuditLog>` for dynamic query building (already availab
 #### 8. AuditLogDTO
 
 **`AuditLogDTO.java`**:
+
 - All fields from entity
 - `actorEmail` (String) — enriched from `User` table (optional; can be null if user deleted)
 - Use a simple `@Query` join or post-fetch enrichment (avoid N+1)
@@ -178,16 +186,19 @@ Use `SpecificationBuilder<AuditLog>` for dynamic query building (already availab
 **Location:** `/backoffice/admin/audit-logs`
 
 **Features:**
+
 - Paginated table with columns: Timestamp, Actor (email), Action, Entity Type, Entity ID, IP Address
 - Filter bar: action dropdown, entity type dropdown, date range picker, actor search
 - Click row to expand `details` text
 - Sidebar link under Admin section (ADMIN role only)
 
 **Components:**
+
 - `AuditLogTable.tsx` — paginated table with expandable rows
 - `useAuditLogs.ts` — React Query hook for fetching audit logs
 
 **Types:**
+
 - `AuditLog` type in `types/audit.ts`
 
 ---
@@ -197,6 +208,7 @@ Use `SpecificationBuilder<AuditLog>` for dynamic query building (already availab
 **No new migration needed.** The `audit_logs` table already exists in `V1__initial_schema.sql` with the correct schema. If `actorEmail` enrichment requires a view or index:
 
 **Optional — `V9__audit_logs_indexes.sql`:**
+
 ```sql
 CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at DESC);
 CREATE INDEX idx_audit_logs_entity ON audit_logs (entity_type, entity_id);
@@ -210,27 +222,27 @@ These indexes support the query patterns from the audit log viewer. Add only if 
 
 ## Implementation Order
 
-| Step | Task | Files |
-|------|------|-------|
-| 1 | Create `AuditLog` entity | `shared/audit/AuditLog.java` |
-| 2 | Create `AuditLogRepository` | `shared/audit/AuditLogRepository.java` |
-| 3 | Create `AuditAction` constants | `shared/audit/AuditAction.java` |
-| 4 | Create `AuditService` (with IP resolution + async) | `shared/audit/AuditService.java` |
-| 5 | Configure async thread pool for audit | `shared/audit/AuditAsyncConfig.java` or `application.yml` |
-| 6 | Create `ClearanceAuditListener` | `clearance/service/ClearanceAuditListener.java` |
-| 7 | Instrument `AuthService` | `identity/service/AuthService.java` |
-| 8 | Instrument `UserService` | `identity/service/UserService.java` |
-| 9 | Instrument `ResidentService` | `residents/service/ResidentService.java` |
-| 10 | Instrument `PaymentService` | `payments/service/PaymentService.java` |
-| 11 | Instrument `SettingsService` | `settings/service/SettingsService.java` |
-| 12 | Create `AuditLogDTO` | `shared/audit/AuditLogDTO.java` |
-| 13 | Create `AuditLogController` | `shared/audit/AuditLogController.java` |
-| 14 | Add audit log indexes (optional migration) | `db/migration/V9__audit_logs_indexes.sql` |
-| 15 | Frontend: `types/audit.ts` | `frontend/src/types/audit.ts` |
-| 16 | Frontend: `useAuditLogs.ts` hook | `frontend/src/hooks/useAuditLogs.ts` |
-| 17 | Frontend: Audit log viewer page | `frontend/src/app/backoffice/admin/audit-logs/page.tsx` |
-| 18 | Frontend: `AuditLogTable.tsx` | `frontend/src/components/backoffice/AuditLogTable.tsx` |
-| 19 | Update Sidebar with Audit Logs link | `frontend/src/components/backoffice/Sidebar.tsx` |
+| Step | Task                                               | Files                                                     |
+| ---- | -------------------------------------------------- | --------------------------------------------------------- |
+| 1    | Create `AuditLog` entity                           | `shared/audit/AuditLog.java`                              |
+| 2    | Create `AuditLogRepository`                        | `shared/audit/AuditLogRepository.java`                    |
+| 3    | Create `AuditAction` constants                     | `shared/audit/AuditAction.java`                           |
+| 4    | Create `AuditService` (with IP resolution + async) | `shared/audit/AuditService.java`                          |
+| 5    | Configure async thread pool for audit              | `shared/audit/AuditAsyncConfig.java` or `application.yml` |
+| 6    | Create `ClearanceAuditListener`                    | `clearance/service/ClearanceAuditListener.java`           |
+| 7    | Instrument `AuthService`                           | `identity/service/AuthService.java`                       |
+| 8    | Instrument `UserService`                           | `identity/service/UserService.java`                       |
+| 9    | Instrument `ResidentService`                       | `residents/service/ResidentService.java`                  |
+| 10   | Instrument `PaymentService`                        | `payments/service/PaymentService.java`                    |
+| 11   | Instrument `SettingsService`                       | `settings/service/SettingsService.java`                   |
+| 12   | Create `AuditLogDTO`                               | `shared/audit/AuditLogDTO.java`                           |
+| 13   | Create `AuditLogController`                        | `shared/audit/AuditLogController.java`                    |
+| 14   | Add audit log indexes (optional migration)         | `db/migration/V9__audit_logs_indexes.sql`                 |
+| 15   | Frontend: `types/audit.ts`                         | `frontend/src/types/audit.ts`                             |
+| 16   | Frontend: `useAuditLogs.ts` hook                   | `frontend/src/hooks/useAuditLogs.ts`                      |
+| 17   | Frontend: Audit log viewer page                    | `frontend/src/app/backoffice/admin/audit-logs/page.tsx`   |
+| 18   | Frontend: `AuditLogTable.tsx`                      | `frontend/src/components/backoffice/AuditLogTable.tsx`    |
+| 19   | Update Sidebar with Audit Logs link                | `frontend/src/components/backoffice/Sidebar.tsx`          |
 
 ---
 

@@ -6,6 +6,8 @@ import com.barangay.clearance.identity.entity.User;
 import com.barangay.clearance.identity.repository.RefreshTokenRepository;
 import com.barangay.clearance.identity.repository.UserRepository;
 import com.barangay.clearance.residents.service.ResidentService;
+import com.barangay.clearance.shared.audit.AuditAction;
+import com.barangay.clearance.shared.audit.AuditService;
 import com.barangay.clearance.shared.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final ResidentService residentService;
+    private final AuditService auditService;
 
     /**
      * Register a new resident. Account starts as PENDING_VERIFICATION.
@@ -51,6 +54,8 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         residentService.createFromRegistration(request, savedUser);
         log.info("Resident registered: {}", savedUser.getEmail());
+        auditService.log(savedUser.getId(), AuditAction.USER_REGISTERED, "User",
+                savedUser.getId(), "Resident registered: " + savedUser.getEmail());
     }
 
     /**
@@ -59,10 +64,16 @@ public class AuthService {
     @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> AppException.unauthorized("Invalid email or password"));
+                .orElseGet(() -> {
+                    auditService.log(null, AuditAction.USER_LOGIN_FAILED, "User", null,
+                            "Attempted email: " + request.getEmail());
+                    throw AppException.unauthorized("Invalid email or password");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             log.warn("Failed login attempt for email: {}", request.getEmail());
+            auditService.log(null, AuditAction.USER_LOGIN_FAILED, "User", null,
+                    "Attempted email: " + request.getEmail());
             throw AppException.unauthorized("Invalid email or password");
         }
 
@@ -103,6 +114,7 @@ public class AuthService {
         refreshTokenRepository.save(refreshToken);
 
         log.info("User logged in: {}", user.getEmail());
+        auditService.log(user.getId(), AuditAction.USER_LOGIN, "User", user.getId(), "Login: " + user.getEmail());
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
@@ -114,9 +126,10 @@ public class AuthService {
     }
 
     /**
-     * Issue a new access token from a valid refresh token.
+     * Issue a new access token from a valid refresh token with rotation.
+     * The old refresh token is revoked; a new one is generated and returned.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public TokenResponse refresh(RefreshRequest request) {
         String hash = jwtService.hashRefreshToken(request.getRefreshToken());
 
@@ -133,12 +146,31 @@ public class AuthService {
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> AppException.unauthorized("User not found"));
 
-        log.debug("Access token refreshed for user: {}", user.getId());
+        // Revoke the old refresh token (token rotation)
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+
+        // Generate new refresh token
+        String rawRefresh = jwtService.generateRawRefreshToken();
+        String hashedRefresh = jwtService.hashRefreshToken(rawRefresh);
+        Instant expiresAt = jwtService.refreshTokenExpiry();
+
+        RefreshToken newRefreshToken = RefreshToken.builder()
+                .userId(user.getId())
+                .tokenHash(hashedRefresh)
+                .expiresAt(expiresAt)
+                .revoked(false)
+                .build();
+        refreshTokenRepository.save(newRefreshToken);
+
+        log.debug("Access token refreshed with token rotation for user: {}", user.getId());
+        auditService.log(user.getId(), AuditAction.USER_TOKEN_REFRESHED, "User", user.getId(), null);
         String newAccessToken = jwtService.generateAccessToken(
                 user.getId(), user.getEmail(), user.getRole(), user.isMustChangePassword());
 
         return TokenResponse.builder()
                 .accessToken(newAccessToken)
+                .refreshToken(rawRefresh)
                 .tokenType("Bearer")
                 .expiresIn(jwtService.getAccessTokenExpirySeconds())
                 .build();
@@ -154,6 +186,7 @@ public class AuthService {
             rt.setRevoked(true);
             refreshTokenRepository.save(rt);
             log.info("Refresh token revoked for user: {}", rt.getUserId());
+            auditService.log(rt.getUserId(), AuditAction.USER_LOGOUT, "User", rt.getUserId(), null);
         });
     }
 
@@ -174,6 +207,7 @@ public class AuthService {
         user.setMustChangePassword(false);
         userRepository.save(user);
         log.info("Password changed successfully for user: {}", userId);
+        auditService.log(userId, AuditAction.USER_PASSWORD_CHANGED, "User", userId, null);
 
         // Revoke all existing refresh tokens and issue new ones
         refreshTokenRepository.deleteByUserId(userId);
