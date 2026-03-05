@@ -16,11 +16,11 @@ import { Skeleton } from '@/components/shared/LoadingSkeleton';
 
 const feesSchema = z.object({
   standardFee: z
-    .number({ required_error: 'Standard fee is required', invalid_type_error: 'Must be a number' })
+    .number()
     .min(0, 'Standard fee must be non-negative')
     .multipleOf(0.01, 'Maximum 2 decimal places'),
   rushFee: z
-    .number({ required_error: 'Rush fee is required', invalid_type_error: 'Must be a number' })
+    .number()
     .min(0, 'Rush fee must be non-negative')
     .multipleOf(0.01, 'Maximum 2 decimal places'),
 });
