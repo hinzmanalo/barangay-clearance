@@ -26,7 +26,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { role } = useAuth();
+  const { role, refreshAuth } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -52,6 +52,9 @@ export default function ChangePasswordPage() {
       if (tokenData.refreshToken) {
         localStorage.setItem('refreshToken', tokenData.refreshToken);
       }
+
+      // Update auth context to reflect the new token state
+      refreshAuth();
 
       const destination = role === 'RESIDENT' ? '/portal/dashboard' : '/backoffice/dashboard';
       router.push(destination);
