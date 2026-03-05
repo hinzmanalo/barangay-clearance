@@ -18,6 +18,11 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     }
   }, [isLoading, mustChangePassword, router]);
 
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <BackofficeSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -50,7 +55,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
               </div>
             )}
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
               title="Log out"
             >
