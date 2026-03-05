@@ -10,6 +10,8 @@ import com.barangay.clearance.clearance.service.ClearanceService;
 import com.barangay.clearance.pdf.service.ClearancePdfService;
 import com.barangay.clearance.settings.entity.BarangaySettings;
 import com.barangay.clearance.settings.repository.BarangaySettingsRepository;
+import com.barangay.clearance.shared.audit.AuditAction;
+import com.barangay.clearance.shared.audit.AuditService;
 import com.barangay.clearance.shared.security.UserPrincipal;
 import com.barangay.clearance.shared.util.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,6 +49,7 @@ public class ClearanceController {
         private final ClearanceService clearanceService;
         private final ClearancePdfService clearancePdfService;
         private final BarangaySettingsRepository settingsRepository;
+        private final AuditService auditService;
 
         @Operation(summary = "List clearance requests", description = "Paginated list with optional filters for status, payment status, and date range")
         @ApiResponses({
@@ -156,7 +159,8 @@ public class ClearanceController {
         })
         @GetMapping("/{id}/pdf")
         @PreAuthorize("hasAnyRole('CLERK', 'ADMIN')")
-        public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id) {
+        public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id,
+                        @AuthenticationPrincipal UserPrincipal principal) {
                 var clearance = clearanceService.getReleasedEntity(id);
                 var resident = clearanceService.getResidentForClearance(clearance.getResidentId());
                 var settings = settingsRepository.findById(1)
@@ -166,6 +170,10 @@ public class ClearanceController {
 
                 byte[] pdfBytes = clearancePdfService.generate(clearance, resident, settings);
                 String filename = "clearance-" + clearance.getClearanceNumber() + ".pdf";
+
+                auditService.log(principal.getUserId(), AuditAction.CLEARANCE_PDF_DOWNLOADED,
+                                "ClearanceRequest", id,
+                                "PDF downloaded by staff: clearanceNumber=" + clearance.getClearanceNumber());
 
                 return ResponseEntity.ok()
                                 .contentType(MediaType.APPLICATION_PDF)

@@ -6,14 +6,20 @@ import com.barangay.clearance.settings.entity.BarangaySettings;
 import com.barangay.clearance.settings.entity.FeeConfig;
 import com.barangay.clearance.settings.repository.BarangaySettingsRepository;
 import com.barangay.clearance.settings.repository.FeeConfigRepository;
+import com.barangay.clearance.shared.audit.AuditAction;
+import com.barangay.clearance.shared.audit.AuditService;
 import com.barangay.clearance.shared.exception.AppException;
+import com.barangay.clearance.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Business logic for barangay settings and fee configuration.
@@ -39,6 +45,7 @@ public class SettingsService {
 
     private final BarangaySettingsRepository settingsRepo;
     private final FeeConfigRepository feeConfigRepo;
+    private final AuditService auditService;
 
     // ── Barangay settings ────────────────────────────────────────────────────
 
@@ -73,6 +80,8 @@ public class SettingsService {
 
         BarangaySettings saved = settingsRepo.save(settings);
         log.info("Barangay settings updated: barangayName={}", saved.getBarangayName());
+        auditService.log(resolveCurrentUserId(), AuditAction.SETTINGS_UPDATED, "BarangaySettings", null,
+                "Barangay settings updated: barangayName=" + saved.getBarangayName());
         return toDTO(saved);
     }
 
@@ -94,6 +103,8 @@ public class SettingsService {
         settingsRepo.save(settings);
 
         log.info("Logo uploaded: contentType={}, size={} bytes", contentType, bytes.length);
+        auditService.log(resolveCurrentUserId(), AuditAction.SETTINGS_LOGO_UPLOADED, "BarangaySettings", null,
+                "Logo uploaded: contentType=" + contentType + " size=" + bytes.length + " bytes");
     }
 
     /**
@@ -148,6 +159,8 @@ public class SettingsService {
 
         FeeConfig saved = feeConfigRepo.save(config);
         log.info("Fee config updated: standardFee={}, rushFee={}", saved.getStandardFee(), saved.getRushFee());
+        auditService.log(resolveCurrentUserId(), AuditAction.FEES_UPDATED, "FeeConfig", null,
+                "{\"standardFee\":\"" + saved.getStandardFee() + "\",\"rushFee\":\"" + saved.getRushFee() + "\"}");
         return toDTO(saved);
     }
 
@@ -173,6 +186,19 @@ public class SettingsService {
         return feeConfigRepo.findById(1)
                 .orElseThrow(() -> new IllegalStateException(
                         "fee_config row (id=1) not found — ensure Flyway V2 migration ran"));
+    }
+
+    /**
+     * Resolves the authenticated user's UUID from the Spring Security context.
+     * Returns {@code null} if no principal is available (e.g. unauthenticated
+     * context).
+     */
+    private UUID resolveCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUserId();
+        }
+        return null;
     }
 
     private void validateLogo(byte[] bytes, String contentType) {

@@ -9,6 +9,8 @@ import com.barangay.clearance.residents.dto.UpdateResidentRequest;
 import com.barangay.clearance.residents.entity.Resident;
 import com.barangay.clearance.residents.repository.ResidentRepository;
 import com.barangay.clearance.residents.service.mapper.ResidentMapper;
+import com.barangay.clearance.shared.audit.AuditAction;
+import com.barangay.clearance.shared.audit.AuditService;
 import com.barangay.clearance.shared.exception.AppException;
 import com.barangay.clearance.shared.util.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class ResidentService {
     private final ResidentRepository residentRepository;
     private final UserRepository userRepository;
     private final ResidentMapper residentMapper;
+    private final AuditService auditService;
 
     // ─────────────────────────────────────────────────────────────────
     // Public API
@@ -70,6 +73,8 @@ public class ResidentService {
         Resident resident = residentMapper.toEntity(request);
         Resident saved = residentRepository.save(resident);
         log.info("RESIDENT_CREATED id={} name={} {}", saved.getId(), saved.getFirstName(), saved.getLastName());
+        auditService.log(null, AuditAction.RESIDENT_CREATED, "Resident", saved.getId(),
+                "Resident created (walk-in): " + saved.getLastName() + ", " + saved.getFirstName());
         return residentMapper.toDTO(saved);
     }
 
@@ -107,6 +112,8 @@ public class ResidentService {
 
         Resident saved = residentRepository.save(resident);
         log.info("RESIDENT_UPDATED id={}", saved.getId());
+        auditService.log(null, AuditAction.RESIDENT_UPDATED, "Resident", saved.getId(),
+                "Resident profile updated: " + saved.getLastName() + ", " + saved.getFirstName());
         return residentMapper.toDTO(saved);
     }
 
@@ -135,6 +142,8 @@ public class ResidentService {
 
         Resident saved = residentRepository.save(resident);
         log.info("RESIDENT_CREATED (via registration) id={} userId={}", saved.getId(), user.getId());
+        auditService.log(user.getId(), AuditAction.RESIDENT_CREATED, "Resident", saved.getId(),
+                "Resident profile created via self-registration for userId=" + user.getId());
         return saved;
     }
 
@@ -180,6 +189,8 @@ public class ResidentService {
         user.setStatus(User.UserStatus.ACTIVE);
         userRepository.save(user);
         log.info("USER_ACCOUNT_ACTIVATED userId={}", userId);
+        auditService.log(userId, AuditAction.RESIDENT_ACTIVATED, "User", userId,
+                "Resident portal account activated");
     }
 
     /**
