@@ -12,6 +12,8 @@ import com.barangay.clearance.payments.gateway.PaymentRequest;
 import com.barangay.clearance.payments.gateway.PaymentResult;
 import com.barangay.clearance.payments.repository.PaymentRepository;
 import com.barangay.clearance.payments.service.mapper.PaymentMapper;
+import com.barangay.clearance.shared.audit.AuditAction;
+import com.barangay.clearance.shared.audit.AuditService;
 import com.barangay.clearance.shared.exception.AppException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,6 +71,7 @@ public class PaymentService {
     private final PaymentGateway paymentGateway;
     private final PaymentMapper paymentMapper;
     private final ObjectMapper objectMapper;
+    private final AuditService auditService;
 
     // ─────────────────────────────────────────────────────────────────
     // Resident / online payment
@@ -147,6 +150,9 @@ public class PaymentService {
                     "Duplicate payment request — another request with this idempotency key is already in progress");
         }
 
+        auditService.log(userId, AuditAction.PAYMENT_INITIATED, "Payment", pendingPayment.getId(),
+                "Payment initiated for clearanceId=" + clearanceId);
+
         // Step 7 — call payment gateway
         PaymentResult result = paymentGateway.initiate(new PaymentRequest(
                 clearanceId, userId, clearance.getFeeAmount(), idempotencyKey));
@@ -165,9 +171,13 @@ public class PaymentService {
         if (result.success()) {
             clearanceService.markPaid(clearanceId);
             log.info("PAYMENT_SUCCESS clearanceId={} paymentId={}", clearanceId, saved.getId());
+            auditService.log(userId, AuditAction.PAYMENT_SUCCESS, "Payment", saved.getId(),
+                    "Payment successful for clearanceId=" + clearanceId);
         } else {
             log.warn("PAYMENT_FAILED clearanceId={} paymentId={} message={}",
                     clearanceId, saved.getId(), result.message());
+            auditService.log(userId, AuditAction.PAYMENT_FAILED, "Payment", saved.getId(),
+                    "{\"clearanceId\":\"" + clearanceId + "\",\"message\":\"" + result.message() + "\"}");
         }
 
         return paymentMapper.toDTO(saved);
@@ -231,6 +241,8 @@ public class PaymentService {
         clearanceService.markPaid(clearanceId);
 
         log.info("PAYMENT_CASH_RECORDED clearanceId={} paymentId={} by={}", clearanceId, saved.getId(), staffUserId);
+        auditService.log(staffUserId, AuditAction.PAYMENT_CASH_RECORDED, "Payment", saved.getId(),
+                "Cash payment recorded for clearanceId=" + clearanceId + " by staffUserId=" + staffUserId);
         return paymentMapper.toDTO(saved);
     }
 
