@@ -113,7 +113,7 @@ export default function ResidentsPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      variant="secondary"
+                      variant="success"
                       size="sm"
                       onClick={() => r.userId && handleActivate(r.userId)}
                       loading={activateMutation.isPending}

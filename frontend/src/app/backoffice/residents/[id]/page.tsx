@@ -339,16 +339,18 @@ export default function ResidentDetailPage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="w-full"
-                onClick={handleActivate}
-                loading={activateMutation.isPending}
-                disabled={activateMutation.isPending}
-              >
-                Activate
-              </Button>
+              {resident.portalStatus !== 'ACTIVE' && (
+                <Button
+                  variant="success"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleActivate}
+                  loading={activateMutation.isPending}
+                  disabled={activateMutation.isPending}
+                >
+                  Activate
+                </Button>
+              )}
               <Button
                 variant="danger"
                 size="sm"

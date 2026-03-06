@@ -6,14 +6,14 @@ import { Loader2 } from "lucide-react";
 import clsx from "clsx";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline" | "success";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
 }
 
 /**
  * Button component with support for multiple variants, sizes, and loading state.
- * @param variant - Visual style variant (primary, secondary, ghost, danger, outline)
+ * @param variant - Visual style variant (primary, secondary, ghost, danger, outline, success)
  * @param size - Button size (sm, md, lg)
  * @param loading - Show loading spinner and disable button
  */
@@ -31,6 +31,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: "bg-transparent text-neutral-700 hover:bg-neutral-100 focus:ring-neutral-300",
       danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
       outline: "border-2 border-neutral-300 text-neutral-700 hover:border-neutral-400 focus:ring-neutral-300",
+      success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
     };
 
     const sizeStyles = {
