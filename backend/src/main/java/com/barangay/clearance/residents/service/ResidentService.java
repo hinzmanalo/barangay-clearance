@@ -186,19 +186,21 @@ public class ResidentService {
     }
 
     /**
-     * Activate a pending resident portal account.
+     * Activate a resident portal account.
      * Sets {@code user.status = ACTIVE}.
+     * Allowed from {@code PENDING_VERIFICATION} or {@code REJECTED} states.
      *
      * @throws AppException 404 if user not found
-     * @throws AppException 400 if user is not in PENDING_VERIFICATION state
+     * @throws AppException 400 if user is not in an activatable state
      */
     @Transactional
     public void activateUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> AppException.notFound("User not found"));
 
-        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION) {
-            throw AppException.badRequest("User is not pending verification");
+        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION
+                && user.getStatus() != User.UserStatus.REJECTED) {
+            throw AppException.badRequest("User cannot be activated from status: " + user.getStatus());
         }
 
         user.setStatus(User.UserStatus.ACTIVE);
