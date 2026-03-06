@@ -8,6 +8,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { AxiosError } from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -49,67 +54,120 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Barangay Clearance</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+    <div className="min-h-screen flex bg-[#F8FAFC]">
+      {/* Left Panel - Hidden on mobile, visible on md and above */}
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-[#062040] to-[#0A4F8F] flex-col items-center justify-center p-12 relative overflow-hidden">
+        {/* Decorative dot-grid pattern (top-right, opacity-5) */}
+        <div className="absolute top-0 right-0 w-40 h-40 opacity-5">
+          <div className="grid grid-cols-10 gap-2">
+            {Array.from({ length: 100 }).map((_, i) => (
+              <div key={i} className="w-1 h-1 bg-white rounded-full" />
+            ))}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow rounded-lg p-8 space-y-6">
-          {serverError && (
-            <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-              {serverError}
-            </div>
-          )}
+        {/* Content */}
+        <motion.div
+          className="text-center z-10"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
+          {/* Barangay seal — Shield icon */}
+          <Shield className="w-16 h-16 text-white/80 mb-6 mx-auto" strokeWidth={1.5} />
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              {...register('email')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
-            )}
-          </div>
+          {/* App name */}
+          <h1 className="font-sora font-bold text-4xl text-white leading-tight">
+            Barangay
+            <br />
+            Clearance System
+          </h1>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register('password')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </button>
-
-          <p className="text-center text-sm text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:underline font-medium">
-              Register
-            </Link>
+          {/* Tagline */}
+          <p className="font-geist text-base text-blue-200 mt-4 text-center max-w-xs">
+            Ang serbisyo ng barangay,
+            <br />
+            nasa dulo ng iyong daliri.
           </p>
-        </form>
+        </motion.div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-full max-w-md"
+        >
+          <Card className="shadow-lg rounded-2xl p-8 bg-white">
+            <h2 className="font-sora font-bold text-2xl text-neutral-900 mb-1">
+              Welcome back
+            </h2>
+            <p className="font-geist text-sm text-neutral-500 mb-8">
+              Sign in to your account
+            </p>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {/* Email Input */}
+              <Input
+                label="Email address"
+                type="email"
+                placeholder=" "
+                autoComplete="email"
+                {...register('email')}
+                error={errors.email?.message}
+              />
+
+              {/* Password Input */}
+              <Input
+                label="Password"
+                type="password"
+                placeholder=" "
+                autoComplete="current-password"
+                {...register('password')}
+                error={errors.password?.message}
+              />
+
+              {/* Global error message with animation */}
+              <AnimatePresence>
+                {serverError && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-200"
+                  >
+                    {serverError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Sign In Button */}
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                loading={isSubmitting}
+                type="submit"
+              >
+                Sign In
+              </Button>
+            </form>
+
+            {/* Register Link */}
+            <p className="mt-6 text-center font-geist text-sm text-neutral-500">
+              New resident?{' '}
+              <Link
+                href="/register"
+                className="text-primary-600 font-medium hover:underline transition-colors"
+              >
+                Register here
+              </Link>
+            </p>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import {
   useBarangaySettings,
@@ -15,7 +14,12 @@ import {
 import { AxiosError } from 'axios';
 import api from '@/lib/api';
 import { toast } from '@/components/shared/ErrorToast';
-import { Skeleton } from '@/components/shared/LoadingSkeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Upload } from 'lucide-react';
 
 // ── Zod schema ───────────────────────────────────────────────────────────
 
@@ -167,9 +171,9 @@ export default function SettingsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-1">
               <Skeleton className="h-3 w-24" />
@@ -184,158 +188,135 @@ export default function SettingsPage() {
   if (role !== 'ADMIN') return null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+    <div className="mx-auto max-w-3xl px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Barangay Settings</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Configure the barangay profile used on clearance documents.
-          </p>
-        </div>
-        <Link
-          href="/backoffice/admin/settings/fees"
-          className="text-sm text-blue-600 hover:underline"
-        >
-          Manage Fees →
-        </Link>
-      </div>
+      <PageHeader
+        title="Barangay Settings"
+        description="Configure the barangay profile used on clearance documents."
+      />
 
       {/* Profile form */}
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">Barangay Profile</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-6">Barangay Profile</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Barangay Name
-            </label>
-            <input
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Barangay Name</label>
+            <Input
               {...register('barangayName')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.barangayName?.message}
               placeholder="e.g. Barangay San Jose"
+              required
             />
-            {errors.barangayName && (
-              <p className="mt-1 text-xs text-red-600">{errors.barangayName.message}</p>
-            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Municipality
-            </label>
-            <input
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Municipality</label>
+            <Input
               {...register('municipality')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.municipality?.message}
               placeholder="e.g. Municipality of Sample"
+              required
             />
-            {errors.municipality && (
-              <p className="mt-1 text-xs text-red-600">{errors.municipality.message}</p>
-            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Province</label>
-            <input
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Province</label>
+            <Input
               {...register('province')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.province?.message}
               placeholder="e.g. Province of Sample"
+              required
             />
-            {errors.province && (
-              <p className="mt-1 text-xs text-red-600">{errors.province.message}</p>
-            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Barangay Captain
-            </label>
-            <input
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Barangay Captain</label>
+            <Input
               {...register('captainName')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.captainName?.message}
               placeholder="e.g. Juan dela Cruz"
+              required
             />
-            {errors.captainName && (
-              <p className="mt-1 text-xs text-red-600">{errors.captainName.message}</p>
-            )}
           </div>
 
           <div className="pt-2">
-            <button
+            <Button
               type="submit"
-              disabled={isSubmitting || updateMutation.isPending}
-              className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              variant="primary"
+              loading={isSubmitting || updateMutation.isPending}
             >
               {isSubmitting || updateMutation.isPending ? 'Saving…' : 'Save Settings'}
-            </button>
+            </Button>
           </div>
         </form>
-      </section>
+      </Card>
 
       {/* Logo upload */}
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">Barangay Logo</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Upload a PNG, JPEG, or GIF logo (max 2 MB). The logo appears on generated clearance
-          PDFs.
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Barangay Logo</h2>
+        <p className="text-sm text-neutral-500 mb-6">
+          Upload a PNG, JPEG, or GIF logo (max 2 MB). The logo appears on generated clearance PDFs.
         </p>
 
         {/* Preview */}
         {logoPreviewUrl && (
-          <div className="mb-4">
+          <div className="mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={logoPreviewUrl}
               alt="Barangay logo preview"
-              className="h-24 w-auto rounded border border-gray-200 object-contain"
+              className="h-24 w-auto rounded border border-neutral-200 object-contain"
             />
             {logoFile && (
-              <p className="mt-1 text-xs text-gray-400">
-                Selected: {logoFile.name} ({(logoFile.size / 1024).toFixed(1)} KB) — not yet
-                uploaded
+              <p className="mt-2 text-xs text-neutral-400">
+                Selected: {logoFile.name} ({(logoFile.size / 1024).toFixed(1)} KB) — not yet uploaded
               </p>
             )}
           </div>
         )}
 
         {/* File input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/gif"
+          onChange={handleFileChange}
+          className="hidden"
+          id="logo-file-input"
+        />
+
         <div className="flex items-center gap-3">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/gif"
-            onChange={handleFileChange}
-            className="hidden"
-            id="logo-file-input"
-          />
-          <label
-            htmlFor="logo-file-input"
-            className="cursor-pointer rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
           >
+            <Upload className="w-4 h-4 mr-2" />
             {settings?.hasLogo ? 'Replace Logo' : 'Choose Logo'}
-          </label>
+          </Button>
 
           {logoFile && (
-            <button
+            <Button
               type="button"
+              variant="primary"
+              loading={uploadLogoMutation.isPending}
               onClick={handleLogoUpload}
-              disabled={uploadLogoMutation.isPending}
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
               {uploadLogoMutation.isPending ? 'Uploading…' : 'Upload Logo'}
-            </button>
+            </Button>
           )}
         </div>
 
-        {logoError && <p className="mt-2 text-xs text-red-600">{logoError}</p>}
+        {logoError && <p className="mt-3 text-xs text-red-600">{logoError}</p>}
 
         {!settings?.hasLogo && !logoFile && (
-          <p className="mt-2 text-xs text-gray-400">No logo uploaded yet.</p>
+          <p className="mt-3 text-xs text-neutral-400">No logo uploaded yet.</p>
         )}
-      </section>
+      </Card>
 
       {/* Last updated */}
       {settings?.updatedAt && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-neutral-400">
           Last updated:{' '}
           {new Date(settings.updatedAt).toLocaleString('en-PH', {
             dateStyle: 'medium',

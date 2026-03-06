@@ -74,6 +74,7 @@ Three interconnected problems:
    - Restored default behavior: Testcontainers uses Unix socket at `/var/run/docker.sock`
 
 3. **Added Explicit Maven Surefire System Properties**
+
    ```xml
    <plugin>
        <groupId>org.apache.maven.plugins</groupId>
@@ -509,15 +510,15 @@ Phases 0–9 complete. The following code work is required before production dep
    - Codifies Docker runtime, Dockerfile path, and build context
    - Prevents Render environment misconfiguration (see Issue 6)
 
-3. **Environment Variable Configuration**
+4. **Environment Variable Configuration**
    - Create `backend/.env.example` — document all Render env vars
    - Create `frontend/.env.example` — document `NEXT_PUBLIC_API_URL`
 
-4. **Application Configuration Updates**
+5. **Application Configuration Updates**
    - `application-prod.yml` — finalize CORS and payment env-var wiring
    - `SecurityConfig.java` — make CORS allowed origins configurable via env var
 
-5. **Database Deployment**
+6. **Database Deployment**
    - No new migrations needed
    - Flyway automatically runs all 9 existing migrations on first startup against Neon DB
 
@@ -537,16 +538,16 @@ Phases 0–9 complete. The following code work is required before production dep
 
 ## Summary Table
 
-| Issue                                  | Date        | Severity | Status      | Resolution                                           |
-| -------------------------------------- | ----------- | -------- | ----------- | ---------------------------------------------------- |
-| Docker API Version Mismatch            | Mar 4, 2026 | Critical | ✅ Resolved | Testcontainers 1.21.0 + System Properties            |
-| FK Constraint Violations               | Mar 4, 2026 | High     | ✅ Resolved | `seedStaffUsers()` helper in BaseIntegrationTest     |
-| Hanging Integration Tests              | Mar 4, 2026 | High     | ✅ Resolved | JVM-lifetime container + @DynamicPropertySource      |
-| Refresh Token Rotation                 | Mar 4, 2026 | Critical | ✅ Resolved | Token revocation + new token issue                   |
-| Render: `mvnw` Not Found               | Mar 5, 2026 | High     | ✅ Resolved | Use `maven:3.9-eclipse-temurin-21-alpine` image      |
-| Render: Docker Not Auto-Detected       | Mar 5, 2026 | Medium   | ✅ Resolved | Added `render.yaml` with explicit Docker config      |
-| Deployment Dockerfiles                 | Mar 5, 2026 | Medium   | ✅ Resolved | `backend/Dockerfile` + `frontend/Dockerfile` created |
-| Environment Configuration              | Phase 10    | Medium   | Pending     | Set env vars in Render + Vercel dashboards           |
+| Issue                            | Date        | Severity | Status      | Resolution                                           |
+| -------------------------------- | ----------- | -------- | ----------- | ---------------------------------------------------- |
+| Docker API Version Mismatch      | Mar 4, 2026 | Critical | ✅ Resolved | Testcontainers 1.21.0 + System Properties            |
+| FK Constraint Violations         | Mar 4, 2026 | High     | ✅ Resolved | `seedStaffUsers()` helper in BaseIntegrationTest     |
+| Hanging Integration Tests        | Mar 4, 2026 | High     | ✅ Resolved | JVM-lifetime container + @DynamicPropertySource      |
+| Refresh Token Rotation           | Mar 4, 2026 | Critical | ✅ Resolved | Token revocation + new token issue                   |
+| Render: `mvnw` Not Found         | Mar 5, 2026 | High     | ✅ Resolved | Use `maven:3.9-eclipse-temurin-21-alpine` image      |
+| Render: Docker Not Auto-Detected | Mar 5, 2026 | Medium   | ✅ Resolved | Added `render.yaml` with explicit Docker config      |
+| Deployment Dockerfiles           | Mar 5, 2026 | Medium   | ✅ Resolved | `backend/Dockerfile` + `frontend/Dockerfile` created |
+| Environment Configuration        | Phase 10    | Medium   | Pending     | Set env vars in Render + Vercel dashboards           |
 
 ---
 

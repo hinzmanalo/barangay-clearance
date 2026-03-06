@@ -1,8 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import AuditLogTable from '@/components/backoffice/AuditLogTable';
 import { useAuditLogs } from '@/hooks/useAuditLogs';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import type { AuditLog } from '@/types/audit';
 
 const ACTION_OPTIONS = [
@@ -88,117 +95,117 @@ export default function AuditLogsPage() {
   const logs: AuditLog[] = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+  const hasActiveFilters = action || entityType || userIdInput || from || to;
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          System-wide record of all state-changing operations. Click a row to expand details.
-        </p>
-      </div>
+  function resetFilters() {
+    setAction('');
+    setEntityType('');
+    setUserIdInput('');
+    setFrom('');
+    setTo('');
+    setPage(0);
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <PageHeader
+        title="Audit Logs"
+        description="System-wide record of all state-changing operations. Click a row to expand details."
+      />
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {/* Action filter */}
-        <select
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">All actions</option>
-          {ACTION_OPTIONS.filter(Boolean).map((a) => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
+      <Card className="p-5">
+        <div className="flex flex-wrap gap-4 items-end">
+          <Select
+            label="Action"
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+          >
+            <option value="">All actions</option>
+            {ACTION_OPTIONS.filter(Boolean).map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </Select>
 
-        {/* Entity type filter */}
-        <select
-          value={entityType}
-          onChange={(e) => setEntityType(e.target.value)}
-          className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">All entity types</option>
-          {ENTITY_TYPE_OPTIONS.filter(Boolean).map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
+          <Select
+            label="Entity Type"
+            value={entityType}
+            onChange={(e) => setEntityType(e.target.value)}
+          >
+            <option value="">All entity types</option>
+            {ENTITY_TYPE_OPTIONS.filter(Boolean).map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </Select>
 
-        {/* Actor user ID filter */}
-        <input
-          type="text"
-          placeholder="Actor User ID (UUID)…"
-          value={userIdInput}
-          onChange={(e) => setUserIdInput(e.target.value)}
-          className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Actor User ID</label>
+            <Input
+              type="text"
+              placeholder="UUID…"
+              value={userIdInput}
+              onChange={(e) => setUserIdInput(e.target.value)}
+            />
+          </div>
 
-        {/* From date */}
-        <div className="flex flex-col gap-0.5">
-          <label className="text-[11px] text-gray-500 font-medium">From</label>
-          <input
-            type="datetime-local"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">From</label>
+            <Input
+              type="datetime-local"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">To</label>
+            <Input
+              type="datetime-local"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              Clear Filters
+            </Button>
+          )}
         </div>
-
-        {/* To date */}
-        <div className="flex flex-col gap-0.5">
-          <label className="text-[11px] text-gray-500 font-medium">To</label>
-          <input
-            type="datetime-local"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        {/* Clear filters */}
-        <button
-          type="button"
-          onClick={() => {
-            setAction('');
-            setEntityType('');
-            setUserIdInput('');
-            setFrom('');
-            setTo('');
-            setPage(0);
-          }}
-          className="self-end rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          Clear filters
-        </button>
-      </div>
+      </Card>
 
       {/* Table */}
       <AuditLogTable logs={logs} isLoading={isLoading} />
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-          <p className="text-sm text-gray-600">
-            Page {page + 1} of {totalPages} &middot; {data?.totalElements ?? 0} total
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <motion.div
+          className="flex items-center justify-center gap-2"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+          >
+            ← Prev
+          </Button>
+          <span className="font-geist text-sm text-neutral-500">
+            Page {page + 1} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+          >
+            Next →
+          </Button>
+        </motion.div>
       )}
     </div>
   );

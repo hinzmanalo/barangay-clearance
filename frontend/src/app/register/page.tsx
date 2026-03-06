@@ -8,6 +8,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { AxiosError } from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 const registerSchema = z
   .object({
@@ -31,6 +37,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [step, setStep] = useState(1);
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -38,9 +45,30 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
+    trigger,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    mode: 'onBlur',
   });
+
+  // Watch form values for step 1 validation
+  const email = watch('email');
+  const password = watch('password');
+  const confirmPassword = watch('confirmPassword');
+
+  // Validate step 1 and move to step 2
+  const handleNextStep = async () => {
+    const isValid = await trigger(['email', 'password', 'confirmPassword']);
+    if (isValid) {
+      setStep(2);
+    }
+  };
+
+  // Go back to step 1
+  const handlePrevStep = () => {
+    setStep(1);
+  };
 
   const onSubmit = async (data: RegisterFormData) => {
     setServerError(null);
@@ -65,207 +93,281 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md text-center space-y-4">
-          <div className="rounded-md bg-green-50 border border-green-200 p-6">
-            <h2 className="text-xl font-semibold text-green-800 mb-2">Registration Successful</h2>
-            <p className="text-green-700 text-sm">
-              Your account has been created and is pending verification by barangay staff.
-              You will be able to log in once your account is activated.
-            </p>
-          </div>
-          <Link href="/login" className="text-blue-600 hover:underline text-sm font-medium">
-            Back to Login
-          </Link>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md"
+        >
+          <Card className="shadow-lg rounded-2xl p-8 bg-white">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 100 }}
+                className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"
+              >
+                <Check className="w-6 h-6 text-green-600" />
+              </motion.div>
+              <h2 className="font-sora font-bold text-xl text-neutral-900">
+                Registration Successful
+              </h2>
+              <p className="font-geist text-sm text-neutral-600">
+                Your account has been created and is pending verification by barangay staff.
+                You will be able to log in once your account is activated.
+              </p>
+              <Link href="/login" className="text-primary-600 font-medium hover:underline text-sm">
+                Back to Login
+              </Link>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-          <p className="mt-2 text-gray-600">Register as a resident</p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow rounded-lg p-8 space-y-5">
-          {serverError && (
-            <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-              {serverError}
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="w-full max-w-2xl"
+      >
+        <Card className="shadow-lg rounded-2xl bg-white overflow-hidden">
+          {/* Header with branding */}
+          <div className="bg-primary-700 py-4 px-8 flex items-center gap-3">
+            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">☐</span>
             </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                First Name *
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                {...register('firstName')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-xs text-red-600">{errors.firstName.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name *
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                {...register('lastName')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-xs text-red-600">{errors.lastName.message}</p>
-              )}
-            </div>
+            <span className="font-sora font-semibold text-lg text-white">
+              Barangay Clearance System
+            </span>
           </div>
 
-          <div>
-            <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
-              Middle Name
-            </label>
-            <input
-              id="middleName"
-              type="text"
-              {...register('middleName')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          <div className="p-8">
+            {/* 2-Step Stepper */}
+            <div className="flex items-center justify-between mb-8">
+              {[1, 2].map((stepNum) => (
+                <div key={stepNum} className="flex items-center flex-1">
+                  {/* Step Circle */}
+                  <motion.div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                      step > stepNum
+                        ? 'bg-teal-500 text-white'
+                        : step === stepNum
+                          ? 'bg-primary-700 text-white'
+                          : 'bg-neutral-200 text-neutral-500'
+                    }`}
+                    animate={step > stepNum ? { scale: 1.1 } : { scale: 1 }}
+                  >
+                    {step > stepNum ? <Check size={16} /> : stepNum}
+                  </motion.div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Birth Date *
-              </label>
-              <input
-                id="birthDate"
-                type="date"
-                {...register('birthDate')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {errors.birthDate && (
-                <p className="mt-1 text-xs text-red-600">{errors.birthDate.message}</p>
-              )}
+                  {/* Step Label */}
+                  <div className="ml-3 flex-1">
+                    <p
+                      className={`text-xs font-medium ${
+                        step >= stepNum ? 'text-primary-700' : 'text-neutral-500'
+                      }`}
+                    >
+                      {stepNum === 1 ? 'Account Info' : 'Personal Info'}
+                    </p>
+                  </div>
+
+                  {/* Connector Line */}
+                  {stepNum < 2 && (
+                    <div
+                      className={`h-0.5 flex-1 mx-2 transition-colors ${
+                        step > stepNum ? 'bg-teal-500' : 'bg-neutral-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-                Gender *
-              </label>
-              <select
-                id="gender"
-                {...register('gender')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+            {/* Server Error Message */}
+            <AnimatePresence>
+              {serverError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-200 mb-6"
+                >
+                  {serverError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Form - Step Content with Animation */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <AnimatePresence mode="wait">
+                {step === 1 ? (
+                  <motion.div
+                    key="step1"
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -30 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-5"
+                  >
+                    <div>
+                      <h3 className="font-sora font-semibold text-neutral-900 mb-4">
+                        Create your account
+                      </h3>
+                    </div>
+
+                    <Input
+                      label="Email address"
+                      type="email"
+                      placeholder=" "
+                      autoComplete="email"
+                      {...register('email')}
+                      error={errors.email?.message}
+                    />
+
+                    <Input
+                      label="Password"
+                      type="password"
+                      placeholder=" "
+                      autoComplete="new-password"
+                      {...register('password')}
+                      error={errors.password?.message}
+                    />
+
+                    <Input
+                      label="Confirm password"
+                      type="password"
+                      placeholder=" "
+                      autoComplete="new-password"
+                      {...register('confirmPassword')}
+                      error={errors.confirmPassword?.message}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="step2"
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -30 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-5"
+                  >
+                    <div>
+                      <h3 className="font-sora font-semibold text-neutral-900 mb-4">
+                        Tell us about yourself
+                      </h3>
+                    </div>
+
+                    {/* Two-column grid on md: */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="First name"
+                        placeholder=" "
+                        {...register('firstName')}
+                        error={errors.firstName?.message}
+                      />
+                      <Input
+                        label="Last name"
+                        placeholder=" "
+                        {...register('lastName')}
+                        error={errors.lastName?.message}
+                      />
+                    </div>
+
+                    <Input
+                      label="Middle name (optional)"
+                      placeholder=" "
+                      {...register('middleName')}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Date of birth"
+                        type="date"
+                        {...register('birthDate')}
+                        error={errors.birthDate?.message}
+                      />
+                      <Select
+                        label="Gender"
+                        {...register('gender')}
+                        error={errors.gender?.message}
+                      >
+                        <option value="">Select gender</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                      </Select>
+                    </div>
+
+                    <Input
+                      label="Street / House no."
+                      placeholder=" "
+                      {...register('address')}
+                      error={errors.address?.message}
+                    />
+
+                    <Input
+                      label="Contact number (optional)"
+                      type="tel"
+                      placeholder=" "
+                      {...register('contactNumber')}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between gap-3 pt-2">
+                {step === 2 && (
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    onClick={handlePrevStep}
+                  >
+                    ← Back
+                  </Button>
+                )}
+                <div className={step === 1 ? 'ml-auto' : ''}>
+                  {step === 1 ? (
+                    <Button
+                      variant="primary"
+                      type="button"
+                      onClick={handleNextStep}
+                      className="flex items-center gap-2"
+                    >
+                      Next
+                      <ChevronRight size={16} />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      loading={isSubmitting}
+                      className="flex items-center gap-2"
+                    >
+                      Create account
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </form>
+
+            {/* Sign In Link */}
+            <p className="mt-6 text-center font-geist text-sm text-neutral-500">
+              Already have an account?{' '}
+              <Link
+                href="/login"
+                className="text-primary-600 font-medium hover:underline transition-colors"
               >
-                <option value="">Select gender</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-                <option value="OTHER">Other</option>
-              </select>
-              {errors.gender && (
-                <p className="mt-1 text-xs text-red-600">{errors.gender.message}</p>
-              )}
-            </div>
+                Sign in
+              </Link>
+            </p>
           </div>
-
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-              Address (include Purok/Zone) *
-            </label>
-            <textarea
-              id="address"
-              rows={2}
-              {...register('address')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.address && (
-              <p className="mt-1 text-xs text-red-600">{errors.address.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700 mb-1">
-              Contact Number
-            </label>
-            <input
-              id="contactNumber"
-              type="tel"
-              {...register('contactNumber')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email *
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              {...register('email')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password *
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              {...register('password')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password *
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              {...register('confirmPassword')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.confirmPassword && (
-              <p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Creating account…' : 'Create account'}
-          </button>
-
-          <p className="text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
-              Sign in
-            </Link>
-          </p>
-        </form>
-      </div>
+        </Card>
+      </motion.div>
     </div>
   );
 }

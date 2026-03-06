@@ -5,9 +5,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useCreateWalkInClearance } from '@/hooks/useClearances';
 import { useResidents } from '@/hooks/useResidents';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
+import { Button } from '@/components/ui/Button';
 import type { Purpose, Urgency } from '@/types/clearance';
 import { PURPOSE_LABELS } from '@/types/clearance';
 import { AxiosError } from 'axios';
@@ -35,8 +40,9 @@ export default function NewWalkInClearancePage() {
   const createMutation = useCreateWalkInClearance();
   const [serverError, setServerError] = useState<string | null>(null);
   const [residentSearch, setResidentSearch] = useState('');
+  const [selectedResidentDisplay, setSelectedResidentDisplay] = useState<string | null>(null);
 
-  const { data: residentsPage } = useResidents({ q: residentSearch, size: 10 });
+  const { data: residentsPage } = useResidents({ q: residentSearch && !selectedResidentDisplay ? residentSearch : '', size: 10 });
   const residents = residentsPage?.content ?? [];
 
   const {
@@ -52,7 +58,6 @@ export default function NewWalkInClearancePage() {
 
   const purpose = watch('purpose');
   const residentId = watch('residentId');
-  const selectedResident = residents.find((r) => r.id === residentId);
 
   const onSubmit = async (data: FormData) => {
     setServerError(null);
@@ -73,131 +78,167 @@ export default function NewWalkInClearancePage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/backoffice/clearances" className="text-sm text-gray-500 hover:text-gray-800">
-          ← Clearances
-        </Link>
-        <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-bold text-gray-900">Walk-in Request</h1>
-      </div>
+    <div className="mx-auto max-w-2xl px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <PageHeader title="New Walk-in Request" backHref="/backoffice/clearances" />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow rounded-lg p-6 space-y-5">
-        {serverError && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-            {serverError}
-          </div>
-        )}
-
-        {/* Resident search + select */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Resident *</label>
-          <input
-            type="text"
-            value={residentSearch}
-            onChange={(e) => setResidentSearch(e.target.value)}
-            placeholder="Type to search resident name…"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-          />
-          {residents.length > 0 && (
-            <div className="border border-gray-200 rounded-md divide-y max-h-48 overflow-y-auto">
-              {residents.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => {
-                    setValue('residentId', r.id);
-                    setResidentSearch(`${r.lastName}, ${r.firstName}`);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${
-                    residentId === r.id ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700'
-                  }`}
-                >
-                  {r.lastName}, {r.firstName} {r.middleName ? r.middleName[0] + '.' : ''}
-                </button>
-              ))}
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Card className="p-6 space-y-6">
+          {/* Server error */}
+          {serverError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <p className="font-geist text-sm text-red-700">{serverError}</p>
             </div>
           )}
-          <input type="hidden" {...register('residentId')} />
-          {errors.residentId && (
-            <p className="mt-1 text-xs text-red-600">{errors.residentId.message}</p>
-          )}
-        </div>
 
-        {/* Purpose */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Purpose *</label>
-          <select
-            {...register('purpose')}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select purpose…</option>
-            {(Object.entries(PURPOSE_LABELS) as [Purpose, string][]).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          {errors.purpose && <p className="mt-1 text-xs text-red-600">{errors.purpose.message}</p>}
-        </div>
-
-        {purpose === 'OTHER' && (
+          {/* Resident search + select */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Purpose description *</label>
-            <input
-              type="text"
-              {...register('purposeOther')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.purposeOther && (
-              <p className="mt-1 text-xs text-red-600">{errors.purposeOther.message}</p>
+            <label className="block font-geist text-sm font-medium text-neutral-900 mb-2">
+              Resident <span className="text-red-600">*</span>
+            </label>
+            {selectedResidentDisplay ? (
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex-1 px-3 py-2 rounded-lg border border-green-300 bg-green-50">
+                  <p className="font-geist text-sm text-green-900 font-medium">{selectedResidentDisplay}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue('residentId', '');
+                    setSelectedResidentDisplay(null);
+                    setResidentSearch('');
+                  }}
+                  className="px-3 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded-lg hover:bg-neutral-50"
+                >
+                  Clear
+                </button>
+              </div>
+            ) : (
+              <>
+                <Input
+                  type="text"
+                  value={residentSearch}
+                  onChange={(e) => setResidentSearch(e.target.value)}
+                  placeholder="Type to search resident name…"
+                  className="mb-2"
+                />
+                {residents.length > 0 && (
+                  <div className="border border-neutral-200 rounded-lg divide-y max-h-48 overflow-y-auto">
+                    {residents.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          setValue('residentId', r.id);
+                          setSelectedResidentDisplay(`${r.lastName}, ${r.firstName}`);
+                          setResidentSearch('');
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 transition-colors text-neutral-700"
+                      >
+                        {r.lastName}, {r.firstName} {r.middleName ? r.middleName[0] + '.' : ''}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            <input type="hidden" {...register('residentId')} />
+            {errors.residentId && (
+              <p className="mt-2 font-geist text-xs text-red-600">{errors.residentId.message}</p>
             )}
           </div>
-        )}
 
-        {/* Urgency */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Urgency *</label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" {...register('urgency')} value="STANDARD" className="accent-blue-600" />
-              <span className="text-sm text-gray-700">Standard (₱50.00)</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" {...register('urgency')} value="RUSH" className="accent-blue-600" />
-              <span className="text-sm text-gray-700">Rush (₱100.00)</span>
-            </label>
+          {/* Purpose */}
+          <div>
+            <label className="block font-geist text-sm font-medium text-neutral-900 mb-2">Purpose <span className="text-red-600">*</span></label>
+            <Select {...register('purpose')} error={errors.purpose?.message}>
+              <option value="">Select purpose…</option>
+              {(Object.entries(PURPOSE_LABELS) as [Purpose, string][]).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
           </div>
-          {errors.urgency && <p className="mt-1 text-xs text-red-600">{errors.urgency.message}</p>}
-        </div>
 
-        {/* Copies */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Copies</label>
-          <input
-            type="number"
-            min={1}
-            max={10}
-            {...register('copies', { valueAsNumber: true })}
-            className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          {/* Purpose description (if OTHER selected) */}
+          {purpose === 'OTHER' && (
+            <div>
+              <label className="block font-geist text-sm font-medium text-neutral-900 mb-2">Purpose description</label>
+              <Input
+                placeholder="Please describe the purpose…"
+                {...register('purposeOther')}
+                error={errors.purposeOther?.message}
+              />
+            </div>
+          )}
 
-        {/* Notes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-          <textarea
-            rows={3}
-            {...register('notes')}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          {/* Urgency */}
+          <div>
+            <label className="block font-geist text-sm font-medium text-neutral-900 mb-3">
+              Urgency <span className="text-red-600">*</span>
+            </label>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  {...register('urgency')}
+                  value="STANDARD"
+                  className="w-4 h-4 accent-blue-600"
+                />
+                <span className="font-geist text-sm text-neutral-700">Standard (₱50.00)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  {...register('urgency')}
+                  value="RUSH"
+                  className="w-4 h-4 accent-blue-600"
+                />
+                <span className="font-geist text-sm text-neutral-700">Rush (₱100.00)</span>
+              </label>
+            </div>
+            {errors.urgency && (
+              <p className="mt-2 font-geist text-xs text-red-600">{errors.urgency.message}</p>
+            )}
+          </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-md bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Creating…' : 'Create Request'}
-        </button>
+          {/* Copies */}
+          <div>
+            <label className="block font-geist text-sm font-medium text-neutral-900 mb-2">Number of Copies <span className="text-red-600">*</span></label>
+            <Input
+              type="number"
+              min={1}
+              max={10}
+              {...register('copies', { valueAsNumber: true })}
+              error={errors.copies?.message}
+              className="w-32"
+            />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block font-geist text-sm font-medium text-neutral-900 mb-2">Notes (optional)</label>
+            <Textarea
+              placeholder="Add any notes for staff…"
+              rows={4}
+              {...register('notes')}
+              error={errors.notes?.message}
+            />
+          </div>
+
+          {/* Submit button */}
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating…' : 'Create Request'}
+          </Button>
+        </Card>
       </form>
     </div>
   );

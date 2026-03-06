@@ -1,6 +1,7 @@
 package com.barangay.clearance.residents.dto;
 
 import com.barangay.clearance.residents.entity.Resident;
+import com.barangay.clearance.identity.entity.User;
 import lombok.Builder;
 import lombok.Data;
 
@@ -26,6 +27,9 @@ public class ResidentDTO {
 
     /** True when this resident has a linked portal user account. */
     private boolean hasPortalAccount;
+
+    /** Portal account status. Only populated if hasPortalAccount is true. */
+    private User.UserStatus portalStatus;
 
     private Instant createdAt;
     private Instant updatedAt;
