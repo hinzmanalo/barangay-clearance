@@ -209,19 +209,21 @@ public class ResidentService {
     }
 
     /**
-     * Reject a pending resident portal account.
+     * Reject a resident portal account.
      * Sets {@code user.status = REJECTED}.
+     * Allowed from {@code PENDING_VERIFICATION} or {@code ACTIVE} states.
      *
      * @throws AppException 404 if user not found
-     * @throws AppException 400 if user is not in PENDING_VERIFICATION state
+     * @throws AppException 400 if user is not in a rejectable state
      */
     @Transactional
     public void rejectUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> AppException.notFound("User not found"));
 
-        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION) {
-            throw AppException.badRequest("User is not pending verification");
+        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION
+                && user.getStatus() != User.UserStatus.ACTIVE) {
+            throw AppException.badRequest("User cannot be rejected from status: " + user.getStatus());
         }
 
         user.setStatus(User.UserStatus.REJECTED);

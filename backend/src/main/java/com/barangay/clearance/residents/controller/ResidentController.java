@@ -108,7 +108,7 @@ public class ResidentController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Reject a pending portal account", description = "Sets user status to REJECTED")
+    @Operation(summary = "Reject a portal account", description = "Sets user status to REJECTED. Allowed from PENDING_VERIFICATION or ACTIVE states.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Account rejected"),
             @ApiResponse(responseCode = "400", description = "User is not pending verification"),
