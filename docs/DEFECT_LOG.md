@@ -462,18 +462,253 @@ The backend `ResidentDTO` did not include the portal user's status from the `Use
 
 ---
 
+## DEF-012 — Resident List: Status Column Showing Wrong Badges
+
+| Field        | Detail                    |
+| ------------ | ------------------------- |
+| **Severity** | Medium                    |
+| **Area**     | Frontend / Residents List |
+| **Status**   | Resolved                  |
+
+### Description
+
+The **Status** column in the resident list table displayed clearance-workflow badges (`FOR_APPROVAL` / `DRAFT`) instead of the resident's actual `ACTIVE` / `INACTIVE` status.
+
+### Root Cause
+
+`ResidentTable.tsx` was mapping `r.status === 'ACTIVE'` to the string `'FOR_APPROVAL'` and passing it to `<Badge variant="status" />`. This used the clearance status colour map, not the resident/user status map.
+
+### Resolution
+
+Changed the badge to use `variant="user-status"` and pass `r.status` directly:
+
+```tsx
+<Badge variant="user-status" value={r.status} dot />
+```
+
+**File modified:** `frontend/src/components/backoffice/ResidentTable.tsx`
+
+---
+
+## DEF-013 — Resident List: Portal Column Showing Role Badge Instead of Portal Status
+
+| Field        | Detail                    |
+| ------------ | ------------------------- |
+| **Severity** | Medium                    |
+| **Area**     | Frontend / Residents List |
+| **Status**   | Resolved                  |
+
+### Description
+
+The **Portal** column in the resident list table displayed a `RESIDENT` role badge for any resident with a portal account, regardless of the portal account's actual status (e.g., PENDING_VERIFICATION, REJECTED).
+
+### Root Cause
+
+The column rendered `<Badge variant="role" value="RESIDENT" />` unconditionally when `r.hasPortalAccount === true`, ignoring the `r.portalStatus` field.
+
+### Resolution
+
+Changed the column to display the portal user's actual status using `variant="user-status"`, and show **"No account"** when no portal account exists:
+
+```tsx
+{
+  r.hasPortalAccount && r.portalStatus ? (
+    <Badge variant="user-status" value={r.portalStatus} dot />
+  ) : (
+    <span className="text-neutral-400 text-xs">No account</span>
+  );
+}
+```
+
+**File modified:** `frontend/src/components/backoffice/ResidentTable.tsx`
+
+---
+
+## DEF-014 — Activate Button Not Visible (White/Secondary Styling)
+
+| Field        | Detail                   |
+| ------------ | ------------------------ |
+| **Severity** | Medium                   |
+| **Area**     | Frontend / UI Components |
+| **Status**   | Resolved                 |
+
+### Description
+
+The **Activate** button on both the resident detail page portal panel and the Pending Portal Activations section used `variant="secondary"`, rendering it as a barely visible light-gray button. It was intended to be green to signal a positive/approval action.
+
+### Root Cause
+
+The `Button` component did not have a `success` variant; the button was using `secondary` as a fallback.
+
+### Resolution
+
+Added a `success` variant to `Button.tsx`:
+
+```tsx
+success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
+```
+
+Updated all Activate buttons to use `variant="success"`.
+
+**Files modified:**
+
+- `frontend/src/components/ui/Button.tsx`
+- `frontend/src/app/backoffice/residents/[id]/page.tsx`
+- `frontend/src/app/backoffice/residents/page.tsx`
+
+---
+
+## DEF-015 — Activate Button Visible Even When Portal Account Is Already Active
+
+| Field        | Detail                     |
+| ------------ | -------------------------- |
+| **Severity** | Medium                     |
+| **Area**     | Frontend / Resident Detail |
+| **Status**   | Resolved                   |
+
+### Description
+
+The **Activate** button on the resident detail page portal panel was visible even when the portal account was already `ACTIVE`, which was misleading and caused unnecessary API calls.
+
+### Root Cause
+
+The Activate button was rendered unconditionally inside the portal account card, with no check against `portalStatus`.
+
+### Resolution
+
+Wrapped the Activate button in a conditional so it only renders when `portalStatus !== 'ACTIVE'`:
+
+```tsx
+{
+  resident.portalStatus !== "ACTIVE" && (
+    <Button variant="success" size="sm" onClick={handleActivate}>
+      Activate
+    </Button>
+  );
+}
+```
+
+The **Reject** button remains always visible to allow revoking an active account.
+
+**File modified:** `frontend/src/app/backoffice/residents/[id]/page.tsx`
+
+---
+
+## DEF-016 — Reject Fails for ACTIVE Portal Accounts
+
+| Field        | Detail              |
+| ------------ | ------------------- |
+| **Severity** | High                |
+| **Area**     | Backend / Residents |
+| **Status**   | Resolved            |
+
+### Description
+
+Attempting to reject a portal account that was already `ACTIVE` returned a 400 error: _"User is not pending verification"_, even though the staff intended to revoke an active account.
+
+### Root Cause
+
+`ResidentService.rejectUser()` only allowed rejection from the `PENDING_VERIFICATION` state.
+
+### Resolution
+
+Expanded the allowed states to include `ACTIVE`:
+
+```java
+if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION
+        && user.getStatus() != User.UserStatus.ACTIVE) {
+    throw AppException.badRequest("User cannot be rejected from status: " + user.getStatus());
+}
+```
+
+**File modified:** `backend/.../residents/service/ResidentService.java`
+
+---
+
+## DEF-017 — Activate / Reject Mutations Do Not Refresh Resident UI
+
+| Field        | Detail                 |
+| ------------ | ---------------------- |
+| **Severity** | High                   |
+| **Area**     | Frontend / React Query |
+| **Status**   | Resolved               |
+
+### Description
+
+After clicking **Activate** or **Reject**, the portal status badge and the Pending Portal Activations list did not update until the page was manually refreshed. The action succeeded on the backend but the UI remained stale.
+
+### Root Cause
+
+`useActivateResident` and `useRejectResident` in `useResidents.ts` only invalidated `residentKeys.pending()` on success. This refreshed the pending list but left the resident list and detail page caches stale.
+
+### Resolution
+
+Changed both mutation `onSuccess` handlers to invalidate the entire resident cache root:
+
+```typescript
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: residentKeys.all });
+},
+```
+
+This triggers a refetch of all resident queries (list, detail, and pending) simultaneously.
+
+**File modified:** `frontend/src/hooks/useResidents.ts`
+
+---
+
+## DEF-018 — Activate Fails for REJECTED Portal Accounts
+
+| Field        | Detail              |
+| ------------ | ------------------- |
+| **Severity** | High                |
+| **Area**     | Backend / Residents |
+| **Status**   | Resolved            |
+
+### Description
+
+Attempting to activate a portal account that was in `REJECTED` state returned a 400 error: _"User cannot be activated from status: REJECTED"_, preventing staff from reinstating a previously rejected user.
+
+### Root Cause
+
+`ResidentService.activateUser()` only allowed activation from `PENDING_VERIFICATION` state.
+
+### Resolution
+
+Expanded the allowed states to include `REJECTED`:
+
+```java
+if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION
+        && user.getStatus() != User.UserStatus.REJECTED) {
+    throw AppException.badRequest("User cannot be activated from status: " + user.getStatus());
+}
+```
+
+The frontend already displayed the Activate button for non-`ACTIVE` statuses, so no frontend changes were needed.
+
+**File modified:** `backend/.../residents/service/ResidentService.java`
+
+---
+
 ## Summary Table
 
-| ID      | Title                                       | Area                          | Severity | Status      |
-| ------- | ------------------------------------------- | ----------------------------- | -------- | ----------- |
-| DEF-001 | Login page module error                     | Frontend / Build              | Critical | ✅ Resolved |
-| DEF-002 | Sidebar text black on dark background       | Frontend / Styling            | High     | ✅ Resolved |
-| DEF-003 | Form input text invisible                   | Frontend / UI Components      | High     | ✅ Resolved |
-| DEF-004 | Redundant fee configuration labels          | Frontend / Admin Settings     | Low      | ✅ Resolved |
-| DEF-005 | Floating labels rendering inside inputs     | Frontend / Forms              | High     | ✅ Resolved |
-| DEF-006 | Selected resident not displayed in form     | Frontend / Clearance Workflow | High     | ✅ Resolved |
-| DEF-007 | "Page not found" on all routes (wrong port) | Frontend / Dev Environment    | Critical | ✅ Resolved |
-| DEF-008 | `NoClassDefFoundError` on walk-in creation  | Backend / Audit Logging       | Critical | ✅ Resolved |
-| DEF-009 | Read-only fields not displaying as disabled | Frontend / UI Components      | Medium   | ✅ Resolved |
-| DEF-010 | Edit form submits immediately               | Frontend / Form Submission    | High     | ✅ Resolved |
-| DEF-011 | Portal account status not displayed         | Frontend / Backend / Details  | Medium   | ✅ Resolved |
+| ID      | Title                                          | Area                          | Severity | Status      |
+| ------- | ---------------------------------------------- | ----------------------------- | -------- | ----------- |
+| DEF-001 | Login page module error                        | Frontend / Build              | Critical | ✅ Resolved |
+| DEF-002 | Sidebar text black on dark background          | Frontend / Styling            | High     | ✅ Resolved |
+| DEF-003 | Form input text invisible                      | Frontend / UI Components      | High     | ✅ Resolved |
+| DEF-004 | Redundant fee configuration labels             | Frontend / Admin Settings     | Low      | ✅ Resolved |
+| DEF-005 | Floating labels rendering inside inputs        | Frontend / Forms              | High     | ✅ Resolved |
+| DEF-006 | Selected resident not displayed in form        | Frontend / Clearance Workflow | High     | ✅ Resolved |
+| DEF-007 | "Page not found" on all routes (wrong port)    | Frontend / Dev Environment    | Critical | ✅ Resolved |
+| DEF-008 | `NoClassDefFoundError` on walk-in creation     | Backend / Audit Logging       | Critical | ✅ Resolved |
+| DEF-009 | Read-only fields not displaying as disabled    | Frontend / UI Components      | Medium   | ✅ Resolved |
+| DEF-010 | Edit form submits immediately                  | Frontend / Form Submission    | High     | ✅ Resolved |
+| DEF-011 | Portal account status not displayed            | Frontend / Backend / Details  | Medium   | ✅ Resolved |
+| DEF-012 | Resident list Status column shows wrong badges | Frontend / Residents List     | Medium   | ✅ Resolved |
+| DEF-013 | Resident list Portal column shows role badge   | Frontend / Residents List     | Medium   | ✅ Resolved |
+| DEF-014 | Activate button not green (invisible)          | Frontend / UI Components      | Medium   | ✅ Resolved |
+| DEF-015 | Activate visible when account already active   | Frontend / Residents          | Medium   | ✅ Resolved |
+| DEF-016 | Reject fails for ACTIVE portal accounts        | Backend / Residents           | High     | ✅ Resolved |
+| DEF-017 | Activate/Reject don't refresh resident UI      | Frontend / React Query        | High     | ✅ Resolved |
+| DEF-018 | Activate fails for REJECTED portal accounts    | Backend / Residents           | High     | ✅ Resolved |

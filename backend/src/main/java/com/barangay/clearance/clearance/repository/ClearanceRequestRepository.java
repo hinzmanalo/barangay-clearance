@@ -16,38 +16,44 @@ import java.util.UUID;
 
 @Repository
 public interface ClearanceRequestRepository extends JpaRepository<ClearanceRequest, UUID>,
-        JpaSpecificationExecutor<ClearanceRequest> {
+                JpaSpecificationExecutor<ClearanceRequest> {
 
-    /**
-     * Portal scoping — returns only requests belonging to the given resident's
-     * portal user.
-     */
-    Page<ClearanceRequest> findByResidentId(UUID residentId, Pageable pageable);
+        /**
+         * Portal scoping — returns only requests belonging to the given resident's
+         * portal user.
+         */
+        Page<ClearanceRequest> findByResidentId(UUID residentId, Pageable pageable);
 
-    /**
-     * Dashboard summary — count by status.
-     */
-    long countByStatus(ClearanceStatus status);
+        /**
+         * Dashboard summary — count by status.
+         */
+        long countByStatus(ClearanceStatus status);
 
-    /**
-     * Dashboard summary — count by status and payment status.
-     */
-    long countByStatusAndPaymentStatus(ClearanceStatus status, ClearanceRequest.ClearancePaymentStatus paymentStatus);
+        /**
+         * Dashboard summary — count by status and payment status.
+         */
+        long countByStatusAndPaymentStatus(ClearanceStatus status,
+                        ClearanceRequest.ClearancePaymentStatus paymentStatus);
 
-    /**
-     * Count requests released today (issued_at on current day).
-     */
-    @Query("""
-            SELECT COUNT(cr) FROM ClearanceRequest cr
-            WHERE cr.status = 'RELEASED'
-              AND cr.issuedAt >= :startOfDay
-              AND cr.issuedAt < :endOfDay
-            """)
-    long countReleasedToday(@Param("startOfDay") Instant startOfDay, @Param("endOfDay") Instant endOfDay);
+        /**
+         * Dashboard summary — count by payment status (across all clearance statuses).
+         */
+        long countByPaymentStatus(ClearanceRequest.ClearancePaymentStatus paymentStatus);
 
-    /**
-     * Find a single clearance owned by the given resident (for portal ownership
-     * check).
-     */
-    Optional<ClearanceRequest> findByIdAndResidentId(UUID id, UUID residentId);
+        /**
+         * Count requests released today (issued_at on current day).
+         */
+        @Query("""
+                        SELECT COUNT(cr) FROM ClearanceRequest cr
+                        WHERE cr.status = 'RELEASED'
+                          AND cr.issuedAt >= :startOfDay
+                          AND cr.issuedAt < :endOfDay
+                        """)
+        long countReleasedToday(@Param("startOfDay") Instant startOfDay, @Param("endOfDay") Instant endOfDay);
+
+        /**
+         * Find a single clearance owned by the given resident (for portal ownership
+         * check).
+         */
+        Optional<ClearanceRequest> findByIdAndResidentId(UUID id, UUID residentId);
 }
