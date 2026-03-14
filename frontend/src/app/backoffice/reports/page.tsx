@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { FileSearch } from 'lucide-react';
 import { useReports } from '@/hooks/useReports';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Select } from '@/components/ui/Select';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import type {
   ClearanceStatus,
   ClearancePaymentStatus,
@@ -22,38 +32,6 @@ function formatDate(iso?: string) {
     month: 'short',
     day: 'numeric',
   });
-}
-
-function statusBadge(status: ClearanceStatus) {
-  const colors: Record<ClearanceStatus, string> = {
-    DRAFT: 'bg-gray-100 text-gray-700',
-    FOR_APPROVAL: 'bg-yellow-100 text-yellow-800',
-    APPROVED: 'bg-green-100 text-green-800',
-    REJECTED: 'bg-red-100 text-red-800',
-    RELEASED: 'bg-blue-100 text-blue-800',
-  };
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${colors[status]}`}
-    >
-      {STATUS_LABELS[status]}
-    </span>
-  );
-}
-
-function paymentBadge(ps: ClearancePaymentStatus) {
-  const colors: Record<ClearancePaymentStatus, string> = {
-    UNPAID: 'bg-orange-100 text-orange-800',
-    PAID: 'bg-green-100 text-green-800',
-    WAIVED: 'bg-purple-100 text-purple-800',
-  };
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${colors[ps]}`}
-    >
-      {PAYMENT_STATUS_LABELS[ps]}
-    </span>
-  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -97,89 +75,65 @@ export default function ReportsPage() {
     status || paymentStatus || purpose || purok || from || to;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clearance Issuance Report</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Digital log-book of all clearance requests
-          </p>
-        </div>
-        {!isLoading && (
-          <p className="text-sm text-gray-500">
-            {totalElements.toLocaleString()} record{totalElements !== 1 ? 's' : ''}
-          </p>
-        )}
-      </div>
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <PageHeader
+        title="Clearance Issuance Report"
+        description="Digital log-book of all clearance requests"
+      />
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 px-4 py-4 space-y-3">
-        <p className="text-sm font-medium text-gray-700">Filters</p>
+      <Card className="p-5">
+        <div className="flex flex-wrap gap-4 items-end">
+          <Select
+            label="Status"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value as ClearanceStatus | '');
+              setPage(0);
+            }}
+          >
+            <option value="">All Status</option>
+            <option value="DRAFT">Draft</option>
+            <option value="FOR_APPROVAL">For Approval</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="RELEASED">Released</option>
+          </Select>
 
-        <div className="flex flex-wrap gap-3 items-end">
-          {/* Status */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Status</label>
-            <select
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value as ClearanceStatus | '');
-                setPage(0);
-              }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="DRAFT">Draft</option>
-              <option value="FOR_APPROVAL">For Approval</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="RELEASED">Released</option>
-            </select>
-          </div>
+          <Select
+            label="Payment"
+            value={paymentStatus}
+            onChange={(e) => {
+              setPaymentStatus(e.target.value as ClearancePaymentStatus | '');
+              setPage(0);
+            }}
+          >
+            <option value="">All Payment</option>
+            <option value="UNPAID">Unpaid</option>
+            <option value="PAID">Paid</option>
+            <option value="WAIVED">Waived</option>
+          </Select>
 
-          {/* Payment status */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Payment</label>
-            <select
-              value={paymentStatus}
-              onChange={(e) => {
-                setPaymentStatus(e.target.value as ClearancePaymentStatus | '');
-                setPage(0);
-              }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Payment</option>
-              <option value="UNPAID">Unpaid</option>
-              <option value="PAID">Paid</option>
-              <option value="WAIVED">Waived</option>
-            </select>
-          </div>
+          <Select
+            label="Purpose"
+            value={purpose}
+            onChange={(e) => {
+              setPurpose(e.target.value as Purpose | '');
+              setPage(0);
+            }}
+          >
+            <option value="">All Purposes</option>
+            {(Object.keys(PURPOSE_LABELS) as Purpose[]).map((p) => (
+              <option key={p} value={p}>
+                {PURPOSE_LABELS[p]}
+              </option>
+            ))}
+          </Select>
 
-          {/* Purpose */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Purpose</label>
-            <select
-              value={purpose}
-              onChange={(e) => {
-                setPurpose(e.target.value as Purpose | '');
-                setPage(0);
-              }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Purposes</option>
-              {(Object.keys(PURPOSE_LABELS) as Purpose[]).map((p) => (
-                <option key={p} value={p}>
-                  {PURPOSE_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Purok / address search */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Purok / Address</label>
-            <input
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Purok / Address</label>
+            <Input
               type="text"
               placeholder="e.g. Purok 3"
               value={purok}
@@ -187,141 +141,174 @@ export default function ReportsPage() {
                 setPurok(e.target.value);
                 setPage(0);
               }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Date range */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">From</label>
-            <input
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">From</label>
+            <Input
               type="date"
               value={from}
               onChange={(e) => {
                 setFrom(e.target.value);
                 setPage(0);
               }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">To</label>
-            <input
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">To</label>
+            <Input
               type="date"
               value={to}
               onChange={(e) => {
                 setTo(e.target.value);
                 setPage(0);
               }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Reset */}
           {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="self-end text-sm text-gray-500 hover:text-gray-800 underline pb-1.5"
-            >
-              Reset
-            </button>
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              Clear Filters
+            </Button>
           )}
         </div>
-      </div>
+      </Card>
+
+      {/* Results header */}
+      {!isLoading && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+          className="flex items-center justify-between"
+        >
+          <motion.p className="font-geist text-sm text-neutral-600">
+            <span className="font-semibold text-neutral-900">
+              {totalElements.toLocaleString()}
+            </span>{' '}
+            record{totalElements !== 1 ? 's' : ''} found
+          </motion.p>
+        </motion.div>
+      )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <Card>
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
           </div>
         ) : isError ? (
-          <p className="py-12 text-center text-sm text-red-500">
-            Failed to load report. Please try again.
-          </p>
+          <div className="py-12 text-center">
+            <p className="text-sm text-red-600">
+              Failed to load report. Please try again.
+            </p>
+          </div>
         ) : rows.length === 0 ? (
-          <p className="py-12 text-center text-sm text-gray-500">
-            No records found for the selected filters.
-          </p>
+          <div className="py-12 text-center">
+            <FileSearch className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
+            <p className="text-sm text-neutral-500">No records found for the selected filters.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-100 bg-neutral-50">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Clearance No.
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Resident
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Purpose
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Urgency
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Payment
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Issued At
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wide text-xs">
+                  <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
                     Created At
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {rows.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-800">
-                      {row.clearanceNumber ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {row.residentFullName}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {PURPOSE_LABELS[row.purpose]}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 capitalize">
-                      {row.urgency.toLowerCase()}
-                    </td>
-                    <td className="px-4 py-3">{statusBadge(row.status)}</td>
-                    <td className="px-4 py-3">{paymentBadge(row.paymentStatus)}</td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(row.issuedAt)}</td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(row.createdAt)}</td>
-                  </tr>
-                ))}
+              <tbody>
+                <motion.tr
+                  className="contents"
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {rows.map((row, idx) => (
+                    <motion.tr
+                      key={idx}
+                      className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors"
+                      variants={staggerItem}
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-neutral-800">
+                        {row.clearanceNumber ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-neutral-900">
+                        {row.residentFullName}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600">
+                        {PURPOSE_LABELS[row.purpose]}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600 capitalize">
+                        {row.urgency.toLowerCase()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="status" value={row.status} dot />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="payment" value={row.paymentStatus} dot />
+                      </td>
+                      <td className="px-4 py-3 text-neutral-500 text-xs">
+                        {formatDate(row.issuedAt)}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-500 text-xs">
+                        {formatDate(row.createdAt)}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </motion.tr>
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50"
           >
-            Previous
-          </button>
-          <span className="text-sm text-gray-500">
+            ← Prev
+          </Button>
+          <span className="font-geist text-sm text-neutral-500">
             Page {page + 1} of {totalPages}
           </span>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-40 hover:bg-gray-50"
           >
-            Next
-          </button>
+            Next →
+          </Button>
         </div>
       )}
     </div>

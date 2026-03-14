@@ -39,6 +39,18 @@ public class ResidentService {
     // ─────────────────────────────────────────────────────────────────
 
     /**
+     * Enrich a ResidentDTO with portal status from the linked user account.
+     * Sets portalStatus if hasPortalAccount is true.
+     */
+    private ResidentDTO enrichWithPortalStatus(ResidentDTO dto) {
+        if (dto.isHasPortalAccount() && dto.getUserId() != null) {
+            userRepository.findById(dto.getUserId())
+                    .ifPresent(user -> dto.setPortalStatus(user.getStatus()));
+        }
+        return dto;
+    }
+
+    /**
      * Search residents by name (q) and/or purok/zone (purok).
      * Results are paginated. Null/blank parameters are ignored.
      */
@@ -49,7 +61,8 @@ public class ResidentService {
 
         Page<ResidentDTO> page = residentRepository
                 .search(normalizedQ, normalizedPurok, pageable)
-                .map(residentMapper::toDTO);
+                .map(residentMapper::toDTO)
+                .map(this::enrichWithPortalStatus);
         return PageResponse.of(page);
     }
 
@@ -62,6 +75,7 @@ public class ResidentService {
     public ResidentDTO getById(UUID id) {
         return residentRepository.findById(id)
                 .map(residentMapper::toDTO)
+                .map(this::enrichWithPortalStatus)
                 .orElseThrow(() -> AppException.notFound("Resident not found"));
     }
 
@@ -75,7 +89,7 @@ public class ResidentService {
         log.info("RESIDENT_CREATED id={} name={} {}", saved.getId(), saved.getFirstName(), saved.getLastName());
         auditService.log(null, AuditAction.RESIDENT_CREATED, "Resident", saved.getId(),
                 "Resident created (walk-in): " + saved.getLastName() + ", " + saved.getFirstName());
-        return residentMapper.toDTO(saved);
+        return enrichWithPortalStatus(residentMapper.toDTO(saved));
     }
 
     /**
@@ -114,7 +128,7 @@ public class ResidentService {
         log.info("RESIDENT_UPDATED id={}", saved.getId());
         auditService.log(null, AuditAction.RESIDENT_UPDATED, "Resident", saved.getId(),
                 "Resident profile updated: " + saved.getLastName() + ", " + saved.getFirstName());
-        return residentMapper.toDTO(saved);
+        return enrichWithPortalStatus(residentMapper.toDTO(saved));
     }
 
     /**
@@ -165,25 +179,28 @@ public class ResidentService {
                 .filter(u -> u.getRole() == User.Role.RESIDENT)
                 .map(u -> residentRepository.findByUserId(u.getId())
                         .map(residentMapper::toDTO)
+                        .map(this::enrichWithPortalStatus)
                         .orElse(null))
                 .filter(dto -> dto != null)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Activate a pending resident portal account.
+     * Activate a resident portal account.
      * Sets {@code user.status = ACTIVE}.
+     * Allowed from {@code PENDING_VERIFICATION} or {@code REJECTED} states.
      *
      * @throws AppException 404 if user not found
-     * @throws AppException 400 if user is not in PENDING_VERIFICATION state
+     * @throws AppException 400 if user is not in an activatable state
      */
     @Transactional
     public void activateUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> AppException.notFound("User not found"));
 
-        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION) {
-            throw AppException.badRequest("User is not pending verification");
+        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION
+                && user.getStatus() != User.UserStatus.REJECTED) {
+            throw AppException.badRequest("User cannot be activated from status: " + user.getStatus());
         }
 
         user.setStatus(User.UserStatus.ACTIVE);
@@ -194,19 +211,21 @@ public class ResidentService {
     }
 
     /**
-     * Reject a pending resident portal account.
+     * Reject a resident portal account.
      * Sets {@code user.status = REJECTED}.
+     * Allowed from {@code PENDING_VERIFICATION} or {@code ACTIVE} states.
      *
      * @throws AppException 404 if user not found
-     * @throws AppException 400 if user is not in PENDING_VERIFICATION state
+     * @throws AppException 400 if user is not in a rejectable state
      */
     @Transactional
     public void rejectUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> AppException.notFound("User not found"));
 
-        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION) {
-            throw AppException.badRequest("User is not pending verification");
+        if (user.getStatus() != User.UserStatus.PENDING_VERIFICATION
+                && user.getStatus() != User.UserStatus.ACTIVE) {
+            throw AppException.badRequest("User cannot be rejected from status: " + user.getStatus());
         }
 
         user.setStatus(User.UserStatus.REJECTED);

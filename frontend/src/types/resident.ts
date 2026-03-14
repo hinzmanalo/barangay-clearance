@@ -2,6 +2,7 @@
 
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 export type ResidentStatus = 'ACTIVE' | 'INACTIVE';
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING_VERIFICATION' | 'REJECTED' | 'DEACTIVATED';
 
 export interface Resident {
   id: string;
@@ -16,6 +17,7 @@ export interface Resident {
   email?: string;
   status: ResidentStatus;
   hasPortalAccount: boolean;
+  portalStatus?: UserStatus;
   createdAt: string;
   updatedAt: string;
 }

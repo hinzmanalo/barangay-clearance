@@ -11,9 +11,10 @@ public interface ResidentMapper {
     /**
      * Map a {@link Resident} entity to a {@link ResidentDTO}.
      * The {@code hasPortalAccount} field is computed from whether {@code userId} is
-     * non-null.
+     * non-null. The {@code portalStatus} is set separately by the service.
      */
     @Mapping(target = "hasPortalAccount", expression = "java(resident.getUserId() != null)")
+    @Mapping(target = "portalStatus", ignore = true)
     ResidentDTO toDTO(Resident resident);
 
     /**

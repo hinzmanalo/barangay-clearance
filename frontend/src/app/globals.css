@@ -3,21 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Brand — deep government blue */
+  --clr-primary-900: #062040;
+  --clr-primary-800: #0a3060;
+  --clr-primary-700: #0a4f8f; /* Primary action, backoffice sidebar bg */
+  --clr-primary-600: #1565c0;
+  --clr-primary-500: #1976d2;
+  --clr-primary-300: #64b5f6;
+  --clr-primary-200: #bbdefb;
+  --clr-primary-100: #e3f0ff;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Teal accent — portal CTA, approved states */
+  --clr-teal-600: #0d7a70;
+  --clr-teal-500: #0d9488; /* Portal sidebar bg */
+  --clr-teal-400: #14b8a6;
+  --clr-teal-100: #ccfbf1;
+
+  /* Neutral scale */
+  --clr-neutral-950: #0c1117;
+  --clr-neutral-900: #111827;
+  --clr-neutral-700: #374151;
+  --clr-neutral-500: #6b7280;
+  --clr-neutral-300: #d1d5db;
+  --clr-neutral-100: #f3f4f6;
+  --clr-neutral-50: #f8fafc;
+
+  /* Status colors */
+  --clr-status-draft: #6b7280;
+  --clr-status-for-approval: #d97706;
+  --clr-status-approved: #059669;
+  --clr-status-rejected: #dc2626;
+  --clr-status-released: #2563eb;
+
+  /* Payment colors */
+  --clr-pay-unpaid: #ea580c;
+  --clr-pay-paid: #16a34a;
+  --clr-pay-waived: #7c3aed;
+
+  /* Surfaces */
+  --clr-surface: #ffffff;
+  --clr-surface-alt: #f8fafc;
+  --clr-border: #e2e8f0;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.12);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-neutral-900);
 }
 
 @layer utilities {

@@ -2,8 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { UserCheck } from 'lucide-react';
 import ResidentTable from '@/components/backoffice/ResidentTable';
 import { useResidents, usePendingResidents, useActivateResident, useRejectResident } from '@/hooks/useResidents';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 import type { Resident } from '@/types/resident';
 import { AxiosError } from 'axios';
 import { toast } from '@/components/shared/ErrorToast';
@@ -66,72 +72,87 @@ export default function ResidentsPage() {
   const totalPages = data?.totalPages ?? 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <PageHeader
+        title="Residents"
+        description="Manage the barangay resident registry"
+        actions={
+          <Link href="/backoffice/residents/new">
+            <Button variant="primary" size="sm">
+              + Add Resident
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Residents</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage the barangay resident registry.</p>
-        </div>
-        <Link
-          href="/backoffice/residents/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Add Resident
-        </Link>
-      </div>
-
-      {/* Pending registrations */}
+      {/* Pending portal activations */}
       {pendingResidents && pendingResidents.length > 0 && (
-        <section className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 space-y-3">
-          <h2 className="font-semibold text-yellow-800 text-sm">
-            Pending Portal Registrations ({pendingResidents.length})
-          </h2>
-          <div className="space-y-2">
-            {pendingResidents.map((r) => (
-              <div key={r.id} className="flex items-center justify-between bg-white rounded-md border border-yellow-100 px-4 py-2">
-                <span className="text-sm text-gray-800 font-medium">
-                  {r.lastName}, {r.firstName} {r.middleName ?? ''}
-                  {r.email && <span className="ml-2 text-gray-500 font-normal">({r.email})</span>}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => r.userId && handleActivate(r.userId)}
-                    disabled={activateMutation.isPending}
-                    className="rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                  >
-                    Activate
-                  </button>
-                  <button
-                    onClick={() => r.userId && handleReject(r.userId)}
-                    disabled={rejectMutation.isPending}
-                    className="rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                  >
-                    Reject
-                  </button>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        >
+          <Card accentColor="amber" className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <UserCheck className="w-5 h-5 text-amber-600" />
+              <h3 className="font-sora font-semibold text-base text-neutral-900">
+                Pending Portal Activations ({pendingResidents.length})
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {pendingResidents.map((r) => (
+                <div key={r.id} className="flex items-center justify-between bg-neutral-50 rounded-lg border border-amber-100 px-4 py-3">
+                  <div className="flex-1">
+                    <p className="font-geist text-sm font-medium text-neutral-900">
+                      {r.lastName}, {r.firstName} {r.middleName ?? ''}
+                    </p>
+                    {r.email && (
+                      <p className="font-geist text-xs text-neutral-500 mt-0.5">{r.email}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => r.userId && handleActivate(r.userId)}
+                      loading={activateMutation.isPending}
+                      disabled={activateMutation.isPending}
+                    >
+                      Activate
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => r.userId && handleReject(r.userId)}
+                      loading={rejectMutation.isPending}
+                      disabled={rejectMutation.isPending}
+                    >
+                      Reject
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
       )}
 
       {/* Search filters */}
-      <div className="flex gap-4">
-        <input
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Input
           type="text"
           placeholder="Search by name…"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1"
         />
-        <input
+        <Input
           type="text"
           placeholder="Filter by purok/zone…"
           value={purokInput}
           onChange={(e) => setPurokInput(e.target.value)}
-          className="w-56 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="sm:w-56"
         />
       </div>
 
@@ -140,26 +161,26 @@ export default function ResidentsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>
-            Page {page + 1} of {totalPages} ({data?.totalElements ?? 0} total)
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            ← Prev
+          </Button>
+          <span className="font-geist text-sm text-neutral-500">
+            Page {page + 1} of {totalPages}
           </span>
-          <div className="flex gap-2">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-              className="rounded-md border border-gray-300 px-3 py-1 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
-              className="rounded-md border border-gray-300 px-3 py-1 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next →
+          </Button>
         </div>
       )}
     </div>

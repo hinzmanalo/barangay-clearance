@@ -1,47 +1,47 @@
 'use client';
 
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import type { ClearanceRequest } from '@/types/clearance';
 import { STATUS_LABELS, PURPOSE_LABELS, PAYMENT_STATUS_LABELS } from '@/types/clearance';
-import { TableRowSkeleton } from '@/components/shared/LoadingSkeleton';
+import { Badge } from '@/components/ui/Badge';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 
 interface ClearanceTableProps {
   clearances: ClearanceRequest[];
   isLoading?: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700',
-  FOR_APPROVAL: 'bg-yellow-100 text-yellow-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  RELEASED: 'bg-blue-100 text-blue-800',
-};
-
-const PAYMENT_COLORS: Record<string, string> = {
-  UNPAID: 'bg-orange-100 text-orange-800',
-  PAID: 'bg-green-100 text-green-800',
-  WAIVED: 'bg-gray-100 text-gray-700',
-};
-
 /**
- * Backoffice table listing clearance requests.
+ * Backoffice table listing clearance requests with staggered row entrance.
  */
 export default function ClearanceTable({ clearances, isLoading }: ClearanceTableProps) {
   if (isLoading) {
     return (
-      <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
+      <div className="overflow-x-auto bg-white rounded-lg border border-neutral-200">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 bg-neutral-50">
               {['Resident', 'Purpose', 'Urgency', 'Status', 'Payment', 'Date', 'Clearance #'].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-semibold text-gray-600">{h}</th>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium"
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
-              <TableRowSkeleton key={i} cols={7} />
+              <tr key={i} className="border-b border-neutral-50">
+                {Array.from({ length: 7 }).map((_, j) => (
+                  <td key={j} className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </td>
+                ))}
+              </tr>
             ))}
           </tbody>
         </table>
@@ -51,76 +51,89 @@ export default function ClearanceTable({ clearances, isLoading }: ClearanceTable
 
   if (clearances.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-8 text-center text-sm text-gray-500">
-        No clearance requests found.
+      <div className="bg-white rounded-lg border border-neutral-200 p-8 text-center">
+        <p className="text-sm text-neutral-500">No clearance requests found.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Resident</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Purpose</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Urgency</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Payment</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Date</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-600">Clearance #</th>
+    <div className="overflow-x-auto bg-white rounded-lg border border-neutral-200">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-neutral-100 bg-neutral-50">
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Resident
+            </th>
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Purpose
+            </th>
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Urgency
+            </th>
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Payment
+            </th>
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Date
+            </th>
+            <th className="px-4 py-3 text-left font-geist text-xs uppercase tracking-wide text-neutral-500 font-medium">
+              Clearance #
+            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
-          {clearances.map((cr) => {
-            const purposeLabel =
-              cr.purpose === 'OTHER' && cr.purposeOther
-                ? cr.purposeOther
-                : PURPOSE_LABELS[cr.purpose] ?? cr.purpose;
+        <tbody>
+          <motion.tr
+            className="contents"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {clearances.map((cr) => {
+              const purposeLabel =
+                cr.purpose === 'OTHER' && cr.purposeOther
+                  ? cr.purposeOther
+                  : PURPOSE_LABELS[cr.purpose] ?? cr.purpose;
 
-            return (
-              <tr key={cr.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <Link
-                    href={`/backoffice/clearances/${cr.id}`}
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {cr.residentName ?? '—'}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">{purposeLabel}</td>
-                <td className="px-4 py-3 text-gray-500">{cr.urgency}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      STATUS_COLORS[cr.status] ?? 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {STATUS_LABELS[cr.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      PAYMENT_COLORS[cr.paymentStatus] ?? 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {PAYMENT_STATUS_LABELS[cr.paymentStatus]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                  {new Date(cr.createdAt).toLocaleDateString('en-PH', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </td>
-                <td className="px-4 py-3 font-mono text-gray-600 text-xs">
-                  {cr.clearanceNumber ?? '—'}
-                </td>
-              </tr>
-            );
-          })}
+              return (
+                <motion.tr
+                  key={cr.id}
+                  className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors"
+                  variants={staggerItem}
+                >
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/backoffice/clearances/${cr.id}`}
+                      className="font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      {cr.residentName ?? '—'}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-neutral-700 max-w-[180px] truncate">{purposeLabel}</td>
+                  <td className="px-4 py-3 text-neutral-600">{cr.urgency}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant="status" value={cr.status} dot />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="payment" value={cr.paymentStatus} dot />
+                  </td>
+                  <td className="px-4 py-3 text-neutral-500 text-xs whitespace-nowrap">
+                    {new Date(cr.createdAt).toLocaleDateString('en-PH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-neutral-600 text-xs">
+                    {cr.clearanceNumber ?? '—'}
+                  </td>
+                </motion.tr>
+              );
+            })}
+          </motion.tr>
         </tbody>
       </table>
     </div>

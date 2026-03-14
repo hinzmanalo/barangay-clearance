@@ -1,9 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Users } from 'lucide-react';
 import Link from 'next/link';
 import UserTable from '@/components/backoffice/UserTable';
 import { useUsers } from '@/hooks/useUsers';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import type { StaffUser } from '@/types/auth';
 
 const ROLE_OPTIONS = ['', 'ADMIN', 'CLERK', 'APPROVER'] as const;
@@ -40,85 +48,107 @@ export default function UsersPage() {
 
   const users: StaffUser[] = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
+  const hasActiveFilters = searchInput || role || status;
+
+  function resetFilters() {
+    setSearchInput('');
+    setRole('');
+    setStatus('');
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Accounts</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage staff accounts for the back-office system.
-          </p>
-        </div>
-        <Link
-          href="/backoffice/admin/users/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-        >
-          + New User
-        </Link>
-      </div>
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <PageHeader
+        title="User Accounts"
+        description="Manage staff accounts for the back-office system."
+        actions={
+          <Link href="/backoffice/admin/users/new">
+            <Button variant="primary">+ New User</Button>
+          </Link>
+        }
+      />
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="search"
-          placeholder="Search by name or email…"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="block w-full sm:max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+      <Card className="p-5">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2 font-geist">Search</label>
+            <Input
+              type="text"
+              placeholder="By name or email…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
 
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">All roles</option>
-          {ROLE_OPTIONS.filter(Boolean).map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
+          <Select
+            label="Role"
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="">All roles</option>
+            {ROLE_OPTIONS.filter(Boolean).map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </Select>
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="block rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">All statuses</option>
-          {STATUS_OPTIONS.filter(Boolean).map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </div>
+          <Select
+            label="Status"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.filter(Boolean).map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Select>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              Clear Filters
+            </Button>
+          )}
+        </div>
+      </Card>
 
       {/* Table */}
       <UserTable users={users} isLoading={isLoading} />
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-          <p className="text-sm text-gray-600">
-            Page {page + 1} of {totalPages} &middot; {data?.totalElements ?? 0} total
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <motion.div
+          className="flex items-center justify-center gap-2"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+          >
+            ← Prev
+          </Button>
+          <span className="font-geist text-sm text-neutral-500">
+            Page {page + 1} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+          >
+            Next →
+          </Button>
+        </motion.div>
       )}
     </div>
   );
