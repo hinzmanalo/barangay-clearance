@@ -1,28 +1,39 @@
 # Barangay Clearance System — Project Status
 
-**Last Updated:** 2026-03-05 (Phase 9 backend Testing & QA complete — 112 tests passing)
-**Current Phase:** Phase 10 / 12
-**Overall Progress:** 9 / 13 phases complete (Phase 9 with 112 tests: 56 unit + 56 integration)
+**Last Updated:** 2026-03-06 (Status updated: Phase 13-2 Public Pages redesign complete)
+**Current Phase:** Phase 13 / 13
+**Overall Progress:** 12.2 / 13 phases complete (Phase 13-1 foundation complete; Phase 13-2 public pages ✓; Phases 13-3/13-4/13-5 pending)
 
 ---
 
 ## Phase Overview
 
-| Phase                                   | Name                         | Status        | Week | Notes                                             |
-| --------------------------------------- | ---------------------------- | ------------- | ---- | ------------------------------------------------- |
-| [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete   | 1    | Foundation — must complete first                  |
-| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | 🟢 Complete   | 2    | Blocks all other phases                           |
-| [Phase 2](phase-02-residents.md)        | Residents Module             | 🟢 Complete   | 2–3  | Blocks Phase 3                                    |
-| [Phase 3](phase-03-clearance.md)        | Clearance Module             | 🟢 Complete   | 3–4  | Core business logic                               |
-| [Phase 4](phase-04-payments.md)         | Payments Module              | 🟢 Complete   | 4    | Parallel with Phase 5 & 6                         |
-| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🟢 Complete   | 5    | Parallel with Phase 4 & 6                         |
-| [Phase 6](phase-06-settings.md)         | Settings Module              | 🟢 Complete   | 5    | Parallel with Phase 4 & 5                         |
-| [Phase 7](phase-07-reports.md)          | Reports Module               | 🟢 Complete   | 6    | Parallel with Phase 8                             |
-| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🟢 Complete   | 6    | Parallel with Phase 7                             |
-| [Phase 9](phase-09-testing.md)          | Testing & QA                 | 🟢 Complete   | 7    | 112 tests: 56 unit + 56 integration (all passing) |
-| [Phase 10](phase-10-deployment.md)      | Deployment                   | � In Progress | 7–8  | Phase 9 complete, Dockerfiles next                |
-| [Phase 11](phase-11-user-management.md) | User Management              | 🟢 Complete   | 6–7  | Parallel with Phase 7 & 8                         |
-| [Phase 12](phase-12-audit-logging.md)   | Audit Logging                | � Complete    | 8    | Parallel with Phase 9 & 10                        |
+| Phase                                   | Name                         | Status         | Week | Notes                                                                         |
+| --------------------------------------- | ---------------------------- | -------------- | ---- | ----------------------------------------------------------------------------- |
+| [Phase 0](phase-00-scaffolding.md)      | Scaffolding & Infrastructure | 🟢 Complete    | 1    | Foundation — must complete first                                              |
+| [Phase 1](phase-01-auth.md)             | Identity Module: Auth & JWT  | 🟢 Complete    | 2    | Blocks all other phases                                                       |
+| [Phase 2](phase-02-residents.md)        | Residents Module             | 🟢 Complete    | 2–3  | Blocks Phase 3                                                                |
+| [Phase 3](phase-03-clearance.md)        | Clearance Module             | 🟢 Complete    | 3–4  | Core business logic                                                           |
+| [Phase 4](phase-04-payments.md)         | Payments Module              | 🟢 Complete    | 4    | Parallel with Phase 5 & 6                                                     |
+| [Phase 5](phase-05-pdf.md)              | PDF Generation               | 🟢 Complete    | 5    | Parallel with Phase 4 & 6                                                     |
+| [Phase 6](phase-06-settings.md)         | Settings Module              | 🟢 Complete    | 5    | Parallel with Phase 4 & 5                                                     |
+| [Phase 7](phase-07-reports.md)          | Reports Module               | 🟢 Complete    | 6    | Parallel with Phase 8                                                         |
+| [Phase 8](phase-08-frontend-polish.md)  | Frontend Polish & Navigation | 🟢 Complete    | 6    | Parallel with Phase 7                                                         |
+| [Phase 9](phase-09-testing.md)          | Testing & QA                 | � In Progress  | 7    | Backend tests: 112 (56 unit + 56 integration) ✓; Frontend & E2E tests pending |
+| [Phase 10](phase-10-deployment.md)      | Deployment                   | 🟢 Complete    | 7–8  | Dockerfiles, docker-compose, TLS, backup scripts                              |
+| [Phase 11](phase-11-user-management.md) | User Management              | 🟢 Complete    | 6–7  | Staff CRUD, role management, user profiles                                    |
+| [Phase 12](phase-12-audit-logging.md)   | Audit Logging                | 🟢 Complete    | 8    | Audit service, event listeners, log queries                                   |
+| Phase 13                                | UI/UX Redesign               | 🔴 Not Started | 9+   | Split into 5 sub-phases; see table below                                      |
+
+**Phase 13 Sub-phases:**
+
+| Sub-phase                                      | Name                                            | Status         | Parallel?                      |
+| ---------------------------------------------- | ----------------------------------------------- | -------------- | ------------------------------ |
+| [13-1](phase-13-1-design-system-foundation.md) | Design System & Layout Shells                   | � Complete     | Sequential — blocks 13-2/3/4   |
+| [13-2](phase-13-2-public-pages.md)             | Public Pages (Login, Register, Change Password) | 🟢 Complete    | Parallel with 13-3 and 13-4    |
+| [13-3](phase-13-3-backoffice-pages.md)         | Backoffice Pages                                | 🔴 Not Started | Parallel with 13-2 and 13-4    |
+| [13-4](phase-13-4-portal-pages.md)             | Portal Pages                                    | 🔴 Not Started | Parallel with 13-2 and 13-3    |
+| [13-5](phase-13-5-polish-qa.md)                | Polish & QA                                     | 🔴 Not Started | Sequential — requires 13-2/3/4 |
 
 | [Perf Review](performance-improvements.md) | Backend Performance Audit | 📋 Documented | — | 19 issues identified, ready to implement |
 
@@ -39,12 +50,18 @@
 
 > Update this section when starting a new phase.
 
-**Active phase:** Phase 10 (Deployment)
-**Current work:** All backend tests complete (56 unit + 56 integration = 112/112 passing)
+**Active phase:** Phase 13-2 (Public Pages Redesign) — ✓ COMPLETE
+**Current work:** Phase 13-1 foundation + Phase 13-2 complete; Phases 13-3/13-4/13-5 pending
 
-- Unit tests: JwtServiceTest, AuthServiceTest, ClearanceServiceTest, PaymentServiceTest, ClearancePdfServiceTest (56 tests, 92% coverage)
-- Integration tests: AuthControllerIT, ResidentControllerIT, ClearanceWorkflowIT, PaymentControllerIT, SecurityGuardIT, SettingsControllerIT (56 tests, real DB + Testcontainers)
-  **Next:** Deployment infrastructure (Dockerfiles, docker-compose, TLS, backup scripts)
+- Phase 13-1: ✓ Design system, CSS tokens, UI components with animations, Framer Motion
+- **Phase 13-2: ✓ Public pages (Login, Register, Change Password) redesigned and compiled successfully**
+  - Login: Split-screen layout with navy gradient left panel, form card right panel, entrance animation
+  - Register: 2-step stepper with slide transitions, account info → personal info flow
+  - Change Password: Centered card with amber security warning banner
+  - All pages use design system components, preserve existing validation/API logic, zero TypeScript errors
+- Phase 13-3: ⏳ Backoffice pages (next)
+- Phase 13-4: ⏳ Portal pages
+- Phase 13-5: ⏳ Polish & QA
 
 ---
 
@@ -53,13 +70,15 @@
 See [dependency-graph.md](dependency-graph.md) for full details.
 
 **Sequential (critical path):**
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8/11 in parallel] → [Phase 9/12 in parallel] → Phase 10
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [Phase 7/8/11 in parallel] → [Phase 9/12 in parallel] → Phase 10 → Phase 13-1 → [Phase 13-2/13-3/13-4 in parallel] → Phase 13-5
 
 **Parallel opportunities:**
 
 - After Phase 3: Phases 4, 5, and 6 can all run concurrently
 - After Phases 4/5/6: Phases 7, 8, and 11 can run concurrently
 - During Phase 9: Phase 10 infrastructure setup and Phase 12 can begin
+- Phase 13: After 13-1 (foundation) completes, phases 13-2, 13-3, and 13-4 can all run concurrently
+- Phase 13-5 (QA) is the sole gate before Phase 13 is marked complete
 
 ---
 
@@ -252,7 +271,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 9 — Testing & QA
 
-**Status:** 🟢 Complete (112 tests: 56 unit + 56 integration, all passing)
+**Status:** � In Progress (Backend: 112 tests passing; Frontend & E2E: Not started)
 
 **Checklist:**
 
@@ -286,7 +305,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 10 — Deployment
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 
 **Checklist:**
 
@@ -309,7 +328,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 11 — User Management
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 7, 8
 
 **Checklist:**
@@ -341,7 +360,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 
 ### Phase 12 — Audit Logging
 
-**Status:** 🔴 Not Started
+**Status:** � Complete
 **Parallel with:** Phases 9, 10
 
 **Checklist:**
@@ -394,6 +413,108 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → [Phase 4/5/6 in parallel] → [P
 | 2026-02-27 | Phase 12 | Planned      | Created [`phase-12-audit-logging.md`](phase-12-audit-logging.md) — audit trail for all state-changing operations. `audit_logs` table exists (V1) but has zero code implementation. Plan covers: `AuditLog` entity/repo/service in `shared/audit/`, 27 audit action constants, `@Async` + `REQUIRES_NEW` writes, `ClearanceStatusChangedEvent` listener, instrumentation of 5 services (auth, users, residents, payments, settings), ADMIN-only query endpoints, and frontend audit log viewer page.                                                                                                      |
 | 2026-03-04 | Phase 9  | Completed    | Unit tests: 56 tests (JwtService, AuthService, ClearanceService, PaymentService, ClearancePdfService) all passing. Coverage: ~92% for critical services. Execution time: ~5 seconds.                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 2026-03-05 | Phase 9  | Completed    | Integration tests: 56 tests (AuthControllerIT, ResidentControllerIT, ClearanceWorkflowIT, PaymentControllerIT, SettingsControllerIT, SecurityGuardIT) all passing. Infrastructure: BaseIntegrationTest with Testcontainers PostgreSQL, singleton container pattern, dynamic datasource binding, token helpers, table cleanup/seeding. Execution time: ~30 seconds with Testcontainers. Fixed 3 critical Docker/FK/hanging issues. Total: 112 tests, 0 failures. Phase 9 complete.                                                                                                                        |
+| 2026-03-06 | Phase 13 | Planned      | UI/UX Redesign PRD created ([phase-13-ui-ux-redesign-prd.md](phase-13-ui-ux-redesign-prd.md)). Split into 5 sub-phases: [13-1 Design System Foundation](phase-13-1-design-system-foundation.md), [13-2 Public Pages](phase-13-2-public-pages.md), [13-3 Backoffice](phase-13-3-backoffice-pages.md), [13-4 Portal](phase-13-4-portal-pages.md), [13-5 Polish & QA](phase-13-5-polish-qa.md). 13-2/13-3/13-4 can run in parallel after 13-1 completes. Phase 13-1 blocks all others; 13-5 is the final gate.                                                                                              |
+
+---
+
+### Phase 13 — UI/UX Redesign
+
+**Status:** � Not Started (PRD complete, 5 sub-phase plans created)
+**PRD:** [phase-13-ui-ux-redesign-prd.md](phase-13-ui-ux-redesign-prd.md)
+**Depends on:** Phase 8 (all pages must exist before redesign)
+
+**Parallel execution map:**
+
+```
+13-1 (Foundation) ──► 13-2 (Public Pages)  ──┐
+                  ──► 13-3 (Backoffice)     ──►  13-5 (QA)
+                  ──► 13-4 (Portal)         ──┘
+```
+
+#### Phase 13-1 — Design System & Layout Shells
+
+**File:** [phase-13-1-design-system-foundation.md](phase-13-1-design-system-foundation.md)
+**Status:** 🔴 Not Started
+**Blocks:** 13-2, 13-3, 13-4
+
+- [ ] Install `framer-motion` v11, `clsx`, `tailwind-merge`, `class-variance-authority`
+- [ ] Update `globals.css` — full CSS token system (brand, teal, neutral, status, payment, surface, shadow)
+- [ ] Update `tailwind.config.ts` — `font-sora`, `font-geist`, token-mapped colors, shadow tokens
+- [ ] Update `app/layout.tsx` — integrate `next/font` Sora + Geist with `display: swap`
+- [ ] Create `lib/animations.ts` — shared Framer Motion variants
+- [ ] Build `components/ui/Button.tsx` (5 variants, 3 sizes, loading spinner)
+- [ ] Build `components/ui/Card.tsx` (accent color, hover lift)
+- [ ] Build `components/ui/Badge.tsx` (status / payment / role variants)
+- [ ] Build `components/ui/Input.tsx` (floating-label, animated error)
+- [ ] Build `components/ui/Select.tsx` (matching Input height)
+- [ ] Build `components/ui/Textarea.tsx` (floating-label)
+- [ ] Build `components/ui/Skeleton.tsx` (Framer Motion stagger)
+- [ ] Build `components/ui/PageHeader.tsx` (Sora h1 + actions slot)
+- [ ] Build `components/ui/StatCard.tsx` (animated counter)
+- [ ] Build `components/ui/EmptyState.tsx` (icon + CTA)
+- [ ] Build `components/ui/DataTable.tsx` (staggered rows)
+- [ ] Redesign `components/backoffice/Sidebar.tsx` (navy gradient, spring collapse, `layoutId` active bar)
+- [ ] Redesign `components/portal/Sidebar.tsx` (teal gradient, same mechanics)
+- [ ] Update `app/backoffice/layout.tsx` (page transition wrapper, new topbar)
+- [ ] Update `app/portal/layout.tsx` (page transition wrapper, new topbar)
+
+#### Phase 13-2 — Public Pages
+
+**File:** [phase-13-2-public-pages.md](phase-13-2-public-pages.md)
+**Status:** 🔴 Not Started
+**Parallel with:** 13-3, 13-4
+
+- [ ] `login/page.tsx` — split-screen layout, floating-label form, entrance animation
+- [ ] `register/page.tsx` — 2-step stepper with slide transitions
+- [ ] `change-password/page.tsx` — amber warning banner, floating-label inputs
+
+#### Phase 13-3 — Backoffice Pages
+
+**File:** [phase-13-3-backoffice-pages.md](phase-13-3-backoffice-pages.md)
+**Status:** 🔴 Not Started
+**Parallel with:** 13-2, 13-4
+
+- [ ] `backoffice/dashboard/page.tsx` — `StatCard` counters, staggered quick actions
+- [ ] `backoffice/clearances/page.tsx` — stat strip, filter bar, `DataTable` with staggered rows
+- [ ] `backoffice/clearances/[id]/page.tsx` — 2-col layout, animated `StatusTimeline`, `AnimatePresence` reject textarea
+- [ ] `backoffice/clearances/new/page.tsx` — primitives applied
+- [ ] `backoffice/residents/page.tsx` — pending activations `Card accentColor="amber"`
+- [ ] `backoffice/residents/[id]/page.tsx` + `residents/new/page.tsx` — primitives applied
+- [ ] `backoffice/admin/users/*` — primitives applied (requires Phase 11 complete)
+- [ ] `backoffice/admin/settings/page.tsx` — dashed drop zone logo upload
+- [ ] `backoffice/admin/settings/fees/page.tsx` — side-by-side fee cards
+- [ ] `backoffice/admin/audit-logs/page.tsx` — collapsible filters (requires Phase 12 complete)
+- [ ] `backoffice/reports/page.tsx` — animated result count, export button
+
+#### Phase 13-4 — Portal Pages
+
+**File:** [phase-13-4-portal-pages.md](phase-13-4-portal-pages.md)
+**Status:** 🔴 Not Started
+**Parallel with:** 13-2, 13-3
+
+- [ ] `portal/dashboard/page.tsx` — welcome banner, staggered `RequestCard` list, `EmptyState`
+- [ ] `portal/requests/new/page.tsx` — fee preview card, `AnimatePresence` `purposeOther` field
+- [ ] `portal/requests/[id]/page.tsx` — 2-col layout, animated `StatusTimeline`, payment/PDF cards
+- [ ] `components/portal/RequestCard.tsx` — richcard redesign
+- [ ] `components/portal/StatusTimeline.tsx` — always-vertical, path-draw animation
+
+#### Phase 13-5 — Polish & QA
+
+**File:** [phase-13-5-polish-qa.md](phase-13-5-polish-qa.md)
+**Status:** 🔴 Not Started
+**Requires:** 13-2, 13-3, 13-4 all complete
+
+- [ ] Responsive validation at 375px, 768px, 1280px, 1536px for all pages
+- [ ] Keyboard accessibility audit (tab order, focus rings, ARIA labels)
+- [ ] `useReducedMotion()` compliance — all animations skip correctly
+- [ ] Token audit — zero hardcoded hex values outside approved exceptions
+- [ ] `npm run build` — zero TypeScript errors
+- [ ] `npm run lint` — zero ESLint errors
+- [ ] Sora + Geist font rendering verified (no FOUT)
+- [ ] Lighthouse Performance ≥ 85 on login, portal dashboard, backoffice dashboard, clearances list
+- [ ] Lighthouse Accessibility ≥ 90 on same pages
+- [ ] Cross-browser smoke test (Chrome, Safari, Firefox)
+- [ ] Scores recorded in Progress Log
 
 ---
 

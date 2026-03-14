@@ -106,7 +106,7 @@ export function useActivateResident() {
       await api.post(`/api/v1/residents/users/${userId}/activate`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: residentKeys.pending() });
+      queryClient.invalidateQueries({ queryKey: residentKeys.all });
     },
   });
 }
@@ -121,7 +121,7 @@ export function useRejectResident() {
       await api.post(`/api/v1/residents/users/${userId}/reject`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: residentKeys.pending() });
+      queryClient.invalidateQueries({ queryKey: residentKeys.all });
     },
   });
 }

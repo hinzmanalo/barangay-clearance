@@ -18,6 +18,7 @@ interface AuthContextValue extends AuthState {
   login: (data: LoginRequest) => Promise<{ role: Role; mustChangePassword: boolean }>;
   logout: () => Promise<void>;
   clearAuth: () => void;
+  refreshAuth: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -121,8 +122,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const refreshAuth = useCallback(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      const payload = decodeToken(token);
+      if (payload && payload.exp * 1000 > Date.now()) {
+        setState({
+          userId: payload.sub,
+          email: payload.email,
+          role: payload.role,
+          mustChangePassword: payload.mustChangePassword ?? false,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return;
+      }
+    }
+    clearAuth();
+  }, [clearAuth]);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, clearAuth }}>
+    <AuthContext.Provider value={{ ...state, login, logout, clearAuth, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );

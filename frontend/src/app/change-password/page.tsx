@@ -10,6 +10,11 @@ import { useAuth } from '@/context/AuthContext';
 import { AxiosError } from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import type { JwtPayload } from '@/types/auth';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 const schema = z
   .object({
@@ -26,7 +31,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { role } = useAuth();
+  const { role, refreshAuth } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -53,6 +58,9 @@ export default function ChangePasswordPage() {
         localStorage.setItem('refreshToken', tokenData.refreshToken);
       }
 
+      // Update auth context to reflect the new token state
+      refreshAuth();
+
       const destination = role === 'RESIDENT' ? '/portal/dashboard' : '/backoffice/dashboard';
       router.push(destination);
     } catch (err) {
@@ -62,77 +70,89 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Change Password</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            You must change your password before continuing.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      >
+        <Card className="w-full max-w-md p-8 shadow-lg rounded-2xl bg-white">
+          {/* Amber warning banner */}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="flex items-start gap-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 mb-6 overflow-hidden"
+          >
+            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="font-geist text-sm text-amber-800">
+              For your security, please set a new password before continuing.
+            </p>
+          </motion.div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white shadow rounded-lg p-8 space-y-5"
-        >
-          {serverError && (
-            <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-              {serverError}
-            </div>
-          )}
+          <h2 className="font-sora font-bold text-xl text-neutral-900 mb-6">
+            Set new password
+          </h2>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Password
-            </label>
-            <input
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Server Error Message */}
+            <AnimatePresence>
+              {serverError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-200"
+                >
+                  {serverError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Current Password Input */}
+            <Input
+              label="Current password"
               type="password"
+              placeholder=" "
               autoComplete="current-password"
               {...register('currentPassword')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.currentPassword?.message}
             />
-            {errors.currentPassword && (
-              <p className="mt-1 text-xs text-red-600">{errors.currentPassword.message}</p>
-            )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-            <input
+            {/* New Password Input */}
+            <Input
+              label="New password"
               type="password"
+              placeholder=" "
               autoComplete="new-password"
               {...register('newPassword')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.newPassword?.message}
             />
-            {errors.newPassword && (
-              <p className="mt-1 text-xs text-red-600">{errors.newPassword.message}</p>
-            )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm New Password
-            </label>
-            <input
+            {/* Confirm Password Input */}
+            <Input
+              label="Confirm new password"
               type="password"
+              placeholder=" "
               autoComplete="new-password"
               {...register('confirmPassword')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              error={errors.confirmPassword?.message}
             />
-            {errors.confirmPassword && (
-              <p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>
-            )}
-          </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Changing password…' : 'Change Password'}
-          </button>
-        </form>
-      </div>
+            {/* Update Button */}
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              loading={isSubmitting}
+              type="submit"
+            >
+              Update password
+            </Button>
+          </form>
+        </Card>
+      </motion.div>
     </div>
   );
 }

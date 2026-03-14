@@ -378,9 +378,7 @@ public class ClearanceService {
     public ClearanceSummaryDTO summary() {
         long pendingApproval = clearanceRepo.countByStatus(ClearanceStatus.FOR_APPROVAL);
         long approved = clearanceRepo.countByStatus(ClearanceStatus.APPROVED);
-        long awaitingPayment = clearanceRepo.countByStatusAndPaymentStatus(
-                ClearanceStatus.APPROVED,
-                ClearancePaymentStatus.UNPAID);
+        long awaitingPayment = clearanceRepo.countByPaymentStatus(ClearancePaymentStatus.UNPAID);
 
         // "Released today" — requests issued on the current UTC day
         Instant startOfDay = LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant();

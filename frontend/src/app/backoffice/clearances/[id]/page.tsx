@@ -1,28 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Download } from 'lucide-react';
 import ActionButtons from '@/components/backoffice/ActionButtons';
 import { useClearance, downloadClearancePdf } from '@/hooks/useClearances';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 import type { ClearanceRequest } from '@/types/clearance';
-import { STATUS_LABELS, PURPOSE_LABELS, PAYMENT_STATUS_LABELS } from '@/types/clearance';
-import { DetailPageSkeleton } from '@/components/shared/LoadingSkeleton';
+import { PURPOSE_LABELS } from '@/types/clearance';
 import { toast } from '@/components/shared/ErrorToast';
-
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700',
-  FOR_APPROVAL: 'bg-yellow-100 text-yellow-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  RELEASED: 'bg-blue-100 text-blue-800',
-};
-
-const PAYMENT_COLORS: Record<string, string> = {
-  UNPAID: 'bg-orange-100 text-orange-800',
-  PAID: 'bg-green-100 text-green-800',
-  WAIVED: 'bg-gray-100 text-gray-700',
-};
 
 export default function ClearanceDetailPage() {
   const params = useParams();
@@ -35,12 +27,30 @@ export default function ClearanceDetailPage() {
   const clearance = cr ?? initialCr;
 
   if (isLoading) {
-    return <DetailPageSkeleton />;
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-40" />
+            <Skeleton className="h-64" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-40" />
+            <Skeleton className="h-32" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!clearance) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8 text-sm text-red-600">Request not found.</div>
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-700">Request not found.</p>
+        </div>
+      </div>
     );
   }
 
@@ -50,137 +60,166 @@ export default function ClearanceDetailPage() {
       : PURPOSE_LABELS[clearance.purpose] ?? clearance.purpose;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/backoffice/clearances" className="text-sm text-gray-500 hover:text-gray-800">
-          ← Clearances
-        </Link>
-        <span className="text-gray-300">/</span>
-        <h1 className="text-xl font-bold text-gray-900">
-          {clearance.residentName ?? 'Clearance Request'}
-        </h1>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      {/* Page Header */}
+      <PageHeader
+        title={clearance.residentName ?? 'Clearance Request'}
+        description={`Clearance #${clearance.clearanceNumber || 'Pending'}`}
+        backHref="/backoffice/clearances"
+      />
 
-      {/* Status + clearance number */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
-              STATUS_COLORS[clearance.status] ?? 'bg-gray-100 text-gray-700'
-            }`}>
-              {STATUS_LABELS[clearance.status]}
-            </span>
-            <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
-              PAYMENT_COLORS[clearance.paymentStatus] ?? 'bg-gray-100 text-gray-700'
-            }`}>
-              {PAYMENT_STATUS_LABELS[clearance.paymentStatus]}
-            </span>
-          </div>
-          {clearance.clearanceNumber && (
-            <span className="font-mono text-sm font-semibold text-gray-700">
-              #{clearance.clearanceNumber}
-            </span>
-          )}
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left column: Clearance info + Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Status badges */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Badge variant="status" value={clearance.status} dot />
+              <Badge variant="payment" value={clearance.paymentStatus} dot />
+              {clearance.clearanceNumber && (
+                <span className="ml-auto font-mono text-sm text-neutral-600">
+                  #{clearance.clearanceNumber}
+                </span>
+              )}
+            </div>
+          </Card>
+
+          {/* Details grid */}
+          <Card className="p-6">
+            <h2 className="font-sora font-semibold text-lg text-neutral-900 mb-4">Details</h2>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+              <div>
+                <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                  Resident
+                </dt>
+                <dd className="font-medium text-neutral-900">{clearance.residentName ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                  Purpose
+                </dt>
+                <dd className="font-medium text-neutral-900">{purposeLabel}</dd>
+              </div>
+              <div>
+                <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                  Urgency
+                </dt>
+                <dd className="font-medium text-neutral-900">{clearance.urgency}</dd>
+              </div>
+              <div>
+                <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                  Copies
+                </dt>
+                <dd className="font-medium text-neutral-900">{clearance.copies}</dd>
+              </div>
+              <div>
+                <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                  Fee Amount
+                </dt>
+                <dd className="font-medium text-neutral-900">
+                  ₱{Number(clearance.feeAmount).toFixed(2)}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                  Date Submitted
+                </dt>
+                <dd className="font-medium text-neutral-900">
+                  {new Date(clearance.createdAt).toLocaleDateString('en-PH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </dd>
+              </div>
+              {clearance.reviewedAt && (
+                <div>
+                  <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                    Date Reviewed
+                  </dt>
+                  <dd className="font-medium text-neutral-900">
+                    {new Date(clearance.reviewedAt).toLocaleDateString('en-PH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </dd>
+                </div>
+              )}
+              {clearance.issuedAt && (
+                <div>
+                  <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                    Date Released
+                  </dt>
+                  <dd className="font-medium text-neutral-900">
+                    {new Date(clearance.issuedAt).toLocaleDateString('en-PH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </dd>
+                </div>
+              )}
+              {clearance.notes && (
+                <div className="col-span-2">
+                  <dt className="font-geist text-xs text-neutral-500 uppercase tracking-wide mb-1">
+                    Notes
+                  </dt>
+                  <dd className="mt-2 text-neutral-900 whitespace-pre-wrap text-sm">
+                    {clearance.notes}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+
+          {/* Resident profile link */}
+          <Link href={`/backoffice/residents/${clearance.residentId}`}>
+            <Button variant="outline" className="w-full">
+              View Resident Profile →
+            </Button>
+          </Link>
         </div>
 
-        {/* Staff action buttons */}
-        <ActionButtons clearance={clearance} onSuccess={setCr} />
+        {/* Right column: Action panel + PDF download */}
+        <div className="space-y-4">
+          {/* Action buttons */}
+          <Card accentColor="blue" className="p-6">
+            <h3 className="font-sora font-semibold text-base text-neutral-900 mb-4">Actions</h3>
+            <ActionButtons clearance={clearance} onSuccess={setCr} />
+          </Card>
 
-        {/* Download PDF — shown when RELEASED */}
-        {clearance.status === 'RELEASED' && clearance.clearanceNumber && (
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={async () => {
-                setDownloading(true);
-                try {
-                  await downloadClearancePdf(clearance.id, clearance.clearanceNumber!);
-                } catch {
-                  toast.error('Failed to download PDF. Please try again.');
-                } finally {
-                  setDownloading(false);
-                }
-              }}
-              disabled={downloading}
-              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {downloading ? 'Downloading…' : 'Print / Download PDF'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Details */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Details</h2>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <div>
-            <dt className="text-gray-500">Resident</dt>
-            <dd className="font-medium text-gray-900">{clearance.residentName ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Purpose</dt>
-            <dd className="font-medium text-gray-900">{purposeLabel}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Urgency</dt>
-            <dd className="font-medium text-gray-900">{clearance.urgency}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Copies</dt>
-            <dd className="font-medium text-gray-900">{clearance.copies}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Fee</dt>
-            <dd className="font-medium text-gray-900">₱{Number(clearance.feeAmount).toFixed(2)}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Date Submitted</dt>
-            <dd className="font-medium text-gray-900">
-              {new Date(clearance.createdAt).toLocaleDateString('en-PH', {
-                year: 'numeric', month: 'short', day: 'numeric',
-              })}
-            </dd>
-          </div>
-          {clearance.reviewedAt && (
-            <div>
-              <dt className="text-gray-500">Date Reviewed</dt>
-              <dd className="font-medium text-gray-900">
-                {new Date(clearance.reviewedAt).toLocaleDateString('en-PH', {
-                  year: 'numeric', month: 'short', day: 'numeric',
-                })}
-              </dd>
-            </div>
+          {/* PDF download — shown when RELEASED */}
+          {clearance.status === 'RELEASED' && clearance.clearanceNumber && (
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Card className="p-4">
+                <p className="font-geist text-xs text-neutral-500 mb-3 uppercase tracking-wide">
+                  Document
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={async () => {
+                    setDownloading(true);
+                    try {
+                      await downloadClearancePdf(clearance.id, clearance.clearanceNumber!);
+                    } catch {
+                      toast.error('Failed to download PDF. Please try again.');
+                    } finally {
+                      setDownloading(false);
+                    }
+                  }}
+                  disabled={downloading}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {downloading ? 'Downloading…' : 'Download PDF'}
+                </Button>
+              </Card>
+            </motion.div>
           )}
-          {clearance.issuedAt && (
-            <div>
-              <dt className="text-gray-500">Date Released</dt>
-              <dd className="font-medium text-gray-900">
-                {new Date(clearance.issuedAt).toLocaleDateString('en-PH', {
-                  year: 'numeric', month: 'short', day: 'numeric',
-                })}
-              </dd>
-            </div>
-          )}
-          {clearance.notes && (
-            <div className="col-span-2">
-              <dt className="text-gray-500">Notes</dt>
-              <dd className="mt-1 text-gray-900 whitespace-pre-wrap">{clearance.notes}</dd>
-            </div>
-          )}
-        </dl>
-      </div>
-
-      {/* Link to resident profile */}
-      <div className="text-sm text-gray-500">
-        <Link
-          href={`/backoffice/residents/${clearance.residentId}`}
-          className="text-blue-600 hover:underline"
-        >
-          View resident profile →
-        </Link>
+        </div>
       </div>
     </div>
   );
