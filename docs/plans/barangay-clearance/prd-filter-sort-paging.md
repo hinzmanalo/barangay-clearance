@@ -97,30 +97,30 @@ Each in-scope list endpoint must accept filter parameters using the convention `
 
 **Clearance Request (`GET /api/v1/clearances`, `GET /api/v1/portal/clearances`)**:
 
-| Filter Field | Type | Values / Format | Notes |
-|---|---|---|---|
-| `filter[status]` | Enum | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` | Exact match |
-| `filter[paymentStatus]` | Enum | `UNPAID`, `PAID`, `WAIVED` | Exact match |
-| `filter[createdAtFrom]` | Date | ISO-8601 `YYYY-MM-DD` | Inclusive start of creation date range |
-| `filter[createdAtTo]` | Date | ISO-8601 `YYYY-MM-DD` | Inclusive end of creation date range |
-| `filter[residentId]` | UUID | Valid UUID v4 | Staff-only; portal scoped by JWT |
+| Filter Field            | Type | Values / Format                                             | Notes                                  |
+| ----------------------- | ---- | ----------------------------------------------------------- | -------------------------------------- |
+| `filter[status]`        | Enum | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` | Exact match                            |
+| `filter[paymentStatus]` | Enum | `UNPAID`, `PAID`, `WAIVED`                                  | Exact match                            |
+| `filter[createdAtFrom]` | Date | ISO-8601 `YYYY-MM-DD`                                       | Inclusive start of creation date range |
+| `filter[createdAtTo]`   | Date | ISO-8601 `YYYY-MM-DD`                                       | Inclusive end of creation date range   |
+| `filter[residentId]`    | UUID | Valid UUID v4                                               | Staff-only; portal scoped by JWT       |
 
 **Resident (`GET /api/v1/residents`)**:
 
-| Filter Field | Type | Values / Format | Notes |
-|---|---|---|---|
-| `filter[q]` | String | Free text | Case-insensitive substring on firstName + lastName |
-| `filter[purok]` | String | Free text | Exact match on purok/address field |
-| `filter[status]` | Enum | `ACTIVE`, `INACTIVE` | Exact match |
-| `filter[gender]` | Enum | `MALE`, `FEMALE`, `OTHER` | Exact match |
+| Filter Field     | Type   | Values / Format           | Notes                                              |
+| ---------------- | ------ | ------------------------- | -------------------------------------------------- |
+| `filter[q]`      | String | Free text                 | Case-insensitive substring on firstName + lastName |
+| `filter[purok]`  | String | Free text                 | Exact match on purok/address field                 |
+| `filter[status]` | Enum   | `ACTIVE`, `INACTIVE`      | Exact match                                        |
+| `filter[gender]` | Enum   | `MALE`, `FEMALE`, `OTHER` | Exact match                                        |
 
 **User (`GET /api/v1/admin/users`)**:
 
-| Filter Field | Type | Values / Format | Notes |
-|---|---|---|---|
-| `filter[role]` | Enum | `ADMIN`, `CLERK`, `APPROVER`, `RESIDENT` | Exact match |
-| `filter[status]` | Enum | `ACTIVE`, `INACTIVE`, `LOCKED` | Exact match |
-| `filter[search]` | String | Free text | Case-insensitive substring on firstName + lastName + email |
+| Filter Field     | Type   | Values / Format                          | Notes                                                      |
+| ---------------- | ------ | ---------------------------------------- | ---------------------------------------------------------- |
+| `filter[role]`   | Enum   | `ADMIN`, `CLERK`, `APPROVER`, `RESIDENT` | Exact match                                                |
+| `filter[status]` | Enum   | `ACTIVE`, `INACTIVE`, `LOCKED`           | Exact match                                                |
+| `filter[search]` | String | Free text                                | Case-insensitive substring on firstName + lastName + email |
 
 ### 4.3 Client-Controlled Sorting (Priority: High)
 
@@ -135,11 +135,11 @@ Each in-scope list endpoint must accept a `sort` query parameter in the format `
 
 **Per-Entity Allowed Sort Fields:**
 
-| Entity | Allowed Sort Fields | Default Sort |
-|---|---|---|
-| ClearanceRequest | `createdAt`, `updatedAt`, `issuedAt` | `createdAt,desc` |
-| Resident | `lastName`, `firstName`, `createdAt` | `lastName,asc` |
-| User | `lastName`, `firstName`, `createdAt`, `email` | `lastName,asc` |
+| Entity           | Allowed Sort Fields                           | Default Sort     |
+| ---------------- | --------------------------------------------- | ---------------- |
+| ClearanceRequest | `createdAt`, `updatedAt`, `issuedAt`          | `createdAt,desc` |
+| Resident         | `lastName`, `firstName`, `createdAt`          | `lastName,asc`   |
+| User             | `lastName`, `firstName`, `createdAt`, `email` | `lastName,asc`   |
 
 ### 4.4 Pagination (Priority: High)
 
@@ -229,14 +229,14 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
 
 ### 5.5 Error States and Messaging
 
-| Error Condition | API Response | Frontend Display |
-|---|---|---|
-| Unknown filter field | `400` + `"Invalid filter field: 'staus'. Allowed: status, paymentStatus, ..."` | Toast: error message |
-| Invalid enum value | `400` + `"Invalid value for filter[status]: 'DONE'. Allowed: DRAFT, FOR_APPROVAL, ..."` | Toast: error message |
-| Invalid date format | `400` + `"Invalid date format for filter[createdAtFrom]. Expected: YYYY-MM-DD"` | Toast: error message |
-| Invalid sort field | `400` + `"Invalid sort field: 'name'. Allowed: createdAt, updatedAt, issuedAt"` | Toast: error message |
-| Invalid sort direction | `400` + `"Invalid sort direction: 'random'. Allowed: asc, desc"` | Toast: error message |
-| Size exceeds max | `400` + `"Page size 200 exceeds maximum allowed size of 100"` | Toast: error message |
+| Error Condition        | API Response                                                                            | Frontend Display     |
+| ---------------------- | --------------------------------------------------------------------------------------- | -------------------- |
+| Unknown filter field   | `400` + `"Invalid filter field: 'staus'. Allowed: status, paymentStatus, ..."`          | Toast: error message |
+| Invalid enum value     | `400` + `"Invalid value for filter[status]: 'DONE'. Allowed: DRAFT, FOR_APPROVAL, ..."` | Toast: error message |
+| Invalid date format    | `400` + `"Invalid date format for filter[createdAtFrom]. Expected: YYYY-MM-DD"`         | Toast: error message |
+| Invalid sort field     | `400` + `"Invalid sort field: 'name'. Allowed: createdAt, updatedAt, issuedAt"`         | Toast: error message |
+| Invalid sort direction | `400` + `"Invalid sort direction: 'random'. Allowed: asc, desc"`                        | Toast: error message |
+| Size exceeds max       | `400` + `"Page size 200 exceeds maximum allowed size of 100"`                           | Toast: error message |
 
 ---
 
@@ -350,19 +350,19 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
 
 ### 7.3 Total Effort Summary
 
-| Phase | Estimated Days | Cumulative |
-|---|---|---|
-| Phase 1: Backend Foundation | 4–5 | 4–5 |
-| Phase 2: Frontend Components | 3–4 | 7–9 |
-| Phase 3: Testing & Docs | 1–2 | 8–11 |
-| **Total** | **8–11 days** | **~2 weeks** |
+| Phase                        | Estimated Days | Cumulative   |
+| ---------------------------- | -------------- | ------------ |
+| Phase 1: Backend Foundation  | 4–5            | 4–5          |
+| Phase 2: Frontend Components | 3–4            | 7–9          |
+| Phase 3: Testing & Docs      | 1–2            | 8–11         |
+| **Total**                    | **8–11 days**  | **~2 weeks** |
 
 ### 7.4 Effort by Role
 
-| Role | Days |
-|---|---|
-| Backend Development | 5–6 days |
-| Frontend Development | 3–4 days |
+| Role                    | Days     |
+| ----------------------- | -------- |
+| Backend Development     | 5–6 days |
+| Frontend Development    | 3–4 days |
 | Testing + Documentation | 1–2 days |
 
 ### 7.5 Parallel Work Opportunities
@@ -399,6 +399,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
 ## 9. User Stories
 
 ### US-001: Filter Clearances by Status
+
 - **ID**: FSP-001
 - **Description**: As a clerk, I want to filter the clearance list by status so that I can focus on requests that need my attention.
 - **Acceptance Criteria**:
@@ -408,6 +409,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Response `PageResponse` reflects filtered `totalElements`.
 
 ### US-002: Filter Clearances by Date Range
+
 - **ID**: FSP-002
 - **Description**: As an approver, I want to filter clearances by creation date range so that I can review requests from a specific period.
 - **Acceptance Criteria**:
@@ -416,6 +418,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Invalid date format `filter[createdAtFrom]=01-2025-01` returns `400` with expected format message.
 
 ### US-003: Sort Clearances by Creation Date
+
 - **ID**: FSP-003
 - **Description**: As a clerk, I want to sort clearances from oldest to newest so that I can process them in order of submission.
 - **Acceptance Criteria**:
@@ -425,6 +428,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - `sort=createdAt,sideways` returns `400` with message listing `asc` and `desc`.
 
 ### US-004: Filter Resident List by Name Search
+
 - **ID**: FSP-004
 - **Description**: As staff, I want to search residents by name so that I can quickly find a specific person.
 - **Acceptance Criteria**:
@@ -434,6 +438,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - String filter values exceeding 255 characters return `400`.
 
 ### US-005: Filter Residents by Status
+
 - **ID**: FSP-005
 - **Description**: As an admin, I want to filter the resident list by status so that I can audit inactive accounts.
 - **Acceptance Criteria**:
@@ -441,6 +446,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - `filter[status]=UNKNOWN` returns `400` with allowed values.
 
 ### US-006: Sort Residents Alphabetically
+
 - **ID**: FSP-006
 - **Description**: As staff, I want to sort the resident list alphabetically by last name so I can quickly scan for a specific person.
 - **Acceptance Criteria**:
@@ -449,6 +455,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - `sort=lastName,desc` returns Z–A order.
 
 ### US-007: Filter Users by Role
+
 - **ID**: FSP-007
 - **Description**: As an admin, I want to filter the user list by role so that I can manage staff accounts separately from residents.
 - **Acceptance Criteria**:
@@ -457,6 +464,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Roles: `ADMIN`, `CLERK`, `APPROVER`, `RESIDENT`.
 
 ### US-008: Filter Users by Status
+
 - **ID**: FSP-008
 - **Description**: As an admin, I want to filter users by account status to find locked or inactive accounts.
 - **Acceptance Criteria**:
@@ -464,6 +472,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - `filter[role]=RESIDENT&filter[status]=ACTIVE` returns active resident-role users.
 
 ### US-009: Search Users by Name/Email
+
 - **ID**: FSP-009
 - **Description**: As an admin, I want to search users by name or email for quick lookup.
 - **Acceptance Criteria**:
@@ -471,6 +480,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Combined with `filter[role]=CLERK` narrows to matching clerks only.
 
 ### US-010: Resident Portal — Filter My Clearances
+
 - **ID**: FSP-010
 - **Description**: As a resident, I want to filter my clearance history by status so that I can find recently approved requests.
 - **Acceptance Criteria**:
@@ -479,6 +489,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - `filter[residentId]` is not in the portal allowed safelist — returns `400` if supplied.
 
 ### US-011: Resident Portal — Sort My Clearances
+
 - **ID**: FSP-011
 - **Description**: As a resident, I want to sort my clearance requests by date so that I can find the most recent one easily.
 - **Acceptance Criteria**:
@@ -487,6 +498,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Default sort is `createdAt,desc`.
 
 ### US-012: Invalid Filter — Clear Error Message
+
 - **ID**: FSP-012
 - **Description**: As any API user, I want a clear error message when I provide an unknown filter field so that I can correct it immediately.
 - **Acceptance Criteria**:
@@ -495,6 +507,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Multiple invalid filter fields in one request return all violations in the `details` array.
 
 ### US-013: Pagination Caps Respect Size Maximum
+
 - **ID**: FSP-013
 - **Description**: As a developer consuming the API, I want the system to return an error if I request too many items per page, preventing memory issues.
 - **Acceptance Criteria**:
@@ -503,6 +516,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - `size=0` returns `400` with message about minimum size.
 
 ### US-014: Filter State Persists in URL
+
 - **ID**: FSP-014
 - **Description**: As a staff user, I want my active filters to be reflected in the browser URL so that I can share or bookmark a filtered view.
 - **Acceptance Criteria**:
@@ -511,6 +525,7 @@ The filters are collapsed by default on mobile, expanded on desktop. A "Filter" 
   - Clicking browser back/forward navigates filter states correctly.
 
 ### US-015: Clear All Filters
+
 - **ID**: FSP-015
 - **Description**: As a staff user, I want a one-click "Clear all filters" button so that I can return to the default unfiltered view.
 - **Acceptance Criteria**:
@@ -619,18 +634,21 @@ This feature introduces no new database tables, columns, or migrations. All filt
 ### 12.2 Filterable / Sortable Columns (Existing)
 
 **clearance_requests table** (filterable columns):
+
 - `status` — VARCHAR enum column
 - `payment_status` — VARCHAR enum column
 - `created_at` — TIMESTAMP WITH TIME ZONE
 - `resident_id` — UUID FK
 
 **residents table** (filterable columns):
+
 - `first_name`, `last_name` — VARCHAR, substring search via LOWER() + LIKE
 - `purok` — VARCHAR, exact match
 - `status` — VARCHAR enum
 - `gender` — VARCHAR enum
 
 **users table** (filterable columns):
+
 - `first_name`, `last_name`, `email` — VARCHAR, substring search
 - `role` — VARCHAR enum
 - `status` — VARCHAR enum
@@ -639,13 +657,13 @@ This feature introduces no new database tables, columns, or migrations. All filt
 
 The following indexes are identified as high-value for Phase 3 performance tuning but are **not included in this phase**:
 
-| Table | Column(s) | Index Type | Rationale |
-|---|---|---|---|
-| `clearance_requests` | `status` | B-tree | High-cardinality filter |
-| `clearance_requests` | `created_at` | B-tree | Date range sorts/filters |
-| `clearance_requests` | `payment_status` | B-tree | Common combined filter |
-| `residents` | `last_name, first_name` | B-tree | Default sort + name search |
-| `users` | `role, status` | B-tree composite | Common combined filter |
+| Table                | Column(s)               | Index Type       | Rationale                  |
+| -------------------- | ----------------------- | ---------------- | -------------------------- |
+| `clearance_requests` | `status`                | B-tree           | High-cardinality filter    |
+| `clearance_requests` | `created_at`            | B-tree           | Date range sorts/filters   |
+| `clearance_requests` | `payment_status`        | B-tree           | Common combined filter     |
+| `residents`          | `last_name, first_name` | B-tree           | Default sort + name search |
+| `users`              | `role, status`          | B-tree composite | Common combined filter     |
 
 ---
 
@@ -668,24 +686,26 @@ The following indexes are identified as high-value for Phase 3 performance tunin
 
 **Roles**: `ADMIN`, `CLERK`, `APPROVER`
 
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `filter[status]` | Enum | No | — | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` |
-| `filter[paymentStatus]` | Enum | No | — | `UNPAID`, `PAID`, `WAIVED` |
-| `filter[createdAtFrom]` | String | No | — | ISO-8601 date `YYYY-MM-DD` |
-| `filter[createdAtTo]` | String | No | — | ISO-8601 date `YYYY-MM-DD` |
-| `filter[residentId]` | UUID | No | — | Filter by resident UUID |
-| `sort` | String | No | `createdAt,desc` | Format: `field,direction` |
-| `page` | Integer | No | `0` | Zero-indexed page |
-| `size` | Integer | No | `20` | Max 100 |
+| Parameter               | Type    | Required | Default          | Description                                                 |
+| ----------------------- | ------- | -------- | ---------------- | ----------------------------------------------------------- |
+| `filter[status]`        | Enum    | No       | —                | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` |
+| `filter[paymentStatus]` | Enum    | No       | —                | `UNPAID`, `PAID`, `WAIVED`                                  |
+| `filter[createdAtFrom]` | String  | No       | —                | ISO-8601 date `YYYY-MM-DD`                                  |
+| `filter[createdAtTo]`   | String  | No       | —                | ISO-8601 date `YYYY-MM-DD`                                  |
+| `filter[residentId]`    | UUID    | No       | —                | Filter by resident UUID                                     |
+| `sort`                  | String  | No       | `createdAt,desc` | Format: `field,direction`                                   |
+| `page`                  | Integer | No       | `0`              | Zero-indexed page                                           |
+| `size`                  | Integer | No       | `20`             | Max 100                                                     |
 
 **Request Example**:
+
 ```
 GET /api/v1/clearances?filter[status]=APPROVED&filter[paymentStatus]=UNPAID&sort=createdAt,asc&page=0&size=20
 Authorization: Bearer <token>
 ```
 
 **Response (200 OK)**:
+
 ```json
 {
   "content": [
@@ -705,6 +725,7 @@ Authorization: Bearer <token>
 ```
 
 **Error Responses**:
+
 - `400 Bad Request` — Invalid filter field, invalid enum value, invalid date format, invalid sort field/direction, size > 100.
 - `401 Unauthorized` — Missing or expired JWT.
 - `403 Forbidden` — `RESIDENT` role attempting to access staff endpoint.
@@ -717,12 +738,12 @@ Authorization: Bearer <token>
 
 **Key difference from staff endpoint**: `filter[residentId]` is **not** in the portal allowed safelist — returns `400` if supplied. JWT scope always overrides; the resident can only ever see their own records.
 
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `filter[status]` | Enum | No | — | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` |
-| `sort` | String | No | `createdAt,desc` | Format: `field,direction` |
-| `page` | Integer | No | `0` | Zero-indexed page |
-| `size` | Integer | No | `20` | Max 100 |
+| Parameter        | Type    | Required | Default          | Description                                                 |
+| ---------------- | ------- | -------- | ---------------- | ----------------------------------------------------------- |
+| `filter[status]` | Enum    | No       | —                | `DRAFT`, `FOR_APPROVAL`, `APPROVED`, `REJECTED`, `RELEASED` |
+| `sort`           | String  | No       | `createdAt,desc` | Format: `field,direction`                                   |
+| `page`           | Integer | No       | `0`              | Zero-indexed page                                           |
+| `size`           | Integer | No       | `20`             | Max 100                                                     |
 
 ---
 
@@ -736,15 +757,15 @@ Authorization: Bearer <token>
 
 **Migration Note**: Existing `?q=value&purok=value` params are aliased to `filter[q]`/`filter[purok]` for backward compatibility during transition.
 
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `filter[q]` | String | No | — | Case-insensitive firstName + lastName substring |
-| `filter[purok]` | String | No | — | Exact purok/address match |
-| `filter[status]` | Enum | No | — | `ACTIVE`, `INACTIVE` |
-| `filter[gender]` | Enum | No | — | `MALE`, `FEMALE`, `OTHER` |
-| `sort` | String | No | `lastName,asc` | Format: `field,direction` |
-| `page` | Integer | No | `0` | Zero-indexed page |
-| `size` | Integer | No | `20` | Max 100 |
+| Parameter        | Type    | Required | Default        | Description                                     |
+| ---------------- | ------- | -------- | -------------- | ----------------------------------------------- |
+| `filter[q]`      | String  | No       | —              | Case-insensitive firstName + lastName substring |
+| `filter[purok]`  | String  | No       | —              | Exact purok/address match                       |
+| `filter[status]` | Enum    | No       | —              | `ACTIVE`, `INACTIVE`                            |
+| `filter[gender]` | Enum    | No       | —              | `MALE`, `FEMALE`, `OTHER`                       |
+| `sort`           | String  | No       | `lastName,asc` | Format: `field,direction`                       |
+| `page`           | Integer | No       | `0`            | Zero-indexed page                               |
+| `size`           | Integer | No       | `20`           | Max 100                                         |
 
 ---
 
@@ -756,14 +777,14 @@ Authorization: Bearer <token>
 
 **Roles**: `ADMIN`
 
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `filter[role]` | Enum | No | — | `ADMIN`, `CLERK`, `APPROVER`, `RESIDENT` |
-| `filter[status]` | Enum | No | — | `ACTIVE`, `INACTIVE`, `LOCKED` |
-| `filter[search]` | String | No | — | Case-insensitive substring on firstName, lastName, email |
-| `sort` | String | No | `lastName,asc` | Format: `field,direction` |
-| `page` | Integer | No | `0` | Zero-indexed page |
-| `size` | Integer | No | `20` | Max 100 |
+| Parameter        | Type    | Required | Default        | Description                                              |
+| ---------------- | ------- | -------- | -------------- | -------------------------------------------------------- |
+| `filter[role]`   | Enum    | No       | —              | `ADMIN`, `CLERK`, `APPROVER`, `RESIDENT`                 |
+| `filter[status]` | Enum    | No       | —              | `ACTIVE`, `INACTIVE`, `LOCKED`                           |
+| `filter[search]` | String  | No       | —              | Case-insensitive substring on firstName, lastName, email |
+| `sort`           | String  | No       | `lastName,asc` | Format: `field,direction`                                |
+| `page`           | Integer | No       | `0`            | Zero-indexed page                                        |
+| `size`           | Integer | No       | `20`           | Max 100                                                  |
 
 ---
 
@@ -781,6 +802,7 @@ Authorization: Bearer <token>
 ```
 
 Multiple violations:
+
 ```json
 {
   "status": 400,
@@ -844,6 +866,7 @@ This feature requires no changes to Docker Compose, Nginx configuration, cloud d
 ### Phase 1: Backend Foundation
 
 **Shared Infrastructure:**
+
 - [ ] Create `backend/src/main/java/com/barangay/clearance/shared/filter/FilterMetadata.java` — per-entity allowed fields registry
 - [ ] Create `backend/src/main/java/com/barangay/clearance/shared/filter/FilterRequestDTO.java` — parse and validate `filter[*]` params
 - [ ] Create `backend/src/main/java/com/barangay/clearance/shared/filter/SortRequestDTO.java` — parse and validate `sort=field,direction`
@@ -851,6 +874,7 @@ This feature requires no changes to Docker Compose, Nginx configuration, cloud d
 - [ ] Unit tests for `SortRequestDTO` (valid sort, unknown field → 400, invalid direction → 400)
 
 **Clearance Module:**
+
 - [ ] Define `ClearanceFilterMetadata` — allowed filter fields + sort fields constants
 - [ ] Update `ClearanceController.list()` — add `@RequestParam Map<String,String> filterParams`, `@RequestParam(required=false) String sort`
 - [ ] Update `ClearanceService.list()` — accept `FilterRequestDTO`, `SortRequestDTO`, apply via `SpecificationBuilder`
@@ -860,6 +884,7 @@ This feature requires no changes to Docker Compose, Nginx configuration, cloud d
 - [ ] Unit tests: `ClearanceServiceListFilterTest`
 
 **Residents Module:**
+
 - [ ] Define `ResidentFilterMetadata` — allowed filter fields + sort fields constants
 - [ ] Update `ResidentController.search()` — migrate `q`, `purok` to `filter[q]`, `filter[purok]`; add sort
 - [ ] Replace custom `@Query` with `SpecificationBuilder` approach in `ResidentService.search()`
@@ -868,6 +893,7 @@ This feature requires no changes to Docker Compose, Nginx configuration, cloud d
 - [ ] Unit tests: `ResidentServiceListFilterTest`
 
 **Identity / Users Module:**
+
 - [ ] Define `UserFilterMetadata` — allowed filter fields + sort fields constants
 - [ ] Update or create `AdminUserController.list()` — add filter/sort params
 - [ ] Update `UserService.list()` — apply `SpecificationBuilder` for filter spec
@@ -933,6 +959,6 @@ This feature requires no changes to Docker Compose, Nginx configuration, cloud d
 
 ### 18.3 Version History
 
-| Version | Date | Author | Changes |
-|---|---|---|---|
-| 1.0 | March 7, 2026 | Barangay Clearance Engineering Team | Initial PRD — brainstormed and approved |
+| Version | Date          | Author                              | Changes                                 |
+| ------- | ------------- | ----------------------------------- | --------------------------------------- |
+| 1.0     | March 7, 2026 | Barangay Clearance Engineering Team | Initial PRD — brainstormed and approved |

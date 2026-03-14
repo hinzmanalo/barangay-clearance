@@ -9,6 +9,7 @@ This document explains the exact sequence of files and logic that executes when 
 ## Step-by-Step Sequence
 
 ### **Step 1: Next.js Server Loads Configuration**
+
 **File:** `frontend/next.config.mjs`
 
 - Next.js loads the config (API routes, image optimization, redirects, etc.)
@@ -17,6 +18,7 @@ This document explains the exact sequence of files and logic that executes when 
 ---
 
 ### **Step 2: Middleware Runs (Server-Side) — FIRST LOGIC**
+
 **File:** `frontend/src/middleware.ts` (lines 17–44)
 
 This is the **first logic** that executes for **every request**:
@@ -24,14 +26,14 @@ This is the **first logic** that executes for **every request**:
 ```typescript
 // Request: GET http://localhost:3000 (pathname = "/")
 const pathname = "/";
-const token = getTokenFromCookieOrHeader(request); 
+const token = getTokenFromCookieOrHeader(request);
 // → looks for request.cookies.get('accessToken')
 // → if not logged in, token = null
 
 // Line 44: No token → redirect to login
 if (!token) {
-  const loginUrl = new URL('/login', request.url);
-  loginUrl.searchParams.set('next', pathname);
+  const loginUrl = new URL("/login", request.url);
+  loginUrl.searchParams.set("next", pathname);
   return NextResponse.redirect(loginUrl);
   // → Redirects to /login?next=/
 }
@@ -42,13 +44,14 @@ if (!token) {
 ---
 
 ### **Step 3: Root Page Renders (Backup Fallback)**
+
 **File:** `frontend/src/app/page.tsx`
 
 If middleware somehow allowed `/` through, this would render:
 
 ```typescript
 export default function Home() {
-  redirect("/login");  // Client-side redirect to /login
+  redirect("/login"); // Client-side redirect to /login
 }
 ```
 
@@ -57,6 +60,7 @@ export default function Home() {
 ---
 
 ### **Step 4: Root Layout Wraps Everything**
+
 **File:** `frontend/src/app/layout.tsx`
 
 After the middleware redirect, the **login page** loads. The root layout wraps it:
@@ -88,9 +92,11 @@ export default function RootLayout({
 ---
 
 ### **Step 5: Providers Initialize Context**
+
 **File:** `frontend/src/app/providers.tsx`
 
 Wraps the entire app with:
+
 - `AuthProvider` — initializes auth state
 - React Query client
 - Other providers
@@ -110,13 +116,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
 ---
 
 ### **Step 6: AuthContext Hydrates from localStorage**
+
 **File:** `frontend/src/context/AuthContext.tsx` (lines 45–65)
 
 Inside `AuthProvider`, a `useEffect` runs **on first render**:
 
 ```typescript
 useEffect(() => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   if (token) {
     const payload = decodeToken(token);
     if (payload && payload.exp * 1000 > Date.now()) {
@@ -134,7 +141,7 @@ useEffect(() => {
     }
   }
   // No token or expired → stay on login page
-  setState(prev => ({ ...prev, isLoading: false }));
+  setState((prev) => ({ ...prev, isLoading: false }));
 }, []);
 ```
 
@@ -143,6 +150,7 @@ useEffect(() => {
 ---
 
 ### **Step 7: Login Page Renders**
+
 **File:** `frontend/src/app/login/page.tsx`
 
 The login page component renders with the login form:
@@ -190,8 +198,8 @@ User enters email + password and clicks submit.
 
 ```typescript
 api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -205,6 +213,7 @@ POST request to `http://localhost:8080/api/v1/auth/login` with credentials.
 ### **Step 10: Backend Returns Tokens**
 
 Backend responds with:
+
 ```json
 {
   "accessToken": "eyJhbGc...",
@@ -219,13 +228,13 @@ Backend responds with:
 
 ```typescript
 const login = useCallback(async (data: LoginRequest) => {
-  const response = await api.post<TokenResponse>('/api/v1/auth/login', data);
+  const response = await api.post<TokenResponse>("/api/v1/auth/login", data);
   const { accessToken, refreshToken, mustChangePassword } = response.data;
 
   // Store in localStorage
-  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem("accessToken", accessToken);
   if (refreshToken) {
-    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem("refreshToken", refreshToken);
   }
 
   const payload = decodeToken(accessToken);
@@ -234,7 +243,7 @@ const login = useCallback(async (data: LoginRequest) => {
   if (payload) {
     document.cookie = `accessToken=${accessToken}; path=/; SameSite=Lax; max-age=${payload.exp - Math.floor(Date.now() / 1000)}`;
   }
-  if (!payload) throw new Error('Invalid token received');
+  if (!payload) throw new Error("Invalid token received");
 
   // Update auth state
   setState({
@@ -246,17 +255,20 @@ const login = useCallback(async (data: LoginRequest) => {
     isLoading: false,
   });
 
-  return { role: payload.role, mustChangePassword: mustChangePassword ?? false };
+  return {
+    role: payload.role,
+    mustChangePassword: mustChangePassword ?? false,
+  };
 }, []);
 ```
 
 ### **Step 12: Navigate to Dashboard**
 
 ```typescript
-if (role === 'RESIDENT') {
-  router.push('/portal/dashboard');
+if (role === "RESIDENT") {
+  router.push("/portal/dashboard");
 } else {
-  router.push('/backoffice/dashboard');
+  router.push("/backoffice/dashboard");
 }
 ```
 
@@ -329,10 +341,10 @@ portal/dashboard/page.tsx renders (dashboard)
 
 The architecture relies on two separate token storage locations:
 
-| Layer | Source | Purpose |
-|-------|--------|---------|
-| **Server (middleware)** | `request.cookies.get('accessToken')` | Route protection — happens first on every request |
-| **Client (context)** | `localStorage.getItem('accessToken')` | Restores user session, survives page reloads |
+| Layer                   | Source                                | Purpose                                           |
+| ----------------------- | ------------------------------------- | ------------------------------------------------- |
+| **Server (middleware)** | `request.cookies.get('accessToken')`  | Route protection — happens first on every request |
+| **Client (context)**    | `localStorage.getItem('accessToken')` | Restores user session, survives page reloads      |
 
 ### Why Two?
 
@@ -347,15 +359,15 @@ If they diverge (e.g., cookie expires but localStorage is still valid), the user
 
 ## Key Files Reference
 
-| File | Purpose |
-|------|---------|
-| `middleware.ts` | **First logic** — validates token, enforces route access control |
-| `app/layout.tsx` | Root HTML wrapper, loads fonts, sets metadata |
-| `app/providers.tsx` | Wraps app with TanStackQuery + AuthProvider |
-| `context/AuthContext.tsx` | Auth state, login/logout, token hydration from localStorage |
-| `lib/api.ts` | Axios instance with request interceptor (Bearer token) + response interceptor (401 → refresh) |
-| `app/page.tsx` | Fallback for `/` → redirects to `/login` |
-| `app/login/page.tsx` | Login form UI |
+| File                      | Purpose                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------- |
+| `middleware.ts`           | **First logic** — validates token, enforces route access control                              |
+| `app/layout.tsx`          | Root HTML wrapper, loads fonts, sets metadata                                                 |
+| `app/providers.tsx`       | Wraps app with TanStackQuery + AuthProvider                                                   |
+| `context/AuthContext.tsx` | Auth state, login/logout, token hydration from localStorage                                   |
+| `lib/api.ts`              | Axios instance with request interceptor (Bearer token) + response interceptor (401 → refresh) |
+| `app/page.tsx`            | Fallback for `/` → redirects to `/login`                                                      |
+| `app/login/page.tsx`      | Login form UI                                                                                 |
 
 ---
 
